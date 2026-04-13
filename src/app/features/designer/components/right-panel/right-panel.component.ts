@@ -39,27 +39,40 @@ import { ElementStyle } from '../../../../core/models/template.model';
 
           <div class="prop-section">
             <div class="prop-section-title">Content</div>
-            <div class="prop-col">
-              <label class="prop-label">Text / Expression</label>
-              <textarea
-                class="prop-textarea"
-                [value]="el.content"
-                (input)="onContentChange($event)"
-                rows="3"
-                [attr.placeholder]="placeholderHint"
-              ></textarea>
-              <div class="hint-text">Use <code>{{ '{' + '{field}' + '}' }}</code> for dynamic values. Expressions: <code>{{ '{' + '{age + 5}' + '}' }}</code></div>
-            </div>
+            
+            @if (el.type === 'text' || el.type === 'field') {
+              <div class="prop-col">
+                <label class="prop-label">Text / Expression</label>
+                <textarea
+                  class="prop-textarea"
+                  [value]="el.content || ''"
+                  (input)="onContentChange($event)"
+                  rows="3"
+                  [attr.placeholder]="placeholderHint"
+                ></textarea>
+                <div class="hint-text">Use <code>{{ '{' + '{field}' + '}' }}</code> for dynamic values. Expressions: <code>{{ '{' + '{age + 5}' + '}' }}</code></div>
+              </div>
 
-            <div class="prop-col">
-              <label class="prop-label">Bind to Field</label>
-              <select class="prop-select" [value]="el.boundField || ''" (change)="onBindField($event)">
-                <option value="">— None —</option>
-                @for (f of fields(); track f.key) {
-                  <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+              <div class="prop-col">
+                <label class="prop-label">Bind to Field</label>
+                <select class="prop-select" [value]="el.boundField || ''" (change)="onBindField($event)">
+                  <option value="">— None —</option>
+                  @for (f of fields(); track f.key) {
+                    <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+                  }
+                </select>
+              </div>
+            }
+
+            @if (el.type === 'image') {
+              <div class="prop-col">
+                <label class="prop-label">Upload Image</label>
+                <input type="file" accept="image/*" (change)="onImageUpload($event)" style="font-size: 11px;" />
+                @if (el.imageUrl) {
+                  <img [src]="el.imageUrl" style="margin-top: 8px; max-width: 100%; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;"/>
                 }
-              </select>
-            </div>
+              </div>
+            }
           </div>
 
           <div class="prop-section">
@@ -275,9 +288,25 @@ export class RightPanelComponent {
     const el = this.element();
     if (!el) return;
     if (val) {
-      this.templateService.updateElement(el.id, { content: `{{${val}}}`, boundField: val });
+      this.templateService.updateElement(el.id, { content: `{{${val}}}`, boundField: val, fieldPath: val, type: 'field' });
     } else {
-      this.templateService.updateElement(el.id, { boundField: undefined });
+      this.templateService.updateElement(el.id, { boundField: undefined, fieldPath: undefined, type: 'text' });
+    }
+  }
+
+  onImageUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        const el = this.element();
+        if (el && el.type === 'image') {
+          this.templateService.updateElement(el.id, { imageUrl: result });
+        }
+      };
+      reader.readAsDataURL(file);
     }
   }
 

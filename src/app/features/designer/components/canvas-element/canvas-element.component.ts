@@ -1,8 +1,9 @@
 import {
-  Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy,
+  Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy, inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateElement } from '../../../../core/models/template.model';
+import { TemplateService } from '../../../../core/services/template.service';
 
 @Component({
   selector: 'app-canvas-element',
@@ -14,6 +15,7 @@ import { TemplateElement } from '../../../../core/models/template.model';
       #elRef
       class="canvas-el"
       [class.selected]="selected"
+      [class.is-image]="element.type === 'image'"
       [style.left.px]="element.position.x"
       [style.top.px]="element.position.y"
       [style.fontSize.px]="element.style.fontSize"
@@ -23,8 +25,20 @@ import { TemplateElement } from '../../../../core/models/template.model';
       [style.color]="element.style.color"
       (mousedown)="onMouseDown($event)"
       (click)="onClick($event)"
+      (dblclick)="onDblClick($event)"
     >
-      <span class="el-text">{{ element.content }}</span>
+      @if (element.type === 'image') {
+        @if (element.imageUrl) {
+          <img [src]="element.imageUrl" class="el-image" draggable="false" />
+        } @else {
+          <div class="el-image-placeholder">No Image</div>
+        }
+      } @else if (isEditingInline) {
+        <textarea class="inline-edit" [value]="element.content || ''" (blur)="onInlineBlur($event)" (keydown)="onInlineKeyDown($event)"></textarea>
+      } @else {
+        <span class="el-text">{{ element.content }}</span>
+      }
+
       @if (selected) {
         <div class="resize-handles">
           <div class="handle tl"></div>
@@ -87,6 +101,13 @@ import { TemplateElement } from '../../../../core/models/template.model';
       pointer-events: all;
     }
     .delete-btn:hover { background: #dc2626; }
+    .el-image { display: block; max-width: 250px; max-height: 250px; pointer-events: none; }
+    .el-image-placeholder { width: 100px; height: 100px; background: #e2e8f0; display:flex; align-items:center; justify-content:center; color: #64748b; font-size: 11px; }
+    .canvas-el.is-image { padding: 0; overflow: hidden; }
+    .inline-edit {
+      border: 1px solid #3b82f6; outline: none; padding: 0; margin: 0; background: transparent;
+      font: inherit; color: inherit; resize: both; min-width: 100px; line-height: inherit;
+    }
   `],
 })
 export class CanvasElementComponent implements OnInit, OnDestroy {
@@ -98,6 +119,9 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   @ViewChild('elRef') elRef!: ElementRef<HTMLDivElement>;
 
+  private templateService = inject(TemplateService);
+
+  isEditingInline = false;
   private isDragging = false;
   private startMouseX = 0;
   private startMouseY = 0;
@@ -119,7 +143,33 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   onClick(event: MouseEvent): void {
     event.stopPropagation();
-    this.select.emit(this.element.id);
+    if (!this.isEditingInline) {
+      this.select.emit(this.element.id);
+    }
+  }
+
+  onDblClick(event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.element.type === 'text') {
+      this.isEditingInline = true;
+      setTimeout(() => {
+        const area = this.elRef.nativeElement.querySelector('.inline-edit') as HTMLTextAreaElement;
+        if (area) { area.focus(); area.select(); }
+      });
+    }
+  }
+
+  onInlineBlur(event: Event): void {
+    this.isEditingInline = false;
+    const val = (event.target as HTMLTextAreaElement).value;
+    this.templateService.updateElement(this.element.id, { content: val });
+  }
+
+  onInlineKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+       event.preventDefault();
+       (event.target as HTMLTextAreaElement).blur();
+    }
   }
 
   onMouseDown(event: MouseEvent): void {

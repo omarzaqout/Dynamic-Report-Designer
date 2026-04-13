@@ -47,7 +47,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
                       [style.fontStyle]="el.style.fontStyle"
                       [style.textDecoration]="el.style.textDecoration"
                       [style.color]="el.style.color"
-                    >{{ el.content }}</div>
+                      [class.is-image]="el.type === 'image'"
+                    >
+                      @if (el.type === 'image') {
+                        @if (el.imageUrl) {
+                          <img [src]="el.imageUrl" [style.display]="'block'" [style.maxWidth.px]="250" [style.maxHeight.px]="250" />
+                        }
+                      } @else {
+                        {{ el.content }}
+                      }
+                    </div>
                   }
                 </div>
               }

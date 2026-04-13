@@ -15,35 +15,91 @@ import { Field } from '../../../../core/models/field.model';
         <span class="panel-title">Field Explorer</span>
       </div>
 
-      <div class="search-box">
-        <input
-          type="text"
-          placeholder="Search fields..."
-          (input)="onSearch($event)"
-          class="search-input"
-        />
+      <div class="api-loader">
+        <div class="api-input-group">
+          <label>API Endpoint</label>
+          <div class="input-row">
+            <input
+              type="text"
+              [value]="apiUrl()"
+              (input)="apiUrl.set($any($event.target).value)"
+              placeholder="https://jsonplaceholder.typicode.com/users"
+              class="api-input"
+            />
+            <button (click)="loadData()" [disabled]="isLoading()" class="load-btn">
+              {{ isLoading() ? '...' : 'Load' }}
+            </button>
+          </div>
+        </div>
+        @if (errorMsg()) {
+          <div class="error-msg">{{ errorMsg() }}</div>
+        }
       </div>
 
-      <div class="section-label">Data Fields</div>
-      <div class="fields-list">
-        @for (field of filteredFields(); track field.key) {
-          <div
-            class="field-item"
-            [attr.data-field-key]="field.key"
-            [attr.data-field-label]="field.label"
-            [attr.data-field-type]="field.type"
-            draggable="true"
-            (dragstart)="onDragStart($event, field)"
-            (dragend)="onDragEnd()"
-            [class.dragging]="draggingKey() === field.key"
-          >
+      <ng-template #fieldNode let-field let-level="level">
+        <div
+          class="field-item"
+          [style.padding-left.px]="level * 16 + 8"
+          [attr.data-field-key]="field.key"
+          [attr.data-field-label]="field.label"
+          [attr.data-field-type]="field.type"
+          [attr.draggable]="!field.children"
+          (dragstart)="!field.children && onDragStart($event, field)"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === field.key"
+          [class.is-parent]="field.children"
+        >
+          @if (field.children) {
+            <button class="expand-btn" (click)="toggleExpand(field, $event)">
+              {{ field.isExpanded ? '▼' : '▶' }}
+            </button>
+          } @else {
             <span class="field-type-badge" [class]="'type-' + field.type">
               {{ typeIcon(field.type) }}
             </span>
-            <span class="field-name">{{ field.label }}</span>
-            <span class="field-key-hint">{{ field.key }}</span>
-          </div>
+          }
+          <span class="field-name">{{ field.label }}</span>
+        </div>
+        
+        @if (field.children && field.isExpanded) {
+          @for (child of field.children; track child.key) {
+            <ng-container *ngTemplateOutlet="fieldNode; context: { $implicit: child, level: level + 1 }"></ng-container>
+          }
         }
+      </ng-template>
+
+      <div class="section-label">Data Fields</div>
+      <div class="fields-list">
+        @if (fields().length === 0 && !isLoading() && !errorMsg()) {
+          <div class="empty-state">No fields available</div>
+        }
+        @for (field of fields(); track field.key) {
+          <ng-container *ngTemplateOutlet="fieldNode; context: { $implicit: field, level: 0 }"></ng-container>
+        }
+      </div>
+
+      <div class="section-label">Static Elements</div>
+      <div class="fields-list" style="flex: 0 0 auto; max-height: 150px;">
+        <div
+          class="field-item"
+          draggable="true"
+          (dragstart)="onStaticDragStart($event, 'text')"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === 'static-text'"
+        >
+          <span class="field-type-badge type-text">T</span>
+          <span class="field-name">Text Element</span>
+        </div>
+        <div
+          class="field-item"
+          draggable="true"
+          (dragstart)="onStaticDragStart($event, 'image')"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === 'static-image'"
+        >
+          <span class="field-type-badge type-date">Img</span>
+          <span class="field-name">Image Element</span>
+        </div>
       </div>
 
       <div class="section-label">Template Sections</div>
@@ -88,21 +144,76 @@ import { Field } from '../../../../core/models/field.model';
     }
     .panel-icon { font-size: 16px; color: #60a5fa; }
     .panel-title { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: #f1f5f9; text-transform: uppercase; }
-    .search-box { padding: 10px 12px 6px; }
-    .search-input {
-      width: 100%;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      color: #e2e8f0;
-      padding: 6px 10px;
-      font-size: 12px;
-      box-sizing: border-box;
-      outline: none;
-      transition: border-color 0.2s;
+    .api-loader {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
     }
-    .search-input::placeholder { color: #64748b; }
-    .search-input:focus { border-color: #3b82f6; }
+    .api-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .api-input-group label {
+      font-size: 10px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .input-row { display: flex; gap: 6px; }
+    .api-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      color: #e2e8f0;
+      padding: 6px 8px;
+      font-size: 11px;
+      outline: none;
+      min-width: 0;
+    }
+    .api-input:focus { border-color: #3b82f6; }
+    .load-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .load-btn:hover:not(:disabled) { background: #2563eb; }
+    .load-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error-msg {
+      color: #ef4444;
+      font-size: 10px;
+      margin-top: 6px;
+    }
+    .expand-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 10px;
+      cursor: pointer;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .empty-state {
+      padding: 12px;
+      color: #94a3b8;
+      font-size: 11px;
+      text-align: center;
+    }
+    .is-parent { background: rgba(255, 255, 255, 0.015); cursor: default; }
+    .is-parent:active { cursor: default; }
     .section-label {
       font-size: 10px;
       font-weight: 700;
@@ -183,14 +294,12 @@ export class LeftPanelComponent {
   private dataService = inject(DataService);
   private templateService = inject(TemplateService);
 
-  readonly fields = signal<Field[]>(this.dataService.getFields());
-  readonly searchQuery = signal('');
-  readonly draggingKey = signal<string | null>(null);
+  readonly apiUrl = signal('https://jsonplaceholder.typicode.com/users');
+  readonly isLoading = signal(false);
+  readonly errorMsg = signal<string | null>(null);
 
-  readonly filteredFields = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    return q ? this.fields().filter((f) => f.label.toLowerCase().includes(q) || f.key.toLowerCase().includes(q)) : this.fields();
-  });
+  readonly fields = signal<Field[]>(this.dataService.getFields());
+  readonly draggingKey = signal<string | null>(null);
 
   readonly sections = computed(() => this.templateService.template().sections);
 
@@ -198,12 +307,33 @@ export class LeftPanelComponent {
     this.templateService.template().sections.reduce((sum, s) => sum + s.elements.length, 0)
   );
 
-  onSearch(event: Event): void {
-    this.searchQuery.set((event.target as HTMLInputElement).value);
+  async loadData() {
+    if (!this.apiUrl()) return;
+    this.isLoading.set(true);
+    this.errorMsg.set(null);
+    try {
+      const data = await this.dataService.getData(this.apiUrl());
+      if (!data || data.length === 0) {
+        this.errorMsg.set('No fields available');
+        this.fields.set([]);
+      } else {
+        this.fields.set(this.dataService.getFields(data[0]));
+      }
+    } catch (err) {
+      this.errorMsg.set('Invalid API -> ' + (err as Error).message);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  toggleExpand(field: Field, event: Event) {
+    event.stopPropagation();
+    field.isExpanded = !field.isExpanded;
   }
 
   onDragStart(event: DragEvent, field: Field): void {
-    event.dataTransfer?.setData('application/field-key', field.key);
+    if (field.children) return; 
+    event.dataTransfer?.setData('application/field-key', field.path || field.key);
     event.dataTransfer?.setData('application/field-label', field.label);
     event.dataTransfer?.setData('application/field-type', field.type);
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
@@ -214,7 +344,13 @@ export class LeftPanelComponent {
     this.draggingKey.set(null);
   }
 
+  onStaticDragStart(event: DragEvent, type: string): void {
+    event.dataTransfer?.setData('application/static-type', type);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
+    this.draggingKey.set(`static-${type}`);
+  }
+
   typeIcon(type: string): string {
-    return type === 'number' ? '#' : type === 'date' ? 'D' : 'T';
+    return type === 'number' ? '#' : type === 'date' ? 'D' : type === 'object' ? '{}' : type === 'array' ? '[]' : 'T';
   }
 }

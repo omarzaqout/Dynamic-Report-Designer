@@ -10,8 +10,10 @@ export interface ElementStyle {
 
 export interface TemplateElement {
   id: string;
-  type: 'text';
-  content: string;
+  type: 'text' | 'field' | 'image';
+  content?: string;
+  fieldPath?: string;
+  imageUrl?: string;
   position: { x: number; y: number };
   style: ElementStyle;
   boundField?: string;

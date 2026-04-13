@@ -4,10 +4,12 @@ import { ReportTemplate, TemplateSection, TemplateElement } from '../models/temp
 
 export interface RenderedElement {
   content: string;
+  imageUrl?: string;
   x: number;
   y: number;
   style: TemplateElement['style'];
   id: string;
+  type: string;
 }
 
 export interface RenderedSection {
@@ -42,13 +44,21 @@ export class RenderService {
   }
 
   private renderSection(section: TemplateSection, row: ReportData, isDetail: boolean): RenderedSection {
-    const elements: RenderedElement[] = section.elements.map((el) => ({
-      id: el.id,
-      content: this.interpolate(el.content, row),
-      x: el.position.x,
-      y: el.position.y,
-      style: el.style,
-    }));
+    const elements: RenderedElement[] = section.elements.map((el) => {
+      let renderedContent = el.content || '';
+      if (el.type === 'field') {
+        renderedContent = this.interpolate(renderedContent, row);
+      }
+      return {
+        id: el.id,
+        content: renderedContent,
+        imageUrl: (el as any).imageUrl,
+        x: el.position.x,
+        y: el.position.y,
+        style: el.style,
+        type: el.type
+      } as any;
+    });
 
     return {
       label: section.label,
@@ -63,14 +73,25 @@ export class RenderService {
   interpolate(content: string, row: ReportData): string {
     return content.replace(/\{\{([^}]+)\}\}/g, (_match, expr) => {
       try {
-        const keys = Object.keys(row);
-        const values = Object.values(row);
-        const fn = new Function(...keys, `return ${expr.trim()}`);
-        const result = fn(...values);
-        return result !== undefined && result !== null ? String(result) : '';
+        const trimmed = expr.trim();
+        let result = this.getValueByPath(row, trimmed);
+        
+        if (result === undefined) {
+          const keys = Object.keys(row);
+          const values = Object.values(row);
+          const fn = new Function(...keys, `return ${trimmed}`);
+          result = fn(...values);
+        }
+        
+        return result !== undefined && result !== null ? typeof result === 'object' ? JSON.stringify(result) : String(result) : '';
       } catch {
         return `{{${expr}}}`;
       }
     });
+  }
+
+  getValueByPath(obj: any, path: string): any {
+    if (!obj || !path) return undefined;
+    return path.split('.').reduce((acc, key) => acc?.[key], obj);
   }
 }

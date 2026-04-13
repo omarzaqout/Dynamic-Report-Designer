@@ -139,22 +139,37 @@ export class CanvasSectionComponent {
   onDrop(event: DragEvent): void {
     event.preventDefault();
     this._isDragOver.set(false);
-    const fieldKey = event.dataTransfer?.getData('application/field-key');
-    const fieldLabel = event.dataTransfer?.getData('application/field-label');
-    if (!fieldKey) return;
 
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     const x = Math.max(0, event.clientX - rect.left - 4);
     const y = Math.max(0, event.clientY - rect.top - 10);
 
+    const staticType = event.dataTransfer?.getData('application/static-type');
+    if (staticType) {
+      this.elementAdd.emit({
+        sectionType: this.section.type,
+        element: {
+          type: staticType as 'text' | 'image',
+          content: staticType === 'text' ? 'Double click to edit' : undefined,
+          position: { x, y },
+          style: { ...DEFAULT_STYLE },
+        },
+      });
+      return;
+    }
+
+    const fieldKey = event.dataTransfer?.getData('application/field-key');
+    if (!fieldKey) return;
+
     this.elementAdd.emit({
       sectionType: this.section.type,
       element: {
-        type: 'text',
+        type: 'field',
         content: `{{${fieldKey}}}`,
+        fieldPath: fieldKey,
+        boundField: fieldKey,
         position: { x, y },
         style: { ...DEFAULT_STYLE },
-        boundField: fieldKey,
       },
     });
   }
