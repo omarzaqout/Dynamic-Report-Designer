@@ -12,8 +12,10 @@
     }
     .canvas-el:hover { border-color: rgba(59,130,246,0.4); }
     .canvas-el.selected {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+      border: 1px solid #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.3), 0 4px 12px rgba(0,0,0,0.1);
+      background: rgba(59,130,246,0.03);
+      z-index: 100 !important;
     }
     .el-text { pointer-events: none; display: block; }
     .resize-handles { position: absolute; inset: 0; pointer-events: none; }
@@ -83,6 +85,14 @@
       pointer-events: all;
     }
     .table-col-resizer:hover { background: rgba(59,130,246,0.2); }
+    .lasso-box {
+      border: 1px solid #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+      position: absolute;
+      pointer-events: none;
+      z-index: 999;
+      box-shadow: 0 0 10px rgba(59,130,246,0.2);
+    }
     .table-row-resizer {
       position: absolute;
       left: 0;

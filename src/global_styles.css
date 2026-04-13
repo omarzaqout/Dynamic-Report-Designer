@@ -18,6 +18,17 @@ html, body {
   color: #1e293b;
 }
 
+@media print {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+  * {
+    overflow: visible !important;
+  }
+}
+
 button, input, select, textarea {
   font-family: inherit;
 }

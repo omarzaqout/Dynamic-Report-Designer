@@ -1,3 +1,10 @@
+    :host {            
+      display: flex;   
+      flex: 1;         
+      width: 100%;     
+      height: 100%;    
+      overflow: hidden;
+    }                  
     .canvas-host {
       flex: 1;
       display: flex;
@@ -26,23 +33,60 @@
     .canvas-info { display: flex; align-items: center; gap: 6px; }
     .info-chip {
       font-size: 11px;
-      background: #f1f5f9;
+      background: #f8fafc;
       color: #64748b;
       padding: 2px 8px;
       border-radius: 10px;
       border: 1px solid #e2e8f0;
     }
-    .add-details-btn {
-      border: 1px solid #86efac;
-      background: #f0fdf4;
-      color: #15803d;
+    .history-group {
+      display: flex;
+      gap: 4px;
+      margin-right: 12px;
+      padding-right: 12px;
+      border-right: 1px solid #e2e8f0;
+    }
+    .tool-btn {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 6px;
-      padding: 5px 10px;
-      font-size: 11px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+    .tool-btn:active {
+      background: #e2e8f0;
+      transform: translateY(1px);
+    }
+    .add-section-group { display: flex; gap: 4px; }
+    .add-section-btn {
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
       font-weight: 600;
       cursor: pointer;
+      color: #0f172a;
     }
-    .add-details-btn:hover { background: #dcfce7; }
+    .btn-rh { background: #fef3c7; border-color: #fcd34d; color: #b45309; }
+    .btn-rh:hover { background: #fde68a; }
+    .btn-ph { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+    .btn-ph:hover { background: #bfdbfe; }
+    .btn-dt { background: #d1fae5; border-color: #6ee7b7; color: #047857; }
+    .btn-dt:hover { background: #a7f3d0; }
+    .btn-ft { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
+    .btn-ft:hover { background: #ddd6fe; }
     .report-canvas {
       flex: 1;
       overflow: auto;
@@ -60,4 +104,31 @@
       border-radius: 3px;
       overflow: hidden;
     }
-  
+
+    @media print {
+      :host, .canvas-host {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      .canvas-toolbar, .history-group, .add-section-group, .info-chip {
+        display: none !important;
+      }
+      .report-canvas {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+      .page-frame {
+        box-shadow: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        border: none !important;
+      }
+      .section-bar, .delete-btn, .lasso-box, .resize-handles, .table-grid-resizers, .handle {
+        display: none !important;
+      }
+    }

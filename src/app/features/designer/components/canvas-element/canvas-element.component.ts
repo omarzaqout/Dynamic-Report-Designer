@@ -58,7 +58,8 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   onClick(event: MouseEvent): void {
     event.stopPropagation();
     if (!this.isEditingInline) {
-      this.select.emit(this.element.id);
+      // Pass ctrlKey info to support multi-select toggle on click
+      this.templateService.selectElement(this.element.id, event.ctrlKey || event.metaKey);
     }
   }
 
@@ -99,7 +100,10 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
     event.preventDefault();
     event.stopPropagation();
-    this.select.emit(this.element.id);
+    
+    const isMulti = event.ctrlKey || event.metaKey || event.shiftKey;
+    this.templateService.selectElement(this.element.id, isMulti);
+    
     this.isDragging = true;
     this.startMouseX = event.clientX;
     this.startMouseY = event.clientY;
@@ -166,10 +170,26 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     if (this.isDragging) {
       const dx = event.clientX - this.startMouseX;
       const dy = event.clientY - this.startMouseY;
-      this.positionChange.emit({
-        x: Math.max(0, this.startElX + dx),
-        y: Math.max(0, this.startElY + dy),
-      });
+      
+      const selectedIds = this.templateService.selectedElementIds();
+      if (selectedIds.length > 1 && selectedIds.includes(this.element.id)) {
+        // We move the whole selection group by the delta since LAST mouse move
+        // Actually simpler: move by delta from start, but we need to update startMouse every time or similar.
+        // Better: delta from start position.
+        // But moveSelectedElements uses relative addition.
+        // So we calculate delta since LAST frame.
+        const currentDx = event.clientX - this.startMouseX;
+        const currentDy = event.clientY - this.startMouseY;
+        
+        // We use the start position and absolute delta to avoid accumulation errors if we wanted,
+        // but moveSelectedElements is additive. Let's use it frame-by-frame.
+        this.templateService.moveSelectedElements(event.movementX, event.movementY);
+      } else {
+        this.positionChange.emit({
+          x: Math.max(0, this.startElX + dx),
+          y: Math.max(0, this.startElY + dy),
+        });
+      }
       return;
     }
 

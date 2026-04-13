@@ -1,20 +1,30 @@
-    <div class="canvas-host" (click)="deselect()">
+    <div class="canvas-host">
       <div class="canvas-toolbar">
         <div class="canvas-title">
           <span class="canvas-icon">&#9638;</span>
           <span>{{ template().name }}</span>
         </div>
-        <div class="canvas-info">
+        <div class="canvas-info" style="display: flex; gap: 8px; align-items: center;">
+          <div class="history-group" style="display: flex; gap: 4px; margin-right: 8px; border-right: 1px solid #e2e8f0; padding-right: 8px;">
+            <button class="tool-btn" (click)="undo()" title="Undo (Ctrl+Z)">&#8630;</button>
+            <button class="tool-btn" (click)="redo()" title="Redo (Ctrl+Y)">&#8631;</button>
+            <button class="tool-btn" (click)="exportJson()" title="Export JSON">&#10515;</button>
+            <button class="tool-btn" (click)="exportPdf()" title="Export PDF">&#128424;</button>
+            <button class="tool-btn" (click)="resetTemplate()" title="Reset Template" style="color: #ef4444;">&#8634;</button>
+          </div>
           <span class="info-chip">{{ sectionCount() }} sections</span>
-          <span class="info-chip">{{ elementCount() }} elements</span>
-          <button class="add-details-btn" (click)="addDetailsSection(); $event.stopPropagation()">
-            + Details Section
-          </button>
+          <span class="info-chip" style="margin-right: 8px;">{{ elementCount() }} elements</span>
+          <div class="add-section-group">
+            <button class="add-section-btn btn-rh" (click)="addSection('reportHeader'); $event.stopPropagation()" title="Add Report Header">+ RH</button>
+            <button class="add-section-btn btn-ph" (click)="addSection('pageHeader'); $event.stopPropagation()" title="Add Page Header">+ PH</button>
+            <button class="add-section-btn btn-dt" (click)="addSection('details'); $event.stopPropagation()" title="Add Details Section">+ Details</button>
+            <button class="add-section-btn btn-ft" (click)="addSection('footer'); $event.stopPropagation()" title="Add Footer">+ Footer</button>
+          </div>
         </div>
       </div>
 
-      <div class="report-canvas">
-        <div class="page-frame">
+      <div class="report-canvas" (click)="deselect()">
+        <div class="page-frame" (click)="$event.stopPropagation()">
           @for (section of template().sections; track section.id) {
             <app-canvas-section
               [section]="section"

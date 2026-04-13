@@ -1,86 +1,90 @@
-    <div class="preview-host">
-      <div class="preview-toolbar">
-        <div class="preview-title">
-          <span class="preview-icon">&#9654;</span>
-          <span>Live Preview</span>
-          <span class="live-badge">LIVE</span>
-        </div>
-        <div class="preview-stats">
-          <span class="stat">{{ dataRows().length }} records</span>
-          <span class="stat">{{ renderedSectionCount() }} rendered sections</span>
-        </div>
-      </div>
+<div class="preview-host">
+  <div class="preview-toolbar">
+    <div class="preview-title">
+      <span class="preview-icon">&#9654;</span>
+      <span>Live Preview</span>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="preview-stats">
+      <span class="stat">{{ dataRows().length }} records</span>
+      <span class="stat">{{ renderedSectionCount() }} rendered sections</span>
+    </div>
+    <div class="preview-actions">
+      <button class="print-btn" (click)="print()" title="Print / Export to PDF">
+        Print Report
+      </button>
+    </div>
+  </div>
 
-      <div class="preview-scroll">
-        <div class="preview-page">
-          @for (section of renderedReport().sections; track $index) {
-            <div
-              class="preview-section"
-              [class]="'ps-' + section.sectionType"
-              [style.min-height.px]="section.height"
-            >
-              @if (section.elements.length === 0) {
-                <div class="empty-section">{{ section.label }} — no content</div>
-              } @else {
-                <div class="section-body" [style.position]="'relative'" [style.height.px]="getSectionHeight(section)">
-                  @for (el of section.elements; track el.id) {
+  <div class="preview-scroll">
+    <div class="preview-page">
+      @for (section of renderedReport().sections; track $index) {
+        <div
+          class="preview-section"
+          [class]="'ps-' + section.sectionType"
+          [style.min-height.px]="section.height"
+        >
+          @if (section.elements.length === 0) {
+            <div class="empty-section">{{ section.label }} — no content</div>
+          } @else {
+            <div class="section-body" [style.position]="'relative'" [style.min-height.px]="getSectionHeight(section)">
+              @for (el of section.elements; track el.id) {
+                <div
+                  class="preview-el"
+                  [style.left.px]="el.x"
+                  [style.top.px]="el.y"
+                  [style.fontSize.px]="el.style.fontSize"
+                  [style.fontFamily]="el.style.fontFamily"
+                  [style.fontWeight]="el.style.fontWeight"
+                  [style.fontStyle]="el.style.fontStyle"
+                  [style.textDecoration]="el.style.textDecoration"
+                  [style.color]="el.style.color"
+                  [class.is-image]="el.type === 'image'"
+                  [class.is-table]="el.type === 'table'"
+                >
+                  @if (el.type === 'table' && el.table) {
                     <div
-                      class="preview-el"
-                      [style.left.px]="el.x"
-                      [style.top.px]="el.y"
-                      [style.fontSize.px]="el.style.fontSize"
-                      [style.fontFamily]="el.style.fontFamily"
-                      [style.fontWeight]="el.style.fontWeight"
-                      [style.fontStyle]="el.style.fontStyle"
-                      [style.textDecoration]="el.style.textDecoration"
-                      [style.color]="el.style.color"
-                      [class.is-image]="el.type === 'image'"
-                      [class.is-table]="el.type === 'table'"
+                      class="preview-table-wrap"
+                      [style.width.px]="tableWidth(el.table)"
+                      [style.height.px]="tableHeight(el.table)"
                     >
-                      @if (el.type === 'table' && el.table) {
-                        <div
-                          class="preview-table-wrap"
-                          [style.width.px]="tableWidth(el.table)"
-                          [style.height.px]="tableHeight(el.table)"
-                        >
-                          <table class="preview-table">
-                            <tbody>
-                              @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
-                                <tr [style.height.px]="rowHeight(el.table, rowIndex)">
-                                  @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
-                                    <td [style.width.px]="columnWidth(el.table, colIndex)">
-                                      {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
-                                    </td>
-                                  }
-                                </tr>
+                      <table class="preview-table">
+                        <tbody>
+                          @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
+                            <tr [style.height.px]="rowHeight(el.table, rowIndex)">
+                              @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
+                                <td [style.width.px]="columnWidth(el.table, colIndex)">
+                                  {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
+                                </td>
                               }
-                            </tbody>
-                          </table>
-                        </div>
-                      } @else if (el.type === 'image') {
-                        @if (el.imageUrl) {
-                          <img
-                            [src]="el.imageUrl"
-                            [style.display]="'block'"
-                            [style.width.px]="el.size?.width"
-                            [style.height.px]="el.size?.height"
-                            [style.maxWidth.px]="el.size ? null : 250"
-                            [style.maxHeight.px]="el.size ? null : 250"
-                          />
-                        }
-                      } @else {
-                        {{ el.content }}
-                      }
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
                     </div>
+                  } @else if (el.type === 'image') {
+                    @if (el.imageUrl) {
+                      <img
+                        [src]="el.imageUrl"
+                        [style.display]="'block'"
+                        [style.width.px]="el.size?.width"
+                        [style.height.px]="el.size?.height"
+                        [style.maxWidth.px]="el.size ? null : 250"
+                        [style.maxHeight.px]="el.size ? null : 250"
+                      />
+                    }
+                  } @else {
+                    {{ el.content }}
                   }
                 </div>
               }
             </div>
-            @if (section.isDetail && !isLastDetail($index)) {
-              <div class="row-divider"></div>
-            }
           }
         </div>
-      </div>
+        @if (section.isDetail && !isLastDetail($index)) {
+          <div class="row-divider"></div>
+        }
+      }
     </div>
-  
+  </div>
+</div>

@@ -1,4 +1,12 @@
+    :host {
+      display: flex;
+      flex: 1;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
     .preview-host {
+      flex: 1;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -83,4 +91,66 @@
       font-style: italic;
     }
     .row-divider { height: 1px; background: #f1f5f9; }
-  
+
+    .print-btn {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .print-btn:hover { background: #059669; transform: translateY(-1px); }
+
+    @media print {
+      @page {
+        margin: 5mm;
+        size: auto;
+      }
+      :host, .preview-host, .preview-scroll {
+        display: block !important;
+        overflow: visible !important;
+        background: white !important;
+        height: auto !important;
+        min-height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      .preview-toolbar, .stat, .live-badge, .row-divider, .empty-section, .print-btn {
+        display: none !important;
+      }
+      .preview-page {
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+        border: none !important;
+        background: white !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      .preview-section {
+        border-left: none !important;
+        border-bottom: 1px solid #eee !important;
+        background: white !important;
+        page-break-inside: avoid;
+        display: block !important;
+        width: 100% !important;
+        position: relative !important;
+        overflow: visible !important;
+      }
+      .section-body {
+        overflow: visible !important;
+        display: block !important;
+      }
+      .preview-table-wrap, .preview-table {
+        height: auto !important;
+        overflow: visible !important;
+      }
+    }

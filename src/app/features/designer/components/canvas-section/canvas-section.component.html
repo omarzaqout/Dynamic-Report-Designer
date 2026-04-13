@@ -24,15 +24,18 @@
         [class.drag-over]="isDragOver()"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave()"
+        (mousedown)="startLasso($event)"
         (drop)="onDrop($event)"
-        (click)="onCanvasClick()"
       >
+        @if (selectionBox(); as box) {
+          <div class="lasso-box" [style.left.px]="box.x" [style.top.px]="box.y" [style.width.px]="box.width" [style.height.px]="box.height"></div>
+        }
         @for (el of section.elements; track el.id) {
           <app-canvas-element
             [element]="el"
-            [selected]="selectedElementId === el.id"
+            [selected]="selectedElementIds().includes(el.id)"
+            (select)="elementSelect.emit(el.id)"
             (positionChange)="onPositionChange(el.id, $event)"
-            (select)="elementSelect.emit($event)"
             (delete)="elementDelete.emit($event)"
             (dragEnd)="onDragEnd()"
           />

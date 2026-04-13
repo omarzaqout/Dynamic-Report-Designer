@@ -32,6 +32,7 @@ export class RightPanelComponent {
   ] as const;
 
   readonly element = this.templateService.selectedElement;
+  readonly selectedElementIds = this.templateService.selectedElementIds;
   readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
   readonly fields = computed(() => this.dataService.getFields(this.dataRows()[0]));
   readonly leafFields = computed(() => this.flattenLeafFields(this.fields()));
@@ -281,7 +282,15 @@ export class RightPanelComponent {
 
   deleteElement(): void {
     const el = this.element();
-    if (el) this.templateService.removeElement(el.id);
+    if (el) this.templateService.deleteSelectedElements();
+  }
+
+  duplicateSelected(): void {
+    this.templateService.duplicateSelectedElements();
+  }
+
+  deleteSelected(): void {
+    this.templateService.deleteSelectedElements();
   }
 
   private updateStyle(patch: Partial<ElementStyle>): void {

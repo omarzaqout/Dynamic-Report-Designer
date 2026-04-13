@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateSection, TemplateElement, DEFAULT_STYLE, TableData } from '../../../../core/models/template.model';
 import { CanvasElementComponent } from '../canvas-element/canvas-element.component';
+import { TemplateService } from '../../../../core/services/template.service';
 
 @Component({
   selector: 'app-canvas-section',
@@ -12,8 +13,11 @@ import { CanvasElementComponent } from '../canvas-element/canvas-element.compone
   styleUrl: './canvas-section.component.css',
 })
 export class CanvasSectionComponent {
+  private templateService = inject(TemplateService);
+  
   @Input({ required: true }) section!: TemplateSection;
   @Input() selectedElementId: string | null = null;
+  readonly selectedElementIds = this.templateService.selectedElementIds;
 
   @Output() elementAdd = new EventEmitter<{ sectionId: string; element: Omit<TemplateElement, 'id'> }>();
   @Output() elementSelect = new EventEmitter<string>();
@@ -50,6 +54,13 @@ export class CanvasSectionComponent {
   private resizeStartHeight = 0;
   private resizeMoveHandler!: (e: MouseEvent) => void;
   private resizeUpHandler!: () => void;
+
+  selectionBox = signal<{ x: number, y: number, width: number, height: number } | null>(null);
+  private lassoStartX = 0;
+  private lassoStartY = 0;
+  private lassoIsAppend = false;
+  private lassoMoveHandler!: (e: MouseEvent) => void;
+  private lassoUpHandler!: () => void;
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -104,6 +115,76 @@ export class CanvasSectionComponent {
         style: { ...DEFAULT_STYLE },
       },
     });
+  }
+
+  startLasso(event: MouseEvent): void {
+    if (!(event.target as HTMLElement).classList.contains('section-canvas')) return;
+    
+    event.preventDefault();
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.lassoStartX = event.clientX - rect.left;
+    this.lassoStartY = event.clientY - rect.top;
+    this.lassoIsAppend = event.ctrlKey || event.metaKey || event.shiftKey;
+    this.selectionBox.set({ x: this.lassoStartX, y: this.lassoStartY, width: 0, height: 0 });
+
+    this.lassoMoveHandler = (e: MouseEvent) => {
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+      const x = Math.min(this.lassoStartX, currentX);
+      const y = Math.min(this.lassoStartY, currentY);
+      const width = Math.abs(currentX - this.lassoStartX);
+      const height = Math.abs(currentY - this.lassoStartY);
+      this.selectionBox.set({ x, y, width, height });
+    };
+
+    this.lassoUpHandler = () => {
+      document.removeEventListener('mousemove', this.lassoMoveHandler);
+      document.removeEventListener('mouseup', this.lassoUpHandler);
+      
+      const box = this.selectionBox();
+      this.selectionBox.set(null);
+      if (!box || (box.width < 5 && box.height < 5)) {
+        if (!this.lassoIsAppend) this.templateService.selectElement(null);
+        return;
+      }
+
+      const boxLeft = box.x;
+      const boxTop = box.y;
+      const boxRight = box.x + box.width;
+      const boxBottom = box.y + box.height;
+      
+      const selectedIds: string[] = [];
+      
+      for (const el of this.section.elements) {
+        let ew = (el.type === 'table' && el.table) 
+          ? (el.table.columnSettings?.reduce((acc, c) => acc + (c.visible ? c.width : 0), 0) || 120) 
+          : (el.size?.width || 120);
+          
+        let eh = (el.type === 'table' && el.table) 
+          ? (el.table.rowHeights?.reduce((acc, h) => acc + h, 0) || 36) 
+          : (el.size?.height || (el.style ? Math.max(24, el.style.fontSize * 1.5) : 36));
+
+        const elL = el.position.x;
+        const elT = el.position.y;
+        const elR = elL + ew;
+        const elB = elT + eh;
+
+        const isOverlap = elL <= boxRight && elR >= boxLeft && elT <= boxBottom && elB >= boxTop;
+        
+        if (isOverlap) {
+          selectedIds.push(el.id);
+        }
+      }
+      
+      if (selectedIds.length > 0) {
+        this.templateService.selectElements(selectedIds, this.lassoIsAppend);
+      } else if (!this.lassoIsAppend) {
+        this.templateService.selectElement(null);
+      }
+    };
+    
+    document.addEventListener('mousemove', this.lassoMoveHandler);
+    document.addEventListener('mouseup', this.lassoUpHandler);
   }
 
   onRepeatPerRowChange(event: Event): void {

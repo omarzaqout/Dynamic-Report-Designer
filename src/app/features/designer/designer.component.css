@@ -70,4 +70,20 @@
       flex: 1;
       overflow: hidden;
     }
-  
+
+    @media print {
+      /* Hide all UI elements */
+      .designer-header, .left-sidebar, .right-sidebar, .header-actions, .status-indicator {
+        display: none !important;
+      }
+
+      /* Reset layout constraints to allow full document printing */
+      :host, .designer-host, .designer-body, .preview-full {
+        display: block !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow: visible !important;
+        background: white !important;
+        width: 100% !important;
+      }
+    }

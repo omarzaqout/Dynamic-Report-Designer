@@ -1,11 +1,10 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LeftPanelComponent } from './components/left-panel/left-panel.component';
 import { CanvasComponent } from './components/canvas/canvas.component';
 import { RightPanelComponent } from './components/right-panel/right-panel.component';
 import { PreviewPanelComponent } from './components/preview-panel/preview-panel.component';
-
-type ActiveView = 'design' | 'preview';
+import { UiService } from '../../core/services/ui.service';
 
 @Component({
   selector: 'app-designer',
@@ -16,9 +15,10 @@ type ActiveView = 'design' | 'preview';
   styleUrl: './designer.component.css',
 })
 export class DesignerComponent {
-  readonly activeView = signal<ActiveView>('design');
+  private uiService = inject(UiService);
+  readonly activeView = this.uiService.activeView;
 
-  setView(view: ActiveView): void {
-    this.activeView.set(view);
+  setView(view: 'design' | 'preview'): void {
+    this.uiService.setView(view);
   }
 }

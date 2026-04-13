@@ -32,6 +32,10 @@ export class PreviewPanelComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  print(): void {
+    window.print();
+  }
+
   isLastDetail(index: number): boolean {
     const sections = this.renderedReport().sections;
     const remaining = sections.slice(index + 1);
