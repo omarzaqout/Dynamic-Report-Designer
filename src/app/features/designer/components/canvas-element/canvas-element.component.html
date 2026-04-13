@@ -1,0 +1,39 @@
+    <div
+      #elRef
+      class="canvas-el"
+      [class.selected]="selected"
+      [class.is-image]="element.type === 'image'"
+      [style.left.px]="element.position.x"
+      [style.top.px]="element.position.y"
+      [style.fontSize.px]="element.style.fontSize"
+      [style.fontWeight]="element.style.fontWeight"
+      [style.fontStyle]="element.style.fontStyle"
+      [style.textDecoration]="element.style.textDecoration"
+      [style.color]="element.style.color"
+      (mousedown)="onMouseDown($event)"
+      (click)="onClick($event)"
+      (dblclick)="onDblClick($event)"
+    >
+      @if (element.type === 'image') {
+        @if (element.imageUrl) {
+          <img [src]="element.imageUrl" class="el-image" draggable="false" />
+        } @else {
+          <div class="el-image-placeholder">No Image</div>
+        }
+      } @else if (isEditingInline) {
+        <textarea class="inline-edit" [value]="element.content || ''" (blur)="onInlineBlur($event)" (keydown)="onInlineKeyDown($event)"></textarea>
+      } @else {
+        <span class="el-text">{{ element.content }}</span>
+      }
+
+      @if (selected) {
+        <div class="resize-handles">
+          <div class="handle tl"></div>
+          <div class="handle tr"></div>
+          <div class="handle bl"></div>
+          <div class="handle br"></div>
+        </div>
+        <button class="delete-btn" (click)="onDelete($event)" title="Delete element">&#10005;</button>
+      }
+    </div>
+  

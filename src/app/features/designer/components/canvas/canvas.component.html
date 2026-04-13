@@ -1,0 +1,29 @@
+    <div class="canvas-host" (click)="deselect()">
+      <div class="canvas-toolbar">
+        <div class="canvas-title">
+          <span class="canvas-icon">&#9638;</span>
+          <span>{{ template().name }}</span>
+        </div>
+        <div class="canvas-info">
+          <span class="info-chip">{{ sectionCount() }} sections</span>
+          <span class="info-chip">{{ elementCount() }} elements</span>
+        </div>
+      </div>
+
+      <div class="report-canvas">
+        <div class="page-frame">
+          @for (section of template().sections; track section.type) {
+            <app-canvas-section
+              [section]="section"
+              [selectedElementId]="selectedId()"
+              (elementAdd)="onElementAdd($event)"
+              (elementSelect)="onElementSelect($event)"
+              (elementDelete)="onElementDelete($event)"
+              (elementMove)="onElementMove($event)"
+              (sectionResize)="onSectionResize($event)"
+            />
+          }
+        </div>
+      </div>
+    </div>
+  

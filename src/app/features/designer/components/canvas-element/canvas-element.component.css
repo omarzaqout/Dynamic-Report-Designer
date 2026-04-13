@@ -1,0 +1,58 @@
+    .canvas-el {
+      position: absolute;
+      cursor: move;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      padding: 2px 4px;
+      border-radius: 3px;
+      line-height: 1.4;
+      transition: border-color 0.1s;
+      min-width: 20px;
+      box-sizing: border-box;
+    }
+    .canvas-el:hover { border-color: rgba(59,130,246,0.4); }
+    .canvas-el.selected {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+    }
+    .el-text { pointer-events: none; display: block; }
+    .resize-handles { position: absolute; inset: 0; pointer-events: none; }
+    .handle {
+      position: absolute;
+      width: 7px; height: 7px;
+      background: #fff;
+      border: 1px solid #3b82f6;
+      border-radius: 2px;
+    }
+    .handle.tl { top: -4px; left: -4px; }
+    .handle.tr { top: -4px; right: -4px; }
+    .handle.bl { bottom: -4px; left: -4px; }
+    .handle.br { bottom: -4px; right: -4px; }
+    .delete-btn {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 18px;
+      height: 18px;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+      pointer-events: all;
+    }
+    .delete-btn:hover { background: #dc2626; }
+    .el-image { display: block; max-width: 250px; max-height: 250px; pointer-events: none; }
+    .el-image-placeholder { width: 100px; height: 100px; background: #e2e8f0; display:flex; align-items:center; justify-content:center; color: #64748b; font-size: 11px; }
+    .canvas-el.is-image { padding: 0; overflow: hidden; }
+    .inline-edit {
+      border: 1px solid #3b82f6; outline: none; padding: 0; margin: 0; background: transparent;
+      font: inherit; color: inherit; resize: both; min-width: 100px; line-height: inherit;
+    }
+  

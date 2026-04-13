@@ -1,0 +1,93 @@
+    .right-panel {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-left: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .panel-icon { font-size: 14px; color: #3b82f6; }
+    .panel-title { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: #1e293b; text-transform: uppercase; }
+    .props-content { flex: 1; overflow-y: auto; padding-bottom: 16px; }
+    .props-content::-webkit-scrollbar { width: 4px; }
+    .props-content::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+    .prop-section { padding: 12px 14px 8px; border-bottom: 1px solid #f1f5f9; }
+    .prop-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; color: #94a3b8; margin-bottom: 10px;
+    }
+    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .prop-col { margin-bottom: 10px; }
+    label { font-size: 11px; color: #64748b; }
+    .prop-label { display: block; font-size: 11px; color: #64748b; margin-bottom: 4px; }
+    .badge-text, .badge-field, .badge-section {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+    }
+    .badge-text { background: #f1f5f9; color: #475569; }
+    .badge-field { background: #dbeafe; color: #2563eb; font-family: monospace; }
+    .badge-section { background: #f0fdf4; color: #16a34a; }
+    .prop-textarea {
+      width: 100%; box-sizing: border-box; padding: 6px 8px;
+      border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px;
+      font-family: monospace; resize: vertical; color: #1e293b;
+      background: #f8fafc; line-height: 1.4; outline: none;
+    }
+    .prop-textarea:focus { border-color: #3b82f6; background: #fff; }
+    .hint-text { font-size: 10px; color: #94a3b8; margin-top: 4px; line-height: 1.5; }
+    .hint-text code { background: #f1f5f9; color: #475569; padding: 0 3px; border-radius: 3px; font-family: monospace; }
+    .prop-select {
+      width: 100%; padding: 5px 8px; border: 1px solid #e2e8f0;
+      border-radius: 6px; font-size: 11px; background: #f8fafc; color: #1e293b;
+      outline: none; box-sizing: border-box;
+    }
+    .prop-select:focus { border-color: #3b82f6; }
+    .stepper { display: flex; align-items: center; gap: 8px; }
+    .stepper button {
+      width: 22px; height: 22px; background: #f1f5f9; border: 1px solid #e2e8f0;
+      border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 1;
+      display: flex; align-items: center; justify-content: center; color: #475569;
+    }
+    .stepper button:hover { background: #e2e8f0; }
+    .stepper span { font-size: 11px; font-weight: 600; color: #334155; min-width: 36px; text-align: center; }
+    .color-row { display: flex; align-items: center; gap: 6px; }
+    .color-picker { width: 28px; height: 24px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px; cursor: pointer; }
+    .color-hex { font-size: 11px; font-family: monospace; color: #475569; }
+    .toggle-group { display: flex; gap: 4px; }
+    .toggle-btn {
+      width: 26px; height: 26px; background: #f1f5f9; border: 1px solid #e2e8f0;
+      border-radius: 4px; cursor: pointer; font-size: 12px; display: flex;
+      align-items: center; justify-content: center; color: #475569;
+    }
+    .toggle-btn:hover { background: #e2e8f0; }
+    .toggle-btn.active { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+    .prop-number {
+      width: 70px; padding: 4px 8px; border: 1px solid #e2e8f0;
+      border-radius: 5px; font-size: 12px; color: #1e293b;
+      background: #f8fafc; outline: none; text-align: right;
+    }
+    .prop-number:focus { border-color: #3b82f6; }
+    .danger-zone { padding: 12px 14px; }
+    .delete-btn {
+      width: 100%; padding: 7px; background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 6px; color: #ef4444; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .delete-btn:hover { background: #fee2e2; }
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 20px; text-align: center;
+    }
+    .empty-icon { font-size: 32px; color: #e2e8f0; margin-bottom: 12px; }
+    .empty-title { font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
+    .empty-hint { font-size: 11px; color: #cbd5e1; line-height: 1.6; }
+  

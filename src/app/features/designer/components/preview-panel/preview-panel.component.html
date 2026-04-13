@@ -1,0 +1,57 @@
+    <div class="preview-host">
+      <div class="preview-toolbar">
+        <div class="preview-title">
+          <span class="preview-icon">&#9654;</span>
+          <span>Live Preview</span>
+          <span class="live-badge">LIVE</span>
+        </div>
+        <div class="preview-stats">
+          <span class="stat">{{ dataRows().length }} records</span>
+          <span class="stat">{{ renderedSectionCount() }} rendered sections</span>
+        </div>
+      </div>
+
+      <div class="preview-scroll">
+        <div class="preview-page">
+          @for (section of renderedReport().sections; track $index) {
+            <div
+              class="preview-section"
+              [class]="'ps-' + section.sectionType"
+              [style.min-height.px]="section.height"
+            >
+              @if (section.elements.length === 0) {
+                <div class="empty-section">{{ section.label }} — no content</div>
+              } @else {
+                <div class="section-body" [style.position]="'relative'" [style.height.px]="section.height">
+                  @for (el of section.elements; track el.id) {
+                    <div
+                      class="preview-el"
+                      [style.left.px]="el.x"
+                      [style.top.px]="el.y"
+                      [style.fontSize.px]="el.style.fontSize"
+                      [style.fontWeight]="el.style.fontWeight"
+                      [style.fontStyle]="el.style.fontStyle"
+                      [style.textDecoration]="el.style.textDecoration"
+                      [style.color]="el.style.color"
+                      [class.is-image]="el.type === 'image'"
+                    >
+                      @if (el.type === 'image') {
+                        @if (el.imageUrl) {
+                          <img [src]="el.imageUrl" [style.display]="'block'" [style.maxWidth.px]="250" [style.maxHeight.px]="250" />
+                        }
+                      } @else {
+                        {{ el.content }}
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            @if (section.isDetail && !isLastDetail($index)) {
+              <div class="row-divider"></div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  

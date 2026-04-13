@@ -1,0 +1,37 @@
+    <div class="section-wrapper" [class]="'section-type-' + section.type">
+      <div class="section-label-bar">
+        <span class="section-badge" [class]="'badge-' + section.type">{{ section.type }}</span>
+        <span class="section-title">{{ section.label }}</span>
+        @if (section.type === 'details') {
+          <span class="detail-hint">repeats per row</span>
+        }
+        <div class="section-actions">
+          <button class="resize-btn" (mousedown)="startResize($event)" title="Drag to resize section">&#8597;</button>
+        </div>
+      </div>
+      <div
+        class="section-canvas"
+        [style.height.px]="section.height"
+        [class.drag-over]="isDragOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+        (click)="onCanvasClick()"
+      >
+        @for (el of section.elements; track el.id) {
+          <app-canvas-element
+            [element]="el"
+            [selected]="selectedElementId === el.id"
+            (positionChange)="onPositionChange(el.id, $event)"
+            (select)="elementSelect.emit($event)"
+            (delete)="elementDelete.emit($event)"
+          />
+        }
+        @if (section.elements.length === 0) {
+          <div class="empty-hint">
+            <span>Drop fields here</span>
+          </div>
+        }
+      </div>
+    </div>
+  

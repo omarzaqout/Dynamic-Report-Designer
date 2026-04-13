@@ -1,0 +1,116 @@
+    <div class="left-panel">
+      <div class="panel-header">
+        <span class="panel-icon">&#9783;</span>
+        <span class="panel-title">Field Explorer</span>
+      </div>
+
+      <div class="api-loader">
+        <div class="api-input-group">
+          <label>API Endpoint</label>
+          <div class="input-row">
+            <input
+              type="text"
+              [value]="apiUrl()"
+              (input)="apiUrl.set($any($event.target).value)"
+              placeholder="https://jsonplaceholder.typicode.com/users"
+              class="api-input"
+            />
+            <button (click)="loadData()" [disabled]="isLoading()" class="load-btn">
+              {{ isLoading() ? '...' : 'Load' }}
+            </button>
+          </div>
+        </div>
+        @if (errorMsg()) {
+          <div class="error-msg">{{ errorMsg() }}</div>
+        }
+      </div>
+
+      <ng-template #fieldNode let-field let-level="level">
+        <div
+          class="field-item"
+          [style.padding-left.px]="level * 16 + 8"
+          [attr.data-field-key]="field.key"
+          [attr.data-field-label]="field.label"
+          [attr.data-field-type]="field.type"
+          [attr.draggable]="!field.children"
+          (dragstart)="!field.children && onDragStart($event, field)"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === field.key"
+          [class.is-parent]="field.children"
+        >
+          @if (field.children) {
+            <button class="expand-btn" (click)="toggleExpand(field, $event)">
+              {{ field.isExpanded ? '▼' : '▶' }}
+            </button>
+          } @else {
+            <span class="field-type-badge" [class]="'type-' + field.type">
+              {{ typeIcon(field.type) }}
+            </span>
+          }
+          <span class="field-name">{{ field.label }}</span>
+        </div>
+        
+        @if (field.children && field.isExpanded) {
+          @for (child of field.children; track child.key) {
+            <ng-container *ngTemplateOutlet="fieldNode; context: { $implicit: child, level: level + 1 }"></ng-container>
+          }
+        }
+      </ng-template>
+
+      <div class="section-label">Data Fields</div>
+      <div class="fields-list">
+        @if (fields().length === 0 && !isLoading() && !errorMsg()) {
+          <div class="empty-state">No fields available</div>
+        }
+        @for (field of fields(); track field.key) {
+          <ng-container *ngTemplateOutlet="fieldNode; context: { $implicit: field, level: 0 }"></ng-container>
+        }
+      </div>
+
+      <div class="section-label">Static Elements</div>
+      <div class="fields-list" style="flex: 0 0 auto; max-height: 150px;">
+        <div
+          class="field-item"
+          draggable="true"
+          (dragstart)="onStaticDragStart($event, 'text')"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === 'static-text'"
+        >
+          <span class="field-type-badge type-text">T</span>
+          <span class="field-name">Text Element</span>
+        </div>
+        <div
+          class="field-item"
+          draggable="true"
+          (dragstart)="onStaticDragStart($event, 'image')"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === 'static-image'"
+        >
+          <span class="field-type-badge type-date">Img</span>
+          <span class="field-name">Image Element</span>
+        </div>
+      </div>
+
+      <div class="section-label">Template Sections</div>
+      <div class="sections-list">
+        @for (section of sections(); track section.type) {
+          <div class="section-item" [class]="'section-' + section.type">
+            <span class="section-dot"></span>
+            <span class="section-name">{{ section.label }}</span>
+            <span class="section-count">{{ section.elements.length }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="panel-footer">
+        <div class="stat-row">
+          <span class="stat-label">Total Fields</span>
+          <span class="stat-value">{{ fields().length }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Total Elements</span>
+          <span class="stat-value">{{ totalElements() }}</span>
+        </div>
+      </div>
+    </div>
+  

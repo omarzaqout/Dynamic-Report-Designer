@@ -1,0 +1,61 @@
+    <div class="designer-host">
+      <header class="designer-header">
+        <div class="header-brand">
+          <div class="brand-logo">&#9638;</div>
+          <div class="brand-text">
+            <span class="brand-name">Dynamic Report Designer</span>
+            <span class="brand-sub">Template Engine</span>
+          </div>
+        </div>
+
+        <nav class="header-nav">
+          <button
+            class="nav-btn"
+            [class.active]="activeView() === 'design'"
+            (click)="setView('design')"
+          >
+            <span>&#9998;</span> Design
+          </button>
+          <button
+            class="nav-btn"
+            [class.active]="activeView() === 'preview'"
+            (click)="setView('preview')"
+          >
+            <span>&#9654;</span> Preview
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span class="status-text">Auto-saved</span>
+          </div>
+          <button class="action-btn secondary" (click)="setView('preview')">
+            Preview Report
+          </button>
+        </div>
+      </header>
+
+      <div class="designer-body">
+        @if (activeView() === 'design') {
+          <aside class="left-sidebar">
+            <app-left-panel />
+          </aside>
+
+          <main class="canvas-area">
+            <app-canvas />
+          </main>
+
+          <aside class="right-sidebar">
+            <app-right-panel />
+          </aside>
+        }
+
+        @if (activeView() === 'preview') {
+          <div class="preview-full">
+            <app-preview-panel />
+          </div>
+        }
+      </div>
+    </div>
+  
