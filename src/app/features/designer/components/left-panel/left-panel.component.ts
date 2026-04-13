@@ -65,7 +65,7 @@ export class LeftPanelComponent {
     this.draggingKey.set(null);
   }
 
-  onStaticDragStart(event: DragEvent, type: string): void {
+  onStaticDragStart(event: DragEvent, type: 'text' | 'image' | 'table'): void {
     event.dataTransfer?.setData('application/static-type', type);
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
     this.draggingKey.set(`static-${type}`);

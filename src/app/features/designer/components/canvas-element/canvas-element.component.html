@@ -3,6 +3,7 @@
       class="canvas-el"
       [class.selected]="selected"
       [class.is-image]="element.type === 'image'"
+      [class.is-table]="element.type === 'table'"
       [style.left.px]="element.position.x"
       [style.top.px]="element.position.y"
       [style.fontSize.px]="element.style.fontSize"
@@ -35,6 +36,20 @@
             No Image
           </div>
         }
+      } @else if (element.type === 'table' && element.table) {
+        <div class="el-table-wrap" [style.width.px]="tableWidth()" [style.height.px]="tableHeight()">
+          <table class="el-table">
+            <tbody>
+              @for (rowIndex of tableRowIndexes(); track rowIndex) {
+                <tr [style.height.px]="rowHeight(rowIndex)">
+                  @for (colIndex of visibleColumnIndexes(); track colIndex) {
+                    <td [style.width.px]="columnWidth(colIndex)">{{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       } @else if (isEditingInline) {
         <textarea class="inline-edit" [value]="element.content || ''" (blur)="onInlineBlur($event)" (keydown)="onInlineKeyDown($event)"></textarea>
       } @else {
@@ -42,6 +57,26 @@
       }
 
       @if (selected) {
+        @if (element.type === 'table' && element.table) {
+          <div class="table-grid-resizers">
+            @for (item of columnBoundaryOffsets(); track item.colIndex) {
+              <div
+                class="table-col-resizer"
+                [style.left.px]="item.left"
+                (mousedown)="onTableColumnResizeStart($event, item.colIndex)"
+                title="Resize column"
+              ></div>
+            }
+            @for (item of rowBoundaryOffsets(); track item.rowIndex) {
+              <div
+                class="table-row-resizer"
+                [style.top.px]="item.top"
+                (mousedown)="onTableRowResizeStart($event, item.rowIndex)"
+                title="Resize row"
+              ></div>
+            }
+          </div>
+        }
         <div class="resize-handles">
           <div class="handle tl"></div>
           <div class="handle tr"></div>

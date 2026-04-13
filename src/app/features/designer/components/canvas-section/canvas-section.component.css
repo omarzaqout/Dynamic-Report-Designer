@@ -26,7 +26,16 @@
     .badge-details { background: #d1fae5; color: #059669; }
     .badge-footer { background: #ede9fe; color: #7c3aed; }
     .section-title { font-size: 11px; font-weight: 600; color: #475569; }
-    .detail-hint { font-size: 10px; color: #9ca3af; font-style: italic; }
+    .repeat-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #64748b;
+      user-select: none;
+    }
+    .repeat-toggle input { margin: 0; width: 12px; height: 12px; accent-color: #10b981; cursor: pointer; }
+    .repeat-toggle span { white-space: nowrap; }
     .section-actions { margin-left: auto; }
     .resize-btn {
       background: none; border: none; cursor: ns-resize;
@@ -57,4 +66,11 @@
       pointer-events: none;
       font-style: italic;
     }
-  
+    .delete-section-btn {
+      background: none; border: none; cursor: pointer;
+      color: #ef4444; font-size: 11px; padding: 0 4px; line-height: 1; margin-right: 4px;
+    }
+    .delete-section-btn:hover { color: #dc2626; }
+    
+    .align-guide-v { position: absolute; top: 0; bottom: 0; width: 1px; background: #ec4899; z-index: 10; pointer-events: none; }
+    .align-guide-h { position: absolute; left: 0; right: 0; height: 1px; background: #ec4899; z-index: 10; pointer-events: none; }

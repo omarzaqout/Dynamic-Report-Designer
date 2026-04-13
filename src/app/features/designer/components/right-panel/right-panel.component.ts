@@ -1,9 +1,12 @@
-import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TemplateService } from '../../../../core/services/template.service';
 import { DataService } from '../../../../core/services/data.service';
-import { ElementStyle } from '../../../../core/models/template.model';
+import { ElementStyle, TableData } from '../../../../core/models/template.model';
+import { Field } from '../../../../core/models/field.model';
+import { ReportData } from '../../../../core/models/report.model';
 
 @Component({
   selector: 'app-right-panel',
@@ -27,8 +30,11 @@ export class RightPanelComponent {
     { label: 'Georgia', value: 'Georgia, serif' },
     { label: 'Courier New', value: '"Courier New", monospace' },
   ] as const;
+
   readonly element = this.templateService.selectedElement;
-  readonly fields = signal(this.dataService.getFields());
+  readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
+  readonly fields = computed(() => this.dataService.getFields(this.dataRows()[0]));
+  readonly leafFields = computed(() => this.flattenLeafFields(this.fields()));
   readonly sectionLabel = computed(() => {
     const s = this.templateService.selectedElementSection();
     const map: Record<string, string> = {
@@ -120,6 +126,159 @@ export class RightPanelComponent {
     }
   }
 
+  addTableRow(): void {
+    this.updateTable((table) => {
+      table.rows += 1;
+      table.cells.push(Array.from({ length: table.columns }, () => ({ content: '' })));
+      table.rowHeights.push(36);
+      return table;
+    });
+  }
+
+  removeTableRow(): void {
+    this.updateTable((table) => {
+      if (table.rows <= 1) return table;
+      table.rows -= 1;
+      table.cells.pop();
+      table.rowHeights.pop();
+      return table;
+    });
+  }
+
+  addTableColumn(): void {
+    this.updateTable((table) => {
+      table.columns += 1;
+      table.cells.forEach((row) => row.push({ content: '' }));
+      const maxOrder = table.columnSettings.reduce((max, col) => Math.max(max, col.order), -1);
+      table.columnSettings.push({
+        width: 120,
+        order: maxOrder + 1,
+        visible: true,
+      });
+      return table;
+    });
+  }
+
+  removeTableColumn(): void {
+    this.updateTable((table) => {
+      if (table.columns <= 1) return table;
+      table.columns -= 1;
+      table.cells.forEach((row) => row.pop());
+      table.columnSettings.pop();
+      return table;
+    });
+  }
+
+  onTableCellContentChange(row: number, col: number, event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.updateTable((table) => {
+      table.cells[row][col].content = value;
+      if (!value && !table.cells[row][col].fieldPath) {
+        table.cells[row][col].content = '';
+      }
+      return table;
+    });
+  }
+
+  onTableCellFieldChange(row: number, col: number, event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.updateTable((table) => {
+      table.cells[row][col].fieldPath = value || undefined;
+      return table;
+    });
+  }
+
+  onTableRowHeightChange(row: number, event: Event): void {
+    const value = parseInt((event.target as HTMLInputElement).value, 10);
+    this.updateTable((table) => {
+      table.rowHeights[row] = Number.isFinite(value) ? Math.max(24, value) : table.rowHeights[row];
+      return table;
+    });
+  }
+
+  onTableColumnWidthChange(col: number, event: Event): void {
+    const value = parseInt((event.target as HTMLInputElement).value, 10);
+    this.updateTable((table) => {
+      table.columnSettings[col].width = Number.isFinite(value) ? Math.max(48, value) : table.columnSettings[col].width;
+      return table;
+    });
+  }
+
+  onTableColumnOrderChange(col: number, event: Event): void {
+    const value = parseInt((event.target as HTMLInputElement).value, 10);
+    this.updateTable((table) => {
+      table.columnSettings[col].order = Number.isFinite(value) ? value : table.columnSettings[col].order;
+      return table;
+    });
+  }
+
+  onTableColumnVisibilityChange(col: number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.updateTable((table) => {
+      if (!checked) {
+        const visibleCount = table.columnSettings.filter((setting) => setting.visible).length;
+        if (visibleCount <= 1) return table;
+      }
+      table.columnSettings[col].visible = checked;
+      return table;
+    });
+  }
+
+  onTableDynamicRowsChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.updateTable((table) => {
+      table.dynamicRows = checked;
+      return table;
+    });
+  }
+
+  tableRowIndexes(table: TableData): number[] {
+    return Array.from({ length: table.rows }, (_, i) => i);
+  }
+
+  orderedColumnIndexes(table: TableData): number[] {
+    const settings = table.columnSettings?.length === table.columns
+      ? table.columnSettings
+      : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true }));
+    return settings
+      .map((setting, index) => ({ index, setting }))
+      .sort((a, b) => a.setting.order - b.setting.order || a.index - b.index)
+      .map(({ index }) => index);
+  }
+
+  tablePreviewWidth(table: TableData): number {
+    const settings = table.columnSettings?.length === table.columns
+      ? table.columnSettings
+      : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true }));
+    const visibleColumns = settings.filter((setting) => setting.visible);
+    if (visibleColumns.length === 0) return 120;
+    return visibleColumns.reduce((sum, setting) => sum + setting.width, 0);
+  }
+
+  tablePreviewHeight(table: TableData): number {
+    const rowHeights = table.rowHeights?.length === table.rows
+      ? table.rowHeights
+      : Array.from({ length: table.rows }, () => 36);
+    if (rowHeights.length === 0) return 36;
+    return rowHeights.reduce((sum, height) => sum + height, 0);
+  }
+
+  tableRowHeight(table: TableData, rowIndex: number): number {
+    return table.rowHeights?.[rowIndex] ?? 36;
+  }
+
+  tableColumnWidth(table: TableData, colIndex: number): number {
+    return table.columnSettings?.[colIndex]?.width ?? 120;
+  }
+
+  tableColumnOrder(table: TableData, colIndex: number): number {
+    return table.columnSettings?.[colIndex]?.order ?? colIndex;
+  }
+
+  tableColumnVisible(table: TableData, colIndex: number): boolean {
+    return table.columnSettings?.[colIndex]?.visible ?? true;
+  }
+
   deleteElement(): void {
     const el = this.element();
     if (el) this.templateService.removeElement(el.id);
@@ -128,5 +287,48 @@ export class RightPanelComponent {
   private updateStyle(patch: Partial<ElementStyle>): void {
     const el = this.element();
     if (el) this.templateService.updateElement(el.id, { style: { ...el.style, ...patch } });
+  }
+
+  private updateTable(mutator: (table: TableData) => TableData): void {
+    const el = this.element();
+    if (!el || !el.table) return;
+    const cloned = this.cloneTable(el.table);
+    const nextTable = mutator(cloned);
+    this.templateService.updateElement(el.id, { table: nextTable });
+  }
+
+  private cloneTable(table: TableData): TableData {
+    const rowHeights = table.rowHeights?.length === table.rows
+      ? [...table.rowHeights]
+      : Array.from({ length: table.rows }, () => 36);
+
+    const columnSettings = table.columnSettings?.length === table.columns
+      ? table.columnSettings.map((setting) => ({ ...setting }))
+      : Array.from({ length: table.columns }, (_v, index) => ({
+          width: 120,
+          order: index,
+          visible: true,
+        }));
+
+    return {
+      rows: table.rows,
+      columns: table.columns,
+      cells: table.cells.map((row) => row.map((cell) => ({ ...cell }))),
+      rowHeights,
+      columnSettings,
+      dynamicRows: table.dynamicRows,
+    };
+  }
+
+  private flattenLeafFields(fields: Field[]): Field[] {
+    const leaves: Field[] = [];
+    for (const field of fields) {
+      if (field.children?.length) {
+        leaves.push(...this.flattenLeafFields(field.children));
+      } else {
+        leaves.push(field);
+      }
+    }
+    return leaves;
   }
 }

@@ -89,11 +89,21 @@
           <span class="field-type-badge type-date">Img</span>
           <span class="field-name">Image Element</span>
         </div>
+        <div
+          class="field-item"
+          draggable="true"
+          (dragstart)="onStaticDragStart($event, 'table')"
+          (dragend)="onDragEnd()"
+          [class.dragging]="draggingKey() === 'static-table'"
+        >
+          <span class="field-type-badge type-table">Tbl</span>
+          <span class="field-name">Table Element</span>
+        </div>
       </div>
 
       <div class="section-label">Template Sections</div>
       <div class="sections-list">
-        @for (section of sections(); track section.type) {
+        @for (section of sections(); track section.id) {
           <div class="section-item" [class]="'section-' + section.type">
             <span class="section-dot"></span>
             <span class="section-name">{{ section.label }}</span>

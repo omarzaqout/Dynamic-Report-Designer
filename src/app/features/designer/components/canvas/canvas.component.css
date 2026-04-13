@@ -23,7 +23,7 @@
       color: #1e293b;
     }
     .canvas-icon { color: #3b82f6; font-size: 16px; }
-    .canvas-info { display: flex; gap: 6px; }
+    .canvas-info { display: flex; align-items: center; gap: 6px; }
     .info-chip {
       font-size: 11px;
       background: #f1f5f9;
@@ -32,6 +32,17 @@
       border-radius: 10px;
       border: 1px solid #e2e8f0;
     }
+    .add-details-btn {
+      border: 1px solid #86efac;
+      background: #f0fdf4;
+      color: #15803d;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .add-details-btn:hover { background: #dcfce7; }
     .report-canvas {
       flex: 1;
       overflow: auto;

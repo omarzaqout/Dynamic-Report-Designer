@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ReportData } from '../models/report.model';
-import { ReportTemplate, TemplateSection, TemplateElement } from '../models/template.model';
+import { ReportTemplate, TemplateSection, TemplateElement, TableData } from '../models/template.model';
 
 export interface RenderedElement {
   content: string;
   imageUrl?: string;
+  table?: TableData;
   size?: { width: number; height: number };
   x: number;
   y: number;
@@ -32,19 +33,21 @@ export class RenderService {
     const sections: RenderedSection[] = [];
 
     for (const section of template.sections) {
-      if (section.type === 'details') {
-        for (const row of data) {
-          sections.push(this.renderSection(section, row, true));
+      if (section.repeatPerRow) {
+        const rows = data.length > 0 ? data : [{}];
+        for (const row of rows) {
+          sections.push(this.renderSection(section, row as ReportData, true, data));
         }
       } else {
-        sections.push(this.renderSection(section, {}, false));
+        const baseRow = section.type === 'details' && data.length > 0 ? data[0] : {};
+        sections.push(this.renderSection(section, baseRow as ReportData, false, data));
       }
     }
 
     return { sections };
   }
 
-  private renderSection(section: TemplateSection, row: ReportData, isDetail: boolean): RenderedSection {
+  private renderSection(section: TemplateSection, row: ReportData, isDetail: boolean, fullData: ReportData[]): RenderedSection {
     const elements: RenderedElement[] = section.elements.map((el) => {
       let renderedContent = el.content || '';
       if (el.type === 'field') {
@@ -54,6 +57,7 @@ export class RenderService {
         id: el.id,
         content: renderedContent,
         imageUrl: (el as any).imageUrl,
+        table: el.type === 'table' ? this.renderTable(el.table, row, fullData) : undefined,
         size: el.size,
         x: el.position.x,
         y: el.position.y,
@@ -70,6 +74,53 @@ export class RenderService {
       height: section.height,
       isDetail,
     };
+  }
+
+  private renderTable(table: TableData | undefined, contextRow: ReportData, fullData: ReportData[]): TableData | undefined {
+    if (!table) return undefined;
+    
+    if (table.dynamicRows && fullData && fullData.length > 0) {
+      if (table.cells.length === 0) return table;
+      
+      const templateBlock = table.cells;
+      const templateRowHeights = table.rowHeights?.length === table.rows ? table.rowHeights : Array.from({ length: table.rows }, () => 36);
+      
+      const newCells: any[][] = [];
+      const newRowHeights: number[] = [];
+      
+      fullData.forEach(row => {
+        templateBlock.forEach((tRow, idx) => {
+          newCells.push(tRow.map(cell => this.processCell(cell, row, true)));
+          newRowHeights.push(templateRowHeights[idx]);
+        });
+      });
+      
+      return {
+        ...table,
+        rows: newCells.length,
+        cells: newCells,
+        rowHeights: newRowHeights,
+      };
+    }
+
+    const hasRowData = Object.keys(contextRow).length > 0;
+    return {
+      ...table,
+      rowHeights: table.rowHeights?.length === table.rows ? [...table.rowHeights] : Array.from({ length: table.rows }, () => 36),
+      columnSettings: table.columnSettings?.length === table.columns ? table.columnSettings.map(col => ({ ...col })) : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true })),
+      cells: table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData))),
+    };
+  }
+
+  private processCell(cell: any, row: ReportData, hasData: boolean): any {
+    if (cell.fieldPath) {
+      const value = this.getValueByPath(row, cell.fieldPath);
+      return {
+        ...cell,
+        content: value === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : typeof value === 'object' ? JSON.stringify(value) : String(value),
+      };
+    }
+    return { ...cell, content: this.interpolate(cell.content || '', row) };
   }
 
   interpolate(content: string, row: ReportData): string {

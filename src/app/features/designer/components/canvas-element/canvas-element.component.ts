@@ -2,8 +2,10 @@ import {
   Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy, inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TemplateElement } from '../../../../core/models/template.model';
+import { TableCell, TableData, TemplateElement } from '../../../../core/models/template.model';
 import { TemplateService } from '../../../../core/services/template.service';
+
+type ResizeMode = 'none' | 'element' | 'table-col' | 'table-row' | 'table-bounds';
 
 @Component({
   selector: 'app-canvas-element',
@@ -19,6 +21,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   @Output() positionChange = new EventEmitter<{ x: number; y: number }>();
   @Output() select = new EventEmitter<string>();
   @Output() delete = new EventEmitter<string>();
+  @Output() dragEnd = new EventEmitter<void>();
 
   @ViewChild('elRef') elRef!: ElementRef<HTMLDivElement>;
 
@@ -26,7 +29,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   isEditingInline = false;
   private isDragging = false;
-  private isResizing = false;
+  private resizeMode: ResizeMode = 'none';
   private startMouseX = 0;
   private startMouseY = 0;
   private startElX = 0;
@@ -34,6 +37,10 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   private resizeStartWidth = 0;
   private resizeStartHeight = 0;
   private resizeStartFontSize = 12;
+  private resizeColumnIndex: number | null = null;
+  private resizeRowIndex: number | null = null;
+  private resizeStartColumnWidth = 0;
+  private resizeStartRowHeight = 0;
 
   private mouseMoveHandler!: (e: MouseEvent) => void;
   private mouseUpHandler!: (e: MouseEvent) => void;
@@ -74,14 +81,22 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   onInlineKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
-       event.preventDefault();
-       (event.target as HTMLTextAreaElement).blur();
+      event.preventDefault();
+      (event.target as HTMLTextAreaElement).blur();
     }
   }
 
   onMouseDown(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    if (target.classList.contains('delete-btn') || target.classList.contains('resize-handle')) return;
+    if (
+      target.classList.contains('delete-btn') ||
+      target.classList.contains('resize-handle') ||
+      target.classList.contains('table-col-resizer') ||
+      target.classList.contains('table-row-resizer')
+    ) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     this.select.emit(this.element.id);
@@ -99,18 +114,50 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.select.emit(this.element.id);
 
-    this.isResizing = true;
     this.startMouseX = event.clientX;
     this.startMouseY = event.clientY;
 
-    if (this.element.type === 'image') {
+    if (this.element.type === 'table' && this.element.table) {
+      const visibleColumns = this.visibleColumnIndexes();
+      this.resizeColumnIndex = visibleColumns.length > 0 ? visibleColumns[visibleColumns.length - 1] : 0;
+      this.resizeRowIndex = Math.max(0, this.element.table.rows - 1);
+      this.resizeStartColumnWidth = this.columnWidth(this.resizeColumnIndex);
+      this.resizeStartRowHeight = this.rowHeight(this.resizeRowIndex);
+      this.resizeMode = 'table-bounds';
+    } else if (this.element.type === 'image') {
       const imgEl = this.elRef.nativeElement.querySelector('.el-image') as HTMLImageElement | null;
       this.resizeStartWidth = this.element.size?.width ?? imgEl?.clientWidth ?? 120;
       this.resizeStartHeight = this.element.size?.height ?? imgEl?.clientHeight ?? 120;
+      this.resizeMode = 'element';
     } else {
       this.resizeStartFontSize = this.element.style.fontSize;
+      this.resizeMode = 'element';
     }
 
+    document.addEventListener('mousemove', this.mouseMoveHandler);
+    document.addEventListener('mouseup', this.mouseUpHandler);
+  }
+
+  onTableColumnResizeStart(event: MouseEvent, colIndex: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.select.emit(this.element.id);
+    this.startMouseX = event.clientX;
+    this.resizeColumnIndex = colIndex;
+    this.resizeStartColumnWidth = this.columnWidth(colIndex);
+    this.resizeMode = 'table-col';
+    document.addEventListener('mousemove', this.mouseMoveHandler);
+    document.addEventListener('mouseup', this.mouseUpHandler);
+  }
+
+  onTableRowResizeStart(event: MouseEvent, rowIndex: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.select.emit(this.element.id);
+    this.startMouseY = event.clientY;
+    this.resizeRowIndex = rowIndex;
+    this.resizeStartRowHeight = this.rowHeight(rowIndex);
+    this.resizeMode = 'table-row';
     document.addEventListener('mousemove', this.mouseMoveHandler);
     document.addEventListener('mouseup', this.mouseUpHandler);
   }
@@ -126,9 +173,29 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isResizing) return;
-    const dx = event.clientX - this.startMouseX;
+    if (this.resizeMode === 'none') return;
 
+    if (this.resizeMode === 'table-col') {
+      const dx = event.clientX - this.startMouseX;
+      this.resizeTableColumn(this.resizeColumnIndex, this.resizeStartColumnWidth + dx);
+      return;
+    }
+
+    if (this.resizeMode === 'table-row') {
+      const dy = event.clientY - this.startMouseY;
+      this.resizeTableRow(this.resizeRowIndex, this.resizeStartRowHeight + dy);
+      return;
+    }
+
+    if (this.resizeMode === 'table-bounds') {
+      const dx = event.clientX - this.startMouseX;
+      const dy = event.clientY - this.startMouseY;
+      this.resizeTableColumn(this.resizeColumnIndex, this.resizeStartColumnWidth + dx);
+      this.resizeTableRow(this.resizeRowIndex, this.resizeStartRowHeight + dy);
+      return;
+    }
+
+    const dx = event.clientX - this.startMouseX;
     if (this.element.type === 'image') {
       const dy = event.clientY - this.startMouseY;
       this.templateService.updateElement(this.element.id, {
@@ -151,8 +218,11 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   }
 
   private onMouseUp(): void {
+    this.dragEnd.emit();
     this.isDragging = false;
-    this.isResizing = false;
+    this.resizeMode = 'none';
+    this.resizeColumnIndex = null;
+    this.resizeRowIndex = null;
     document.removeEventListener('mousemove', this.mouseMoveHandler);
     document.removeEventListener('mouseup', this.mouseUpHandler);
   }
@@ -160,5 +230,111 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   onDelete(event: MouseEvent): void {
     event.stopPropagation();
     this.delete.emit(this.element.id);
+  }
+
+  getTableRows(): TableCell[][] {
+    return this.element.table?.cells ?? [];
+  }
+
+  displayCell(cell: TableCell): string {
+    if (cell.fieldPath) return `{{${cell.fieldPath}}}`;
+    return cell.content || '';
+  }
+
+  tableRowIndexes(): number[] {
+    const table = this.element.table;
+    return table ? Array.from({ length: table.rows }, (_, i) => i) : [];
+  }
+
+  visibleColumnIndexes(): number[] {
+    const table = this.element.table;
+    if (!table) return [];
+    const settings = table.columnSettings?.length === table.columns
+      ? table.columnSettings
+      : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true }));
+    return settings
+      .map((setting, index) => ({ index, setting }))
+      .filter(({ setting }) => setting.visible)
+      .sort((a, b) => a.setting.order - b.setting.order || a.index - b.index)
+      .map(({ index }) => index);
+  }
+
+  rowHeight(rowIndex: number): number {
+    return this.element.table?.rowHeights?.[rowIndex] ?? 36;
+  }
+
+  columnWidth(colIndex: number): number {
+    return this.element.table?.columnSettings?.[colIndex]?.width ?? 120;
+  }
+
+  tableWidth(): number {
+    const visibleColumns = this.visibleColumnIndexes();
+    if (visibleColumns.length === 0) return 120;
+    return visibleColumns.reduce((sum, colIndex) => sum + this.columnWidth(colIndex), 0);
+  }
+
+  tableHeight(): number {
+    const rows = this.tableRowIndexes();
+    if (rows.length === 0) return 36;
+    return rows.reduce((sum, rowIndex) => sum + this.rowHeight(rowIndex), 0);
+  }
+
+  columnBoundaryOffsets(): Array<{ colIndex: number; left: number }> {
+    const visibleColumns = this.visibleColumnIndexes();
+    const result: Array<{ colIndex: number; left: number }> = [];
+    let offset = 0;
+    for (let i = 0; i < visibleColumns.length - 1; i += 1) {
+      const colIndex = visibleColumns[i];
+      offset += this.columnWidth(colIndex);
+      result.push({ colIndex, left: offset });
+    }
+    return result;
+  }
+
+  rowBoundaryOffsets(): Array<{ rowIndex: number; top: number }> {
+    const rows = this.tableRowIndexes();
+    const result: Array<{ rowIndex: number; top: number }> = [];
+    let offset = 0;
+    for (let i = 0; i < rows.length - 1; i += 1) {
+      const rowIndex = rows[i];
+      offset += this.rowHeight(rowIndex);
+      result.push({ rowIndex, top: offset });
+    }
+    return result;
+  }
+
+  private resizeTableColumn(colIndex: number | null, nextWidth: number): void {
+    if (colIndex === null) return;
+    this.updateTable((table) => {
+      table.columnSettings[colIndex].width = Math.max(48, Math.round(nextWidth));
+      return table;
+    });
+  }
+
+  private resizeTableRow(rowIndex: number | null, nextHeight: number): void {
+    if (rowIndex === null) return;
+    this.updateTable((table) => {
+      table.rowHeights[rowIndex] = Math.max(24, Math.round(nextHeight));
+      return table;
+    });
+  }
+
+  private updateTable(mutator: (table: TableData) => TableData): void {
+    if (!this.element.table) return;
+    const cloned: TableData = {
+      rows: this.element.table.rows,
+      columns: this.element.table.columns,
+      cells: this.element.table.cells.map((row) => row.map((cell) => ({ ...cell }))),
+      rowHeights:
+        this.element.table.rowHeights?.length === this.element.table.rows
+          ? [...this.element.table.rowHeights]
+          : Array.from({ length: this.element.table.rows }, () => 36),
+      columnSettings:
+        this.element.table.columnSettings?.length === this.element.table.columns
+          ? this.element.table.columnSettings.map((setting) => ({ ...setting }))
+          : Array.from({ length: this.element.table.columns }, (_v, index) => ({ width: 120, order: index, visible: true })),
+    };
+    const next = mutator(cloned);
+    this.templateService.updateElement(this.element.id, { table: next });
   }
 }

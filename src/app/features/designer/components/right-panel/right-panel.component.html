@@ -44,7 +44,7 @@
                 <label class="prop-label">Bind to Field</label>
                 <select class="prop-select" [value]="el.boundField || ''" (change)="onBindField($event)">
                   <option value="">— None —</option>
-                  @for (f of fields(); track f.key) {
+                  @for (f of leafFields(); track f.key) {
                     <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
                   }
                 </select>
@@ -60,12 +60,118 @@
                 }
               </div>
             }
+
+            @if (el.type === 'table' && el.table; as table) {
+              <div class="prop-col">
+                <label class="prop-label">Table Structure</label>
+                <div class="table-actions">
+                  <button class="table-action-btn" (click)="addTableRow()">+ Row</button>
+                  <button class="table-action-btn" (click)="removeTableRow()">- Row</button>
+                  <button class="table-action-btn" (click)="addTableColumn()">+ Col</button>
+                  <button class="table-action-btn" (click)="removeTableColumn()">- Col</button>
+                </div>
+                <label class="repeat-toggle" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
+                  <input
+                    type="checkbox"
+                    [checked]="table.dynamicRows"
+                    (change)="onTableDynamicRowsChange($event)"
+                    style="margin: 0;"
+                  />
+                  <span>Bind to Dataset (Repeat Table Block)</span>
+                </label>
+                <div class="table-summary">{{ table.rows }} rows &times; {{ table.columns }} cols</div>
+                <div class="table-summary">Preview size: {{ tablePreviewWidth(table) }} &times; {{ tablePreviewHeight(table) }} px</div>
+              </div>
+
+              <div class="prop-col">
+                <label class="prop-label">Row Heights</label>
+                <div class="table-dimension-grid">
+                  @for (rowIndex of tableRowIndexes(table); track rowIndex) {
+                    <label class="dimension-item">
+                      <span>R{{ rowIndex + 1 }}</span>
+                      <input
+                        type="number"
+                        class="prop-number"
+                        [value]="tableRowHeight(table, rowIndex)"
+                        (change)="onTableRowHeightChange(rowIndex, $event)"
+                        min="24"
+                      />
+                    </label>
+                  }
+                </div>
+              </div>
+
+              <div class="prop-col">
+                <label class="prop-label">Columns (Width / Order / Visible)</label>
+                <div class="table-column-list">
+                  @for (colIndex of orderedColumnIndexes(table); track colIndex) {
+                    <div class="table-column-item">
+                      <span class="table-column-label">C{{ colIndex + 1 }}</span>
+                      <input
+                        type="number"
+                        class="prop-number"
+                        [value]="tableColumnWidth(table, colIndex)"
+                        (change)="onTableColumnWidthChange(colIndex, $event)"
+                        min="48"
+                        title="Column width"
+                      />
+                      <input
+                        type="number"
+                        class="prop-number"
+                        [value]="tableColumnOrder(table, colIndex)"
+                        (change)="onTableColumnOrderChange(colIndex, $event)"
+                        title="Order"
+                      />
+                      <label class="column-visible-toggle">
+                        <input
+                          type="checkbox"
+                          [checked]="tableColumnVisible(table, colIndex)"
+                          (change)="onTableColumnVisibilityChange(colIndex, $event)"
+                        />
+                        <span>Show</span>
+                      </label>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="table-editor-wrap">
+                <table class="table-editor">
+                  <tbody>
+                    @for (rowIndex of tableRowIndexes(table); track rowIndex) {
+                      <tr>
+                        @for (colIndex of orderedColumnIndexes(table); track colIndex) {
+                          <td>
+                            <input
+                              class="table-cell-input"
+                              [value]="table.cells[rowIndex][colIndex].content"
+                              (input)="onTableCellContentChange(rowIndex, colIndex, $event)"
+                              placeholder="Cell text"
+                            />
+                            <select
+                              class="table-cell-select"
+                              [value]="table.cells[rowIndex][colIndex].fieldPath || ''"
+                              (change)="onTableCellFieldChange(rowIndex, colIndex, $event)"
+                            >
+                              <option value="">Static text</option>
+                              @for (f of leafFields(); track f.key) {
+                                <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+                              }
+                            </select>
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
           </div>
 
           <div class="prop-section">
             <div class="prop-section-title">Typography</div>
 
-            @if (el.type === 'field' || el.type === 'text') {
+            @if (el.type === 'field' || el.type === 'text' || el.type === 'table') {
               <div class="prop-col">
                 <label class="prop-label">Font Family</label>
                 <select class="prop-select" [value]="el.style.fontFamily" (change)="onFontFamilyChange($event)">

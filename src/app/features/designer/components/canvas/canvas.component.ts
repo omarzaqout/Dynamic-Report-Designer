@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateService } from '../../../../core/services/template.service';
 import { CanvasSectionComponent } from '../canvas-section/canvas-section.component';
-import { TemplateElement, SectionType } from '../../../../core/models/template.model';
+import { TemplateElement } from '../../../../core/models/template.model';
 
 @Component({
   selector: 'app-canvas',
@@ -25,8 +25,8 @@ export class CanvasComponent {
     this.templateService.selectElement(null);
   }
 
-  onElementAdd(event: { sectionType: SectionType; element: Omit<TemplateElement, 'id'> }): void {
-    this.templateService.addElement(event.sectionType, event.element);
+  onElementAdd(event: { sectionId: string; element: Omit<TemplateElement, 'id'> }): void {
+    this.templateService.addElement(event.sectionId, event.element);
   }
 
   onElementSelect(id: string): void {
@@ -41,7 +41,19 @@ export class CanvasComponent {
     this.templateService.updateElementPosition(event.id, event.x, event.y);
   }
 
-  onSectionResize(event: { sectionType: SectionType; height: number }): void {
-    this.templateService.updateSectionHeight(event.sectionType, event.height);
+  onSectionResize(event: { sectionId: string; height: number }): void {
+    this.templateService.updateSectionHeight(event.sectionId, event.height);
+  }
+
+  onSectionDelete(id: string): void {
+    this.templateService.removeSection(id);
+  }
+
+  onSectionRepeatChange(event: { sectionId: string; repeatPerRow: boolean }): void {
+    this.templateService.updateSectionRepeat(event.sectionId, event.repeatPerRow);
+  }
+
+  addDetailsSection(): void {
+    this.templateService.addDetailsSection();
   }
 }

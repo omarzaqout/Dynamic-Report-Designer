@@ -6,9 +6,11 @@ const INITIAL_TEMPLATE: ReportTemplate = {
   name: 'Employee Report',
   sections: [
     {
+      id: 'section-reportHeader-1',
       type: 'reportHeader',
       label: 'Report Header',
       height: 80,
+      repeatPerRow: false,
       elements: [
         {
           id: 'el-title',
@@ -20,9 +22,11 @@ const INITIAL_TEMPLATE: ReportTemplate = {
       ],
     },
     {
+      id: 'section-pageHeader-1',
       type: 'pageHeader',
       label: 'Page Header',
       height: 40,
+      repeatPerRow: false,
       elements: [
         {
           id: 'el-ph-name',
@@ -48,9 +52,11 @@ const INITIAL_TEMPLATE: ReportTemplate = {
       ],
     },
     {
+      id: 'section-details-1',
       type: 'details',
       label: 'Details',
       height: 36,
+      repeatPerRow: true,
       elements: [
         {
           id: 'el-d-name',
@@ -79,9 +85,11 @@ const INITIAL_TEMPLATE: ReportTemplate = {
       ],
     },
     {
+      id: 'section-footer-1',
       type: 'footer',
       label: 'Footer',
       height: 50,
+      repeatPerRow: false,
       elements: [
         {
           id: 'el-footer',
@@ -127,12 +135,12 @@ export class TemplateService {
     this._selectedElementId.set(id);
   }
 
-  addElement(sectionType: SectionType, element: Omit<TemplateElement, 'id'>): void {
+  addElement(sectionId: string, element: Omit<TemplateElement, 'id'>): void {
     const id = `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) =>
-        s.type === sectionType
+        s.id === sectionId
           ? { ...s, elements: [...s.elements, { ...element, id }] }
           : s
       ),
@@ -175,17 +183,62 @@ export class TemplateService {
     if (this._selectedElementId() === id) this._selectedElementId.set(null);
   }
 
-  updateSectionHeight(sectionType: SectionType, height: number): void {
+  removeSection(id: string): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.filter((s) => s.id !== id),
+    }));
+  }
+
+  updateSectionHeight(sectionId: string, height: number): void {
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) =>
-        s.type === sectionType ? { ...s, height: Math.max(30, height) } : s
+        s.id === sectionId ? { ...s, height: Math.max(30, height) } : s
       ),
+    }));
+  }
+
+  updateSectionRepeat(sectionId: string, repeatPerRow: boolean): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.map((s) =>
+        s.id === sectionId ? { ...s, repeatPerRow } : s
+      ),
+    }));
+  }
+
+  addDetailsSection(): void {
+    const detailsCount = this._template().sections.filter((s) => s.type === 'details').length;
+    const index = detailsCount + 1;
+    const id = `section-details-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const detailsSection = {
+      id,
+      type: 'details' as const,
+      label: index === 1 ? 'Details' : `Details ${index}`,
+      height: 80,
+      repeatPerRow: true,
+      elements: [],
+    };
+
+    this._template.update((t) => ({
+      ...t,
+      sections: this.insertBeforeFooter(t.sections, detailsSection),
     }));
   }
 
   resetTemplate(): void {
     this._template.set(structuredClone(INITIAL_TEMPLATE));
     this._selectedElementId.set(null);
+  }
+
+  private insertBeforeFooter(sections: TemplateSection[], nextSection: TemplateSection): TemplateSection[] {
+    const footerIndex = sections.findIndex((section) => section.type === 'footer');
+    if (footerIndex === -1) return [...sections, nextSection];
+    return [
+      ...sections.slice(0, footerIndex),
+      nextSection,
+      ...sections.slice(footerIndex),
+    ];
   }
 }

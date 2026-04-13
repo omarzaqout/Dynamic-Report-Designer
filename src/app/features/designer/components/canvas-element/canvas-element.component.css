@@ -52,6 +52,47 @@
     .el-image { display: block; max-width: none; max-height: none; pointer-events: none; }
     .el-image-placeholder { width: 100px; height: 100px; background: #e2e8f0; display:flex; align-items:center; justify-content:center; color: #64748b; font-size: 11px; }
     .canvas-el.is-image { padding: 0; overflow: hidden; }
+    .canvas-el.is-table { padding: 0; overflow: hidden; white-space: normal; min-width: 120px; }
+    .el-table-wrap { width: 100%; height: 100%; background: #fff; position: relative; }
+    .el-table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font: inherit;
+      color: inherit;
+    }
+    .el-table td {
+      border: 1px solid #cbd5e1;
+      padding: 4px 6px;
+      font-size: inherit;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+    .table-grid-resizers { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+    .table-col-resizer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      margin-left: -4px;
+      cursor: col-resize;
+      pointer-events: all;
+    }
+    .table-col-resizer:hover { background: rgba(59,130,246,0.2); }
+    .table-row-resizer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 8px;
+      margin-top: -4px;
+      cursor: row-resize;
+      pointer-events: all;
+    }
+    .table-row-resizer:hover { background: rgba(16,185,129,0.15); }
     .inline-edit {
       border: 1px solid #3b82f6; outline: none; padding: 0; margin: 0; background: transparent;
       font: inherit; color: inherit; resize: both; min-width: 100px; line-height: inherit;

@@ -1,17 +1,26 @@
-    <div class="section-wrapper" [class]="'section-type-' + section.type">
+<div class="section-wrapper" [class]="'section-type-' + section.type">
       <div class="section-label-bar">
         <span class="section-badge" [class]="'badge-' + section.type">{{ section.type }}</span>
         <span class="section-title">{{ section.label }}</span>
         @if (section.type === 'details') {
-          <span class="detail-hint">repeats per row</span>
+          <label class="repeat-toggle" title="Repeat this section for each data row">
+            <input
+              type="checkbox"
+              [checked]="section.repeatPerRow"
+              (change)="onRepeatPerRowChange($event)"
+              (click)="$event.stopPropagation()"
+            />
+            <span>repeats per row</span>
+          </label>
         }
         <div class="section-actions">
+          <button class="delete-section-btn" (click)="sectionDelete.emit(section.id)" title="Delete section">&#10005;</button>
           <button class="resize-btn" (mousedown)="startResize($event)" title="Drag to resize section">&#8597;</button>
         </div>
       </div>
       <div
         class="section-canvas"
-        [style.height.px]="section.height"
+        [style.height.px]="computedHeight"
         [class.drag-over]="isDragOver()"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave()"
@@ -25,7 +34,14 @@
             (positionChange)="onPositionChange(el.id, $event)"
             (select)="elementSelect.emit($event)"
             (delete)="elementDelete.emit($event)"
+            (dragEnd)="onDragEnd()"
           />
+        }
+        @for (x of alignmentLines().x; track $index) {
+          <div class="align-guide-v" [style.left.px]="x"></div>
+        }
+        @for (y of alignmentLines().y; track $index) {
+          <div class="align-guide-h" [style.top.px]="y"></div>
         }
         @if (section.elements.length === 0) {
           <div class="empty-hint">
@@ -34,4 +50,3 @@
         }
       </div>
     </div>
-  

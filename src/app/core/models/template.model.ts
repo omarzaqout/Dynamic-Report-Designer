@@ -9,12 +9,33 @@ export interface ElementStyle {
   color: string;
 }
 
+export interface TableCell {
+  content: string;
+  fieldPath?: string;
+}
+
+export interface TableColumnSetting {
+  width: number;
+  order: number;
+  visible: boolean;
+}
+
+export interface TableData {
+  rows: number;
+  columns: number;
+  cells: TableCell[][];
+  rowHeights: number[];
+  columnSettings: TableColumnSetting[];
+  dynamicRows?: boolean;
+}
+
 export interface TemplateElement {
   id: string;
-  type: 'text' | 'field' | 'image';
+  type: 'text' | 'field' | 'image' | 'table';
   content?: string;
   fieldPath?: string;
   imageUrl?: string;
+  table?: TableData;
   size?: { width: number; height: number };
   position: { x: number; y: number };
   style: ElementStyle;
@@ -22,10 +43,12 @@ export interface TemplateElement {
 }
 
 export interface TemplateSection {
+  id: string;
   type: SectionType;
   label: string;
   elements: TemplateElement[];
   height: number;
+  repeatPerRow: boolean;
 }
 
 export interface ReportTemplate {

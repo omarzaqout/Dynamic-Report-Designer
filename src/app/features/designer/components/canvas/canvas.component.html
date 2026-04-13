@@ -7,12 +7,15 @@
         <div class="canvas-info">
           <span class="info-chip">{{ sectionCount() }} sections</span>
           <span class="info-chip">{{ elementCount() }} elements</span>
+          <button class="add-details-btn" (click)="addDetailsSection(); $event.stopPropagation()">
+            + Details Section
+          </button>
         </div>
       </div>
 
       <div class="report-canvas">
         <div class="page-frame">
-          @for (section of template().sections; track section.type) {
+          @for (section of template().sections; track section.id) {
             <app-canvas-section
               [section]="section"
               [selectedElementId]="selectedId()"
@@ -21,6 +24,8 @@
               (elementDelete)="onElementDelete($event)"
               (elementMove)="onElementMove($event)"
               (sectionResize)="onSectionResize($event)"
+              (sectionRepeatChange)="onSectionRepeatChange($event)"
+              (sectionDelete)="onSectionDelete($event)"
             />
           }
         </div>

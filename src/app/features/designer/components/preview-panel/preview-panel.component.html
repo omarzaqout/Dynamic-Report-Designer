@@ -22,7 +22,7 @@
               @if (section.elements.length === 0) {
                 <div class="empty-section">{{ section.label }} — no content</div>
               } @else {
-                <div class="section-body" [style.position]="'relative'" [style.height.px]="section.height">
+                <div class="section-body" [style.position]="'relative'" [style.height.px]="getSectionHeight(section)">
                   @for (el of section.elements; track el.id) {
                     <div
                       class="preview-el"
@@ -35,8 +35,29 @@
                       [style.textDecoration]="el.style.textDecoration"
                       [style.color]="el.style.color"
                       [class.is-image]="el.type === 'image'"
+                      [class.is-table]="el.type === 'table'"
                     >
-                      @if (el.type === 'image') {
+                      @if (el.type === 'table' && el.table) {
+                        <div
+                          class="preview-table-wrap"
+                          [style.width.px]="tableWidth(el.table)"
+                          [style.height.px]="tableHeight(el.table)"
+                        >
+                          <table class="preview-table">
+                            <tbody>
+                              @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
+                                <tr [style.height.px]="rowHeight(el.table, rowIndex)">
+                                  @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
+                                    <td [style.width.px]="columnWidth(el.table, colIndex)">
+                                      {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
+                                    </td>
+                                  }
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      } @else if (el.type === 'image') {
                         @if (el.imageUrl) {
                           <img
                             [src]="el.imageUrl"
