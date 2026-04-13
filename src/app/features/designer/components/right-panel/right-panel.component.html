@@ -65,6 +65,17 @@
           <div class="prop-section">
             <div class="prop-section-title">Typography</div>
 
+            @if (el.type === 'field' || el.type === 'text') {
+              <div class="prop-col">
+                <label class="prop-label">Font Family</label>
+                <select class="prop-select" [value]="el.style.fontFamily" (change)="onFontFamilyChange($event)">
+                  @for (font of fontFamilies; track font.value) {
+                    <option [value]="font.value">{{ font.label }}</option>
+                  }
+                </select>
+              </div>
+            }
+
             <div class="prop-row">
               <label>Font Size</label>
               <div class="stepper">

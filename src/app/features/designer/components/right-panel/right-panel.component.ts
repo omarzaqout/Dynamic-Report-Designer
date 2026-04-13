@@ -18,6 +18,15 @@ export class RightPanelComponent {
   private dataService = inject(DataService);
 
   readonly placeholderHint = 'e.g. {{name}} or Hello {{name}}';
+  readonly fontFamilies = [
+    { label: 'Segoe UI', value: '"Segoe UI", Arial, sans-serif' },
+    { label: 'Arial', value: 'Arial, sans-serif' },
+    { label: 'Tahoma', value: 'Tahoma, sans-serif' },
+    { label: 'Verdana', value: 'Verdana, sans-serif' },
+    { label: 'Times New Roman', value: '"Times New Roman", serif' },
+    { label: 'Georgia', value: 'Georgia, serif' },
+    { label: 'Courier New', value: '"Courier New", monospace' },
+  ] as const;
   readonly element = this.templateService.selectedElement;
   readonly fields = signal(this.dataService.getFields());
   readonly sectionLabel = computed(() => {
@@ -74,6 +83,10 @@ export class RightPanelComponent {
 
   onColorChange(event: Event): void {
     this.updateStyle({ color: (event.target as HTMLInputElement).value });
+  }
+
+  onFontFamilyChange(event: Event): void {
+    this.updateStyle({ fontFamily: (event.target as HTMLSelectElement).value });
   }
 
   toggleBold(): void {

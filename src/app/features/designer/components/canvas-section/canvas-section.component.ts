@@ -54,6 +54,7 @@ export class CanvasSectionComponent {
         element: {
           type: staticType as 'text' | 'image',
           content: staticType === 'text' ? 'Double click to edit' : undefined,
+          size: staticType === 'image' ? { width: 120, height: 120 } : undefined,
           position: { x, y },
           style: { ...DEFAULT_STYLE },
         },

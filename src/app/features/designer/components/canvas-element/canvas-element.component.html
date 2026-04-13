@@ -6,6 +6,7 @@
       [style.left.px]="element.position.x"
       [style.top.px]="element.position.y"
       [style.fontSize.px]="element.style.fontSize"
+      [style.fontFamily]="element.style.fontFamily"
       [style.fontWeight]="element.style.fontWeight"
       [style.fontStyle]="element.style.fontStyle"
       [style.textDecoration]="element.style.textDecoration"
@@ -16,9 +17,23 @@
     >
       @if (element.type === 'image') {
         @if (element.imageUrl) {
-          <img [src]="element.imageUrl" class="el-image" draggable="false" />
+          <img
+            [src]="element.imageUrl"
+            class="el-image"
+            [style.width.px]="element.size?.width"
+            [style.height.px]="element.size?.height"
+            [style.maxWidth.px]="element.size ? null : 250"
+            [style.maxHeight.px]="element.size ? null : 250"
+            draggable="false"
+          />
         } @else {
-          <div class="el-image-placeholder">No Image</div>
+          <div
+            class="el-image-placeholder"
+            [style.width.px]="element.size?.width || 120"
+            [style.height.px]="element.size?.height || 120"
+          >
+            No Image
+          </div>
         }
       } @else if (isEditingInline) {
         <textarea class="inline-edit" [value]="element.content || ''" (blur)="onInlineBlur($event)" (keydown)="onInlineKeyDown($event)"></textarea>
@@ -31,7 +46,7 @@
           <div class="handle tl"></div>
           <div class="handle tr"></div>
           <div class="handle bl"></div>
-          <div class="handle br"></div>
+          <div class="handle br resize-handle" (mousedown)="onResizeMouseDown($event)" title="Resize"></div>
         </div>
         <button class="delete-btn" (click)="onDelete($event)" title="Delete element">&#10005;</button>
       }

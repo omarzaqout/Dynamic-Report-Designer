@@ -5,6 +5,7 @@ import { ReportTemplate, TemplateSection, TemplateElement } from '../models/temp
 export interface RenderedElement {
   content: string;
   imageUrl?: string;
+  size?: { width: number; height: number };
   x: number;
   y: number;
   style: TemplateElement['style'];
@@ -53,6 +54,7 @@ export class RenderService {
         id: el.id,
         content: renderedContent,
         imageUrl: (el as any).imageUrl,
+        size: el.size,
         x: el.position.x,
         y: el.position.y,
         style: el.style,

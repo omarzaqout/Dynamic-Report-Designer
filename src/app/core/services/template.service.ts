@@ -15,7 +15,7 @@ const INITIAL_TEMPLATE: ReportTemplate = {
           type: 'text',
           content: 'Employee Report',
           position: { x: 20, y: 20 },
-          style: { fontSize: 20, fontWeight: 'bold', fontStyle: 'normal', textDecoration: 'none', color: '#1e3a5f' },
+          style: { ...DEFAULT_STYLE, fontSize: 20, fontWeight: 'bold', color: '#1e3a5f' },
         },
       ],
     },

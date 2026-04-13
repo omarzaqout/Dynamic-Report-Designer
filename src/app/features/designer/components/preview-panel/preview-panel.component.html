@@ -29,6 +29,7 @@
                       [style.left.px]="el.x"
                       [style.top.px]="el.y"
                       [style.fontSize.px]="el.style.fontSize"
+                      [style.fontFamily]="el.style.fontFamily"
                       [style.fontWeight]="el.style.fontWeight"
                       [style.fontStyle]="el.style.fontStyle"
                       [style.textDecoration]="el.style.textDecoration"
@@ -37,7 +38,14 @@
                     >
                       @if (el.type === 'image') {
                         @if (el.imageUrl) {
-                          <img [src]="el.imageUrl" [style.display]="'block'" [style.maxWidth.px]="250" [style.maxHeight.px]="250" />
+                          <img
+                            [src]="el.imageUrl"
+                            [style.display]="'block'"
+                            [style.width.px]="el.size?.width"
+                            [style.height.px]="el.size?.height"
+                            [style.maxWidth.px]="el.size ? null : 250"
+                            [style.maxHeight.px]="el.size ? null : 250"
+                          />
                         }
                       } @else {
                         {{ el.content }}

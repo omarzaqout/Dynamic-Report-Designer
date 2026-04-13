@@ -2,6 +2,7 @@ export type SectionType = 'reportHeader' | 'pageHeader' | 'details' | 'footer';
 
 export interface ElementStyle {
   fontSize: number;
+  fontFamily: string;
   fontWeight: 'normal' | 'bold';
   fontStyle: 'normal' | 'italic';
   textDecoration: 'none' | 'underline';
@@ -14,6 +15,7 @@ export interface TemplateElement {
   content?: string;
   fieldPath?: string;
   imageUrl?: string;
+  size?: { width: number; height: number };
   position: { x: number; y: number };
   style: ElementStyle;
   boundField?: string;
@@ -34,6 +36,7 @@ export interface ReportTemplate {
 
 export const DEFAULT_STYLE: ElementStyle = {
   fontSize: 12,
+  fontFamily: '"Segoe UI", Arial, sans-serif',
   fontWeight: 'normal',
   fontStyle: 'normal',
   textDecoration: 'none',
