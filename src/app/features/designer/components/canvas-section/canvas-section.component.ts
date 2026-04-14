@@ -197,8 +197,8 @@ export class CanvasSectionComponent {
     this.templateService.updateSectionRepeatOnPage(this.section.id, checked);
   }
 
-  onCanvasClick(): void {
-    this.elementSelect.emit('');
+  onCanvasClick(event: MouseEvent): void {
+    this.templateService.selectElement(null);
   }
 
   onPositionChange(id: string, pos: { x: number; y: number }): void {

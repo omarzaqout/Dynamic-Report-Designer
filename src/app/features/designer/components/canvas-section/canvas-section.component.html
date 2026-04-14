@@ -1,4 +1,4 @@
-<div class="section-wrapper" [class]="'section-type-' + section.type">
+<div class="section-wrapper" [class]="'section-type-' + section.type" (click)="onCanvasClick($event)">
       <div class="section-label-bar">
         <span class="section-badge" [class]="'badge-' + section.type">{{ section.type }}</span>
         <span class="section-title">{{ section.label }}</span>
@@ -25,7 +25,7 @@
           </label>
         }
         <div class="section-actions">
-          <button class="delete-section-btn" (click)="sectionDelete.emit(section.id)" title="Delete section">&#10005;</button>
+          <button class="delete-section-btn" (click)="sectionDelete.emit(section.id); $event.stopPropagation()" title="Delete section">&#10005;</button>
           <button class="resize-btn" (mousedown)="startResize($event)" title="Drag to resize section">&#8597;</button>
         </div>
       </div>

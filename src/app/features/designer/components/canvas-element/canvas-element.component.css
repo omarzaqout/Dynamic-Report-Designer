@@ -73,6 +73,12 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       vertical-align: top;
+      transition: background 0.1s;
+      position: relative;
+    }
+    .el-table td.cell-drag-over {
+      background: rgba(59, 130, 246, 0.2) !important;
+      border: 1px solid #3b82f6 !important;
     }
     .table-grid-resizers { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
     .table-col-resizer {
@@ -106,5 +112,20 @@
     .inline-edit {
       border: 1px solid #3b82f6; outline: none; padding: 0; margin: 0; background: transparent;
       font: inherit; color: inherit; resize: both; min-width: 100px; line-height: inherit;
+    }
+    .cell-edit-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 2px solid #3b82f6;
+      border-radius: 0;
+      padding: 4px 6px;
+      font: inherit;
+      color: inherit;
+      background: #fff;
+      outline: none;
+      box-sizing: border-box;
+      z-index: 10;
     }
   

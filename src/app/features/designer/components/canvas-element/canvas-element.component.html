@@ -43,7 +43,25 @@
               @for (rowIndex of tableRowIndexes(); track rowIndex) {
                 <tr [style.height.px]="rowHeight(rowIndex)">
                   @for (colIndex of visibleColumnIndexes(); track colIndex) {
-                    <td [style.width.px]="columnWidth(colIndex)">{{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}</td>
+                    <td 
+                      [style.width.px]="columnWidth(colIndex)"
+                      (dragover)="onCellDragOver($event, rowIndex, colIndex)"
+                      (dragleave)="onCellDragLeave($event, rowIndex, colIndex)"
+                      (drop)="onCellDrop($event, rowIndex, colIndex)"
+                      (dblclick)="onCellDblClick($event, rowIndex, colIndex)"
+                      [class.cell-drag-over]="activeCellDrop()?.row === rowIndex && activeCellDrop()?.col === colIndex"
+                    >
+                      @if (editingCell?.row === rowIndex && editingCell?.col === colIndex) {
+                        <input
+                          class="cell-edit-input"
+                          [value]="getTableRows()[rowIndex][colIndex].content || ''"
+                          (blur)="onCellEditBlur($event, rowIndex, colIndex)"
+                          (keydown)="onCellEditKeyDown($event)"
+                        />
+                      } @else {
+                        {{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}
+                      }
+                    </td>
                   }
                 </tr>
               }

@@ -76,12 +76,14 @@ export class CanvasComponent {
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent): void {
     const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((event.target as HTMLElement)?.tagName);
-    if (isInput) return;
-
     const key = event.key.toLowerCase();
     if (key === 'escape') {
       this.templateService.selectElement(null);
+      if (isInput) (event.target as HTMLElement).blur();
+      return;
     }
+    
+    if (isInput) return;
     if (key === 'delete' || key === 'backspace') {
       this.templateService.deleteSelectedElements();
     }
@@ -89,15 +91,12 @@ export class CanvasComponent {
     if (event.ctrlKey || event.metaKey) {
       if (key === 'c') {
         event.preventDefault();
-        event.stopPropagation();
         this.templateService.copySelectedElements();
       } else if (key === 'v') {
         event.preventDefault();
-        event.stopPropagation();
         this.templateService.pasteElements();
       } else if (key === 'd') {
         event.preventDefault();
-        event.stopPropagation();
         this.templateService.duplicateSelectedElements();
       } else if (key === 'z') {
         event.preventDefault();

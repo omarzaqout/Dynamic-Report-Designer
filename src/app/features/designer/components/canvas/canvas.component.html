@@ -24,7 +24,7 @@
       </div>
 
       <div class="report-canvas" (click)="deselect()">
-        <div class="page-frame" (click)="$event.stopPropagation()">
+        <div class="page-frame">
           @for (section of template().sections; track section.id) {
             <app-canvas-section
               [section]="section"

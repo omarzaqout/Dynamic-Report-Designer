@@ -1,12 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { ReportTemplate, TemplateSection, TemplateElement, SectionType, DEFAULT_STYLE } from '../models/template.model';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { ReportTemplate, TemplateSection, TemplateElement, DEFAULT_STYLE, SectionType, TableData } from '../models/template.model';
 
 const INITIAL_TEMPLATE: ReportTemplate = {
-  id: 'report-1',
-  name: 'Employee Report',
+  id: 'temp-1',
+  name: 'Monthly Employee Report',
   sections: [
     {
-      id: 'section-reportHeader-1',
+      id: 'section-rh-1',
       type: 'reportHeader',
       label: 'Report Header',
       height: 80,
@@ -22,13 +22,12 @@ const INITIAL_TEMPLATE: ReportTemplate = {
       ],
     },
     {
-      id: 'section-pageHeader-1',
+      id: 'section-ph-1',
       type: 'pageHeader',
       label: 'Page Header',
       height: 40,
       repeatPerRow: false,
-      elements: [
-      ],
+      elements: [],
     },
     {
       id: 'section-details-1',
@@ -42,15 +41,15 @@ const INITIAL_TEMPLATE: ReportTemplate = {
       id: 'section-footer-1',
       type: 'footer',
       label: 'Footer',
-      height: 50,
+      height: 40,
       repeatPerRow: false,
       elements: [
         {
-          id: 'el-footer',
+          id: 'el-f-date',
           type: 'text',
-          content: 'Generated on {{new Date().toLocaleDateString()}} — Total Records: 5',
-          position: { x: 20, y: 16 },
-          style: { ...DEFAULT_STYLE, fontSize: 10, color: '#888', fontStyle: 'italic' },
+          content: 'Printed on: ' + new Date().toLocaleDateString(),
+          position: { x: 20, y: 15 },
+          style: { ...DEFAULT_STYLE, fontSize: 10, color: '#999' },
         },
       ],
     },
@@ -59,26 +58,17 @@ const INITIAL_TEMPLATE: ReportTemplate = {
 
 @Injectable({ providedIn: 'root' })
 export class TemplateService {
-  private _template = signal<ReportTemplate>(structuredClone(INITIAL_TEMPLATE));
-  private _selectedElementIds = signal<string[]>([]);
-  private _clipboardElements = signal<TemplateElement[]>([]);
-  
-  private _history: ReportTemplate[] = [];
-  private _redoStack: ReportTemplate[] = [];
-  private _isHistoryNavigating = false;
-
+  private _template = signal<ReportTemplate>(INITIAL_TEMPLATE);
   readonly template = this._template.asReadonly();
-  readonly selectedElementIds = this._selectedElementIds.asReadonly();
 
-  constructor() {
-    this.loadFromStorage();
-  }
+  private _selectedElementIds = signal<string[]>([]);
+  readonly selectedElementIds = this._selectedElementIds.asReadonly();
 
   readonly selectedElementId = computed(() => {
     const ids = this._selectedElementIds();
     return ids.length === 1 ? ids[0] : null;
   });
-  
+
   readonly selectedElement = computed(() => {
     const id = this.selectedElementId();
     if (!id) return null;
@@ -89,57 +79,58 @@ export class TemplateService {
     return null;
   });
 
-  readonly selectedElementSection = computed<SectionType | null>(() => {
+  readonly selectedElementSection = computed(() => {
     const id = this.selectedElementId();
     if (!id) return null;
-    for (const section of this._template().sections) {
-      if (section.elements.some((e) => e.id === id)) return section.type;
-    }
-    return null;
+    return this._template().sections.find((s) => s.elements.some((e) => e.id === id)) || null;
   });
 
-  private pushToHistory(): void {
-    if (this._isHistoryNavigating) return;
-    const current = structuredClone(this._template());
-    this._history.push(current);
-    if (this._history.length > 50) this._history.shift();
-    this._redoStack = []; 
-    this.saveToStorage();
-  }
+  private history: string[] = [];
+  private historyIndex = -1;
+  private readonly STORAGE_KEY = 'report_template_draft';
 
-  undo(): void {
-    if (this._history.length === 0) return;
-    this._isHistoryNavigating = true;
-    const currentSnapshot = structuredClone(this._template());
-    this._redoStack.push(currentSnapshot);
-    const prev = this._history.pop()!;
-    this._template.set(prev);
-    this._isHistoryNavigating = false;
-  }
-
-  redo(): void {
-    if (this._redoStack.length === 0) return;
-    this._isHistoryNavigating = true;
-    const currentSnapshot = structuredClone(this._template());
-    this._history.push(currentSnapshot);
-    const next = this._redoStack.pop()!;
-    this._template.set(next);
-    this._isHistoryNavigating = false;
-  }
-
-  private saveToStorage(): void {
-    localStorage.setItem('report_template_draft', JSON.stringify(this._template()));
-  }
-
-  private loadFromStorage(): void {
-    const saved = localStorage.getItem('report_template_draft');
+  constructor() {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
     if (saved) {
       try {
         this._template.set(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to load template from storage', e);
+        console.error('Failed to parse saved template', e);
       }
     }
+    this.pushToHistory();
+  }
+
+  private pushToHistory(): void {
+    const currentState = JSON.stringify(this._template());
+    if (this.historyIndex >= 0 && this.history[this.historyIndex] === currentState) return;
+
+    this.history = this.history.slice(0, this.historyIndex + 1);
+    this.history.push(currentState);
+    if (this.history.length > 50) this.history.shift();
+    else this.historyIndex++;
+
+    localStorage.setItem(this.STORAGE_KEY, currentState);
+  }
+
+  undo(): void {
+    if (this.historyIndex > 0) {
+      this.historyIndex--;
+      this._template.set(JSON.parse(this.history[this.historyIndex]));
+    }
+  }
+
+  redo(): void {
+    if (this.historyIndex < this.history.length - 1) {
+      this.historyIndex++;
+      this._template.set(JSON.parse(this.history[this.historyIndex]));
+    }
+  }
+
+  resetTemplate(): void {
+    this._template.set(INITIAL_TEMPLATE);
+    this._selectedElementIds.set([]);
+    this.pushToHistory();
   }
 
   exportAsJson(): void {
@@ -148,98 +139,96 @@ export class TemplateService {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${this._template().name || 'report'}.json`;
+    a.download = `report-template-${new Date().getTime()}.json`;
     a.click();
     window.URL.revokeObjectURL(url);
   }
 
-  selectElement(id: string | null, multi: boolean = false): void {
+  selectElement(id: string | null, append = false): void {
     if (!id) {
       this._selectedElementIds.set([]);
       return;
     }
-    this._selectedElementIds.update(ids => {
-      if (multi) {
-        return ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
+    if (append) {
+      const current = this._selectedElementIds();
+      if (current.includes(id)) {
+        this._selectedElementIds.set(current.filter((i) => i !== id));
+      } else {
+        this._selectedElementIds.set([...current, id]);
       }
-      return [id];
-    });
+    } else {
+      this._selectedElementIds.set([id]);
+    }
   }
 
-  selectElements(ids: string[], append: boolean = false): void {
-    this._selectedElementIds.update(existing => {
-      if (append) {
-        const unique = new Set([...existing, ...ids]);
-        return Array.from(unique);
-      }
-      return ids;
-    });
+  selectElements(ids: string[], append = false): void {
+    if (append) {
+      const current = this._selectedElementIds();
+      const next = new Set([...current, ...ids]);
+      this._selectedElementIds.set(Array.from(next));
+    } else {
+      this._selectedElementIds.set(ids);
+    }
   }
 
   deleteSelectedElements(): void {
     const ids = this._selectedElementIds();
-    if (!ids.length) return;
-    this.pushToHistory();
-    this._template.update((t) => {
-      const sections = t.sections.map((s) => ({
+    if (ids.length === 0) return;
+
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.map((s) => ({
         ...s,
         elements: s.elements.filter((el) => !ids.includes(el.id)),
-      }));
-      return { ...t, sections };
-    });
+      })),
+    }));
     this._selectedElementIds.set([]);
+    this.pushToHistory();
   }
+
+  private clipboard: any[] = [];
 
   copySelectedElements(): void {
     const ids = this._selectedElementIds();
-    if (!ids.length) return;
-    const copied: TemplateElement[] = [];
-    this._template().sections.forEach(s => {
-      s.elements.forEach(el => {
+    if (ids.length === 0) return;
+
+    this.clipboard = [];
+    this._template().sections.forEach((s) => {
+      s.elements.forEach((el) => {
         if (ids.includes(el.id)) {
-          try {
-            copied.push(JSON.parse(JSON.stringify(el)));
-          } catch(e) {
-            console.error('Failed to copy', e);
-          }
+          this.clipboard.push({ ...el, sectionId: s.id });
         }
       });
     });
-    this._clipboardElements.set(copied);
   }
 
   pasteElements(): void {
-    const copied = this._clipboardElements();
-    if (!copied.length) return;
-    
-    let targetSectionId = this._template().sections[0]?.id;
-    const ids = this._selectedElementIds();
-    if (ids.length > 0) {
-      const sec = this._template().sections.find(s => s.elements.some(e => ids.includes(e.id)));
-      if (sec) targetSectionId = sec.id;
-    }
+    if (this.clipboard.length === 0) return;
 
-    if (!targetSectionId) return;
-
-    this.pushToHistory();
     const newIds: string[] = [];
-    this._template.update(t => {
-      const sections = t.sections.map(s => {
-        if (s.id !== targetSectionId) return s;
-        const newElements = copied.map(el => {
-          const newId = `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.map((s) => {
+        const toPaste = this.clipboard.filter((c) => c.sectionId === s.id);
+        if (toPaste.length === 0) return s;
+
+        const pasted = toPaste.map((c) => {
+          const newId = 'el-' + Math.random().toString(36).substr(2, 9);
           newIds.push(newId);
           return {
-            ...el,
+            ...c,
             id: newId,
-            position: { x: el.position.x + 20, y: el.position.y + 20 }
+            position: { x: c.position.x + 20, y: c.position.y + 20 },
+            sectionId: undefined,
           };
         });
-        return { ...s, elements: [...s.elements, ...newElements] };
-      });
-      return { ...t, sections };
-    });
+
+        return { ...s, elements: [...s.elements, ...pasted] };
+      }),
+    }));
+
     this._selectedElementIds.set(newIds);
+    this.pushToHistory();
   }
 
   duplicateSelectedElements(): void {
@@ -248,107 +237,153 @@ export class TemplateService {
   }
 
   addElement(sectionId: string, element: Omit<TemplateElement, 'id'>): void {
-    this.pushToHistory();
-    const id = `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const newElement: TemplateElement = {
+      ...element,
+      id: 'el-' + Math.random().toString(36).substring(2, 11),
+    };
+
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) =>
-        s.id === sectionId
-          ? { ...s, elements: [...s.elements, { ...element, id }] }
-          : s
+        s.id === sectionId ? { ...s, elements: [...s.elements, newElement] } : s
       ),
     }));
-    this._selectedElementIds.set([id]);
+    this.pushToHistory();
+    this.selectElement(newElement.id);
   }
 
-  updateElement(id: string, patch: Partial<Omit<TemplateElement, 'id'>>): void {
+  removeElement(elementId: string): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.map((s) => ({
+        ...s,
+        elements: s.elements.filter((el) => el.id !== elementId),
+      })),
+    }));
     this.pushToHistory();
+  }
+
+  updateElement(id: string, partial: Partial<TemplateElement>): void {
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) => ({
         ...s,
         elements: s.elements.map((el) =>
-          el.id === id ? { ...el, ...patch, style: patch.style ? { ...el.style, ...patch.style } : el.style } : el
+          el.id === id ? { ...el, ...partial } : el
         ),
       })),
     }));
+    this.pushToHistory();
   }
 
-  updateElementPosition(id: string, x: number, y: number): void {
-    const selectedIds = this._selectedElementIds();
-    
-    if (selectedIds.includes(id) && selectedIds.length > 1) {
-      // Logic for group move delta is handled via moveSelectedElements called from component
-      this._updateSingleElementPosition(id, x, y);
-    } else {
-      this._updateSingleElementPosition(id, x, y);
-    }
+  updateElementPosition(elementId: string, x: number, y: number): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.map((s) => ({
+        ...s,
+        elements: s.elements.map((el) =>
+          el.id === elementId ? { ...el, position: { x, y } } : el
+        ),
+      })),
+    }));
+    // We don't push to history on every move to avoid filling history with drag steps
+    // CanvasElement calls pushToHistory on mouseup if needed
   }
 
   moveSelectedElements(dx: number, dy: number): void {
     const ids = this._selectedElementIds();
-    if (!ids.length) return;
-    // We don't push to history on every mouse move frame, maybe on dragEnd?
-    // For now we do it here but it will bloat history. 
-    // Optimization: only push on dragStart or dragEnd.
-    this._template.update(t => {
-      const sections = t.sections.map(s => ({
-        ...s,
-        elements: s.elements.map(el => {
-          if (!ids.includes(el.id)) return el;
-          return {
-            ...el,
-            position: {
-              x: Math.max(0, el.position.x + dx),
-              y: Math.max(0, el.position.y + dy)
-            }
-          };
-        })
-      }));
-      return { ...t, sections };
-    });
-  }
+    if (ids.length === 0) return;
 
-  private _updateSingleElementPosition(id: string, x: number, y: number): void {
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) => ({
         ...s,
         elements: s.elements.map((el) =>
-          el.id === id ? { ...el, position: { x: Math.max(0, x), y: Math.max(0, y) } } : el
+          ids.includes(el.id)
+            ? {
+                ...el,
+                position: { x: el.position.x + dx, y: el.position.y + dy },
+              }
+            : el
         ),
       })),
     }));
   }
 
-  removeElement(id: string): void {
-    this.pushToHistory();
+  updateElementStyle(elementId: string, style: any): void {
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) => ({
         ...s,
-        elements: s.elements.filter((el) => el.id !== id),
+        elements: s.elements.map((el) =>
+          el.id === elementId ? { ...el, style: { ...el.style, ...style } } : el
+        ),
       })),
     }));
-    this._selectedElementIds.update(ids => ids.filter(i => i !== id));
+    this.pushToHistory();
   }
 
-  removeSection(id: string): void {
-    this.pushToHistory();
+  updateElementSize(elementId: string, width: number, height: number): void {
     this._template.update((t) => ({
       ...t,
-      sections: t.sections.filter((s) => s.id !== id),
+      sections: t.sections.map((s) => ({
+        ...s,
+        elements: s.elements.map((el) =>
+          el.id === elementId ? { ...el, size: { width, height } } : el
+        ),
+      })),
     }));
+    this.pushToHistory();
+  }
+
+  updateTableData(elementId: string, table: TableData): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.map((s) => ({
+        ...s,
+        elements: s.elements.map((el) =>
+          el.id === elementId ? { ...el, table } : el
+        ),
+      })),
+    }));
+    this.pushToHistory();
+  }
+
+  updateTableCell(elementId: string, row: number, col: number, data: { content: string; fieldPath: string }): void {
+    this._template.update(t => {
+      const newSections = t.sections.map(s => ({
+        ...s,
+        elements: s.elements.map(el => {
+          if (el.id === elementId && el.table) {
+            const newCells = el.table.cells.map((cellsRow, rIdx) => 
+               rIdx === row ? cellsRow.map((cell, cIdx) => cIdx === col ? { ...cell, ...data } : cell) : cellsRow
+            );
+            return { ...el, table: { ...el.table, cells: newCells } };
+          }
+          return el;
+        })
+      }));
+      return { ...t, sections: newSections };
+    });
+    this.pushToHistory();
   }
 
   updateSectionHeight(sectionId: string, height: number): void {
-    this.pushToHistory();
     this._template.update((t) => ({
       ...t,
       sections: t.sections.map((s) =>
-        s.id === sectionId ? { ...s, height: Math.max(30, height) } : s
+        s.id === sectionId ? { ...s, height } : s
       ),
     }));
+    this.pushToHistory();
+  }
+
+  removeSection(sectionId: string): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: t.sections.filter((s) => s.id !== sectionId),
+    }));
+    this.pushToHistory();
   }
 
   updateSectionRepeat(sectionId: string, repeatPerRow: boolean): void {
@@ -368,58 +403,19 @@ export class TemplateService {
   }
 
   addSection(type: SectionType): void {
-    this.pushToHistory();
-    const typeCount = this._template().sections.filter((s) => s.type === type).length;
-    const index = typeCount + 1;
-    const id = `section-${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    
-    const labelMap: Record<SectionType, string> = {
-      reportHeader: 'Report Header',
-      pageHeader: 'Page Header',
-      details: 'Details',
-      footer: 'Footer'
-    };
-    
-    const baseLabel = labelMap[type];
     const newSection: TemplateSection = {
-      id,
+      id: 'section-' + Math.random().toString(36).substring(2, 11),
       type,
-      label: index === 1 ? baseLabel : `${baseLabel} ${index}`,
-      height: 80,
+      label: type.charAt(0).toUpperCase() + type.slice(1),
+      height: 100,
       repeatPerRow: type === 'details',
       elements: [],
     };
 
-    this._template.update((t) => {
-      const sections = [...t.sections];
-      let insertIndex = sections.length;
-      
-      if (type === 'reportHeader') {
-        const lastIdx = sections.map(s => s.type).lastIndexOf('reportHeader');
-        insertIndex = lastIdx !== -1 ? lastIdx + 1 : 0;
-      } else if (type === 'pageHeader') {
-        const lastSame = sections.map(s => s.type).lastIndexOf('pageHeader');
-        if (lastSame !== -1) {
-          insertIndex = lastSame + 1;
-        } else {
-          const lastPrev = sections.map(s => s.type).lastIndexOf('reportHeader');
-          insertIndex = lastPrev !== -1 ? lastPrev + 1 : 0;
-        }
-      } else if (type === 'details') {
-        const footerIndex = sections.findIndex(s => s.type === 'footer');
-        insertIndex = footerIndex !== -1 ? footerIndex : sections.length;
-      } else if (type === 'footer') {
-        insertIndex = sections.length;
-      }
-      
-      sections.splice(insertIndex, 0, newSection);
-      return { ...t, sections };
-    });
-  }
-
-  resetTemplate(): void {
+    this._template.update((t) => ({
+      ...t,
+      sections: [...t.sections, newSection],
+    }));
     this.pushToHistory();
-    this._template.set(structuredClone(INITIAL_TEMPLATE));
-    this._selectedElementIds.set([]);
   }
 }

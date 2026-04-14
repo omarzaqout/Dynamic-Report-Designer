@@ -38,13 +38,14 @@ export class RightPanelComponent {
   readonly leafFields = computed(() => this.flattenLeafFields(this.fields()));
   readonly sectionLabel = computed(() => {
     const s = this.templateService.selectedElementSection();
+    if (!s) return '';
     const map: Record<string, string> = {
       reportHeader: 'Report Header',
       pageHeader: 'Page Header',
       details: 'Details',
       footer: 'Footer',
     };
-    return s ? (map[s] ?? s) : '';
+    return map[s.type] ?? s.type;
   });
 
   onContentChange(event: Event): void {
@@ -185,6 +186,10 @@ export class RightPanelComponent {
     const value = (event.target as HTMLSelectElement).value;
     this.updateTable((table) => {
       table.cells[row][col].fieldPath = value || undefined;
+      // Also update content to match the field for consistent preview
+      if (value) {
+        table.cells[row][col].content = `{{${value}}}`;
+      }
       return table;
     });
   }

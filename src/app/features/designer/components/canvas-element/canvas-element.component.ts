@@ -1,5 +1,5 @@
 import {
-  Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy, inject
+  Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy, inject, signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableCell, TableData, TemplateElement } from '../../../../core/models/template.model';
@@ -17,7 +17,15 @@ type ResizeMode = 'none' | 'element' | 'table-col' | 'table-row' | 'table-bounds
 })
 export class CanvasElementComponent implements OnInit, OnDestroy {
   @Input({ required: true }) element!: TemplateElement;
-  @Input() selected = false;
+  @Input() set selected(val: boolean) {
+    this._selected = val;
+    if (!val) {
+      this.isEditingInline = false;
+      this.editingCell = null;
+    }
+  }
+  get selected(): boolean { return this._selected; }
+  private _selected = false;
   @Output() positionChange = new EventEmitter<{ x: number; y: number }>();
   @Output() select = new EventEmitter<string>();
   @Output() delete = new EventEmitter<string>();
@@ -28,6 +36,8 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   private templateService = inject(TemplateService);
 
   isEditingInline = false;
+  editingCell: { row: number; col: number } | null = null;
+  readonly activeCellDrop = signal<{ row: number; col: number } | null>(null);
   private isDragging = false;
   private resizeMode: ResizeMode = 'none';
   private startMouseX = 0;
@@ -356,5 +366,83 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     };
     const next = mutator(cloned);
     this.templateService.updateElement(this.element.id, { table: next });
+  }
+
+  onCellDragOver(event: DragEvent, row: number, col: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.activeCellDrop.set({ row, col });
+  }
+
+  onCellDragLeave(event: DragEvent, _row: number, _col: number): void {
+    event.stopPropagation();
+    this.activeCellDrop.set(null);
+  }
+
+  onCellDrop(event: DragEvent, row: number, col: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.activeCellDrop.set(null);
+    
+    // Check for flat field key first (used by LeftPanel)
+    const fieldPath = event.dataTransfer?.getData('application/field-key');
+    if (fieldPath) {
+      this.templateService.updateTableCell(this.element.id, row, col, {
+        content: `{{${fieldPath}}}`,
+        fieldPath: fieldPath
+      });
+      return;
+    }
+
+    // Fallback for JSON format if used elsewhere
+    const dataJson = event.dataTransfer?.getData('application/json');
+    if (dataJson) {
+      try {
+        const data = JSON.parse(dataJson);
+        if (data.type === 'field' && data.field) {
+          this.templateService.updateTableCell(this.element.id, row, col, {
+            content: `{{${data.field.path}}}`,
+            fieldPath: data.field.path
+          });
+        }
+      } catch (e) {
+        console.error('Error dropping on table cell', e);
+      }
+    }
+  }
+
+  onCellDblClick(event: MouseEvent, row: number, col: number): void {
+    event.stopPropagation();
+    this.editingCell = { row, col };
+    setTimeout(() => {
+      const input = this.elRef.nativeElement.querySelector('.cell-edit-input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    });
+  }
+
+  onCellEditBlur(event: Event, row: number, col: number): void {
+    this.editingCell = null;
+    const value = (event.target as HTMLInputElement).value;
+    
+    // Check if the user manually typed or kept a field expression
+    let fieldPath = '';
+    const fieldMatch = value.match(/^{{(.+)}}$/);
+    if (fieldMatch) {
+      fieldPath = fieldMatch[1].trim();
+    }
+
+    this.templateService.updateTableCell(this.element.id, row, col, {
+      content: value,
+      fieldPath: fieldPath
+    });
+  }
+
+  onCellEditKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      (event.target as HTMLInputElement).blur();
+    }
   }
 }
