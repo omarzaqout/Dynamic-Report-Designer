@@ -29,6 +29,7 @@ export interface TableData {
   columnSettings: TableColumnSetting[];
   dynamicRows?: boolean;
   fullWidth?: boolean;
+  previousWidths?: number[];
 }
 
 export interface TemplateElement {

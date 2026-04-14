@@ -256,6 +256,31 @@ export class RightPanelComponent {
   onTableFullWidthChange(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     this.updateTable((table) => {
+      if (checked) {
+        // Store original widths before scaling
+        table.previousWidths = table.columnSettings.map(c => c.width);
+
+        const visibleCols = table.columnSettings.filter(c => c.visible);
+        const currentTotal = visibleCols.reduce((sum, c) => sum + c.width, 0);
+        const targetWidth = 790;
+        
+        if (currentTotal > 0 && currentTotal < targetWidth) {
+          const ratio = targetWidth / currentTotal;
+          table.columnSettings.forEach(c => {
+            if (c.visible) {
+              c.width = Math.round(c.width * ratio);
+            }
+          });
+        }
+      } else if (table.previousWidths) {
+        // Restore previous widths when fullWidth is unchecked
+        table.columnSettings.forEach((c, idx) => {
+          if (table.previousWidths && table.previousWidths[idx] !== undefined) {
+            c.width = table.previousWidths[idx];
+          }
+        });
+        table.previousWidths = undefined;
+      }
       table.fullWidth = checked;
       return table;
     });
