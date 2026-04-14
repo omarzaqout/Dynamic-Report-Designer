@@ -21,6 +21,7 @@ export interface RenderedSection {
   rowData?: ReportData;
   height: number;
   isDetail: boolean;
+  templateSection?: TemplateSection;
 }
 
 export interface RenderedReport {
@@ -73,6 +74,7 @@ export class RenderService {
       rowData: isDetail ? row : undefined,
       height: section.height,
       isDetail,
+      templateSection: section,
     };
   }
 

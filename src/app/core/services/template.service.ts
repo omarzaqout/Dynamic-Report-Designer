@@ -352,13 +352,19 @@ export class TemplateService {
   }
 
   updateSectionRepeat(sectionId: string, repeatPerRow: boolean): void {
-    this.pushToHistory();
-    this._template.update((t) => ({
+    this._template.update(t => ({
       ...t,
-      sections: t.sections.map((s) =>
-        s.id === sectionId ? { ...s, repeatPerRow } : s
-      ),
+      sections: t.sections.map(s => s.id === sectionId ? { ...s, repeatPerRow } : s)
     }));
+    this.pushToHistory();
+  }
+
+  updateSectionRepeatOnPage(sectionId: string, repeatOnEveryPage: boolean): void {
+    this._template.update(t => ({
+      ...t,
+      sections: t.sections.map(s => s.id === sectionId ? { ...s, repeatOnEveryPage } : s)
+    }));
+    this.pushToHistory();
   }
 
   addSection(type: SectionType): void {

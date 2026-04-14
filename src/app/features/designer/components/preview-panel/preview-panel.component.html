@@ -17,74 +17,104 @@
   </div>
 
   <div class="preview-scroll">
-    <div class="preview-page">
-      @for (section of renderedReport().sections; track $index) {
-        <div
-          class="preview-section"
-          [class]="'ps-' + section.sectionType"
-          [style.min-height.px]="section.height"
-        >
-          @if (section.elements.length === 0) {
-            <div class="empty-section">{{ section.label }} — no content</div>
-          } @else {
-            <div class="section-body" [style.position]="'relative'" [style.min-height.px]="getSectionHeight(section)">
-              @for (el of section.elements; track el.id) {
-                <div
-                  class="preview-el"
-                  [style.left.px]="el.x"
-                  [style.top.px]="el.y"
-                  [style.fontSize.px]="el.style.fontSize"
-                  [style.fontFamily]="el.style.fontFamily"
-                  [style.fontWeight]="el.style.fontWeight"
-                  [style.fontStyle]="el.style.fontStyle"
-                  [style.textDecoration]="el.style.textDecoration"
-                  [style.color]="el.style.color"
-                  [class.is-image]="el.type === 'image'"
-                  [class.is-table]="el.type === 'table'"
-                >
-                  @if (el.type === 'table' && el.table) {
-                    <div
-                      class="preview-table-wrap"
-                      [style.width.px]="tableWidth(el.table)"
-                      [style.height.px]="tableHeight(el.table)"
-                    >
-                      <table class="preview-table">
-                        <tbody>
-                          @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
-                            <tr [style.height.px]="rowHeight(el.table, rowIndex)">
-                              @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
-                                <td [style.width.px]="columnWidth(el.table, colIndex)">
-                                  {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
-                                </td>
-                              }
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
-                    </div>
-                  } @else if (el.type === 'image') {
-                    @if (el.imageUrl) {
-                      <img
-                        [src]="el.imageUrl"
-                        [style.display]="'block'"
-                        [style.width.px]="el.size?.width"
-                        [style.height.px]="el.size?.height"
-                        [style.maxWidth.px]="el.size ? null : 250"
-                        [style.maxHeight.px]="el.size ? null : 250"
-                      />
-                    }
-                  } @else {
-                    {{ el.content }}
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
-        @if (section.isDetail && !isLastDetail($index)) {
-          <div class="row-divider"></div>
-        }
-      }
-    </div>
+    <!-- Main wrapper table for print repetition -->
+    <table class="print-layout-table">
+      <thead class="print-header-repeater">
+        <tr>
+          <td>
+            @for (section of repeatingSections(); track $index) {
+              <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            }
+          </td>
+        </tr>
+      </thead>
+      <tbody class="print-body-content">
+        <tr>
+          <td>
+            @for (section of mainSections(); track $index) {
+              <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            }
+          </td>
+        </tr>
+      </tbody>
+
+      <tfoot class="print-footer-repeater">
+        <tr>
+          <td>
+            @for (section of repeatingFooters(); track $index) {
+              <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            }
+          </td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
 </div>
+
+<ng-template #sectionTpl let-section let-index="index">
+  <div
+    class="preview-section"
+    [class]="'ps-' + section.sectionType"
+    [style.min-height.px]="section.height"
+  >
+    @if (section.elements.length === 0) {
+      <div class="empty-section">{{ section.label }} — no content</div>
+    } @else {
+      <div class="section-body" [style.position]="'relative'" [style.min-height.px]="getSectionHeight(section)">
+        @for (el of section.elements; track el.id) {
+          <div
+            class="preview-el"
+            [style.left.px]="el.x"
+            [style.top.px]="el.y"
+            [style.fontSize.px]="el.style.fontSize"
+            [style.fontFamily]="el.style.fontFamily"
+            [style.fontWeight]="el.style.fontWeight"
+            [style.fontStyle]="el.style.fontStyle"
+            [style.textDecoration]="el.style.textDecoration"
+            [style.color]="el.style.color"
+            [class.is-image]="el.type === 'image'"
+            [class.is-table]="el.type === 'table'"
+          >
+            @if (el.type === 'table' && el.table) {
+              <div
+                class="preview-table-wrap"
+                [style.width.px]="tableWidth(el.table)"
+                [style.height.px]="tableHeight(el.table)"
+              >
+                <table class="preview-table">
+                  <tbody>
+                    @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
+                      <tr [style.height.px]="rowHeight(el.table, rowIndex)">
+                        @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
+                          <td [style.width.px]="columnWidth(el.table, colIndex)">
+                            {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (el.type === 'image') {
+              @if (el.imageUrl) {
+                <img
+                  [src]="el.imageUrl"
+                  [style.display]="'block'"
+                  [style.width.px]="el.size?.width"
+                  [style.height.px]="el.size?.height"
+                  [style.maxWidth.px]="el.size ? null : 250"
+                  [style.maxHeight.px]="el.size ? null : 250"
+                />
+              }
+            } @else {
+              {{ el.content }}
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+  @if (section.isDetail && !isLastDetail(index)) {
+    <div class="row-divider"></div>
+  }
+</ng-template>

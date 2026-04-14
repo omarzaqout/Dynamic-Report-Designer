@@ -2,6 +2,17 @@
       <div class="section-label-bar">
         <span class="section-badge" [class]="'badge-' + section.type">{{ section.type }}</span>
         <span class="section-title">{{ section.label }}</span>
+        @if (section.type === 'pageHeader' || section.type === 'reportHeader' || section.type === 'footer') {
+          <label class="repeat-toggle" title="Repeat this section on every printed page">
+            <input
+              type="checkbox"
+              [checked]="section.repeatOnEveryPage"
+              (change)="onRepeatOnPageChange($event)"
+              (click)="$event.stopPropagation()"
+            />
+            <span>repeat on pages</span>
+          </label>
+        }
         @if (section.type === 'details') {
           <label class="repeat-toggle" title="Repeat this section for each data row">
             <input

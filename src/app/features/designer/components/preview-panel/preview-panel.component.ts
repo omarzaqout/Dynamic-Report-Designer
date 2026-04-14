@@ -30,6 +30,18 @@ export class PreviewPanelComponent implements OnInit {
 
   readonly renderedSectionCount = computed(() => this.renderedReport().sections.length);
 
+  readonly repeatingSections = computed(() => 
+    this.renderedReport().sections.filter(s => s.templateSection?.repeatOnEveryPage && s.sectionType !== 'footer')
+  );
+
+  readonly repeatingFooters = computed(() => 
+    this.renderedReport().sections.filter(s => s.templateSection?.repeatOnEveryPage && s.sectionType === 'footer')
+  );
+
+  readonly mainSections = computed(() => 
+    this.renderedReport().sections.filter(s => !s.templateSection?.repeatOnEveryPage)
+  );
+
   ngOnInit(): void {}
 
   print(): void {

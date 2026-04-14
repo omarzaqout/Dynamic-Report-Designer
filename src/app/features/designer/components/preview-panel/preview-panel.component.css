@@ -54,14 +54,18 @@
     }
     .preview-scroll::-webkit-scrollbar { width: 8px; }
     .preview-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    .preview-page {
+    
+    .print-layout-table {
       width: 794px;
       margin: 0 auto;
       background: #fff;
       box-shadow: 0 4px 24px rgba(0,0,0,0.1);
       border-radius: 3px;
-      overflow: hidden;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
+    .print-layout-table td { padding: 0; vertical-align: top; }
+
     .preview-section {
       border-bottom: 1px solid #f1f5f9;
       position: relative;
@@ -126,14 +130,22 @@
       .preview-toolbar, .stat, .live-badge, .row-divider, .empty-section, .print-btn {
         display: none !important;
       }
-      .preview-page {
+      .print-layout-table {
         box-shadow: none !important;
         margin: 0 !important;
         width: 100% !important;
         border: none !important;
         background: white !important;
-        overflow: visible !important;
-        display: block !important;
+        display: table !important;
+      }
+      thead.print-header-repeater {
+        display: table-header-group !important;
+      }
+      tbody.print-body-content {
+        display: table-row-group !important;
+      }
+      tfoot.print-footer-repeater {
+        display: table-footer-group !important;
       }
       .preview-section {
         border-left: none !important;
@@ -142,11 +154,10 @@
         page-break-inside: avoid;
         display: block !important;
         width: 100% !important;
-        position: relative !important;
-        overflow: visible !important;
       }
       .section-body {
         overflow: visible !important;
+        height: auto !important;
         display: block !important;
       }
       .preview-table-wrap, .preview-table {

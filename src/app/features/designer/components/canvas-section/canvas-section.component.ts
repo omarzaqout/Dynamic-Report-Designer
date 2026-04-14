@@ -192,6 +192,11 @@ export class CanvasSectionComponent {
     this.sectionRepeatChange.emit({ sectionId: this.section.id, repeatPerRow: checked });
   }
 
+  onRepeatOnPageChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.templateService.updateSectionRepeatOnPage(this.section.id, checked);
+  }
+
   onCanvasClick(): void {
     this.elementSelect.emit('');
   }

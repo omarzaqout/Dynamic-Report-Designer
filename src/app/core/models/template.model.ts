@@ -49,6 +49,7 @@ export interface TemplateSection {
   elements: TemplateElement[];
   height: number;
   repeatPerRow: boolean;
+  repeatOnEveryPage?: boolean;
 }
 
 export interface ReportTemplate {
