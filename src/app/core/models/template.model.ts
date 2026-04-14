@@ -7,6 +7,7 @@ export interface ElementStyle {
   fontStyle: 'normal' | 'italic';
   textDecoration: 'none' | 'underline';
   color: string;
+  textAlign?: 'left' | 'center' | 'right';
 }
 
 export interface TableCell {
@@ -27,6 +28,7 @@ export interface TableData {
   rowHeights: number[];
   columnSettings: TableColumnSetting[];
   dynamicRows?: boolean;
+  fullWidth?: boolean;
 }
 
 export interface TemplateElement {
@@ -40,6 +42,7 @@ export interface TemplateElement {
   position: { x: number; y: number };
   style: ElementStyle;
   boundField?: string;
+  datasetPath?: string;
 }
 
 export interface TemplateSection {

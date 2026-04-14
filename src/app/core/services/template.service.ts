@@ -412,10 +412,20 @@ export class TemplateService {
       elements: [],
     };
 
-    this._template.update((t) => ({
-      ...t,
-      sections: [...t.sections, newSection],
-    }));
+    this._template.update((t) => {
+      const SECTION_ORDER: Record<string, number> = {
+        reportHeader: 1,
+        pageHeader: 2,
+        details: 3,
+        footer: 4
+      };
+      
+      const newSections = [...t.sections, newSection].sort((a, b) => 
+        (SECTION_ORDER[a.type] || 99) - (SECTION_ORDER[b.type] || 99)
+      );
+      
+      return { ...t, sections: newSections };
+    });
     this.pushToHistory();
   }
 }

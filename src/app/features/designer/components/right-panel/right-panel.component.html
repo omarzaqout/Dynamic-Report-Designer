@@ -44,7 +44,7 @@
                 <label class="prop-label">Bind to Field</label>
                 <select class="prop-select" [value]="el.boundField || ''" (change)="onBindField($event)">
                   <option value="">— None —</option>
-                  @for (f of leafFields(); track f.key) {
+                  @for (f of filteredLeafFields(); track f.key) {
                     <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
                   }
                 </select>
@@ -79,6 +79,27 @@
                   />
                   <span>Bind to Dataset (Repeat Table Block)</span>
                 </label>
+
+                <label class="repeat-toggle" style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
+                  <input
+                    type="checkbox"
+                    [checked]="table.fullWidth"
+                    (change)="onTableFullWidthChange($event)"
+                    style="margin: 0;"
+                  />
+                  <span>Full Width (100%)</span>
+                </label>
+
+                <div class="prop-col" style="margin-top: 8px;">
+                  <label class="prop-label" style="font-size: 10px;">Context Array (Dataset)</label>
+                  <select class="prop-select" [value]="el.datasetPath || ''" (change)="onTableDatasetChange($event)" style="height: 24px; font-size: 11px;">
+                    <option value="">— Global Row —</option>
+                    @for (arr of arrayFields(); track arr.path) {
+                      <option [value]="arr.path">{{ arr.label }} ({{ arr.path }})</option>
+                    }
+                  </select>
+                  <div class="hint-text" style="font-size: 9px;">Limits field selection to this array.</div>
+                </div>
                 <div class="table-summary">{{ table.rows }} rows &times; {{ table.columns }} cols</div>
                 <div class="table-summary">Preview size: {{ tablePreviewWidth(table) }} &times; {{ tablePreviewHeight(table) }} px</div>
               </div>
@@ -154,7 +175,7 @@
                               (change)="onTableCellFieldChange(rowIndex, colIndex, $event)"
                             >
                               <option value="">Static text</option>
-                              @for (f of leafFields(); track f.key) {
+                              @for (f of filteredLeafFields(); track f.key) {
                                 <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
                               }
                             </select>
@@ -225,6 +246,29 @@
                   (click)="toggleUnderline()"
                   title="Underline"
                 ><u>U</u></button>
+              </div>
+            </div>
+            <div class="prop-row">
+              <label>Alignment</label>
+              <div class="toggle-group">
+                <button
+                  class="toggle-btn"
+                  [class.active]="el.style.textAlign === 'left' || !el.style.textAlign"
+                  (click)="onTextAlignChange('left')"
+                  title="Align Left"
+                >&#8612;</button>
+                <button
+                  class="toggle-btn"
+                  [class.active]="el.style.textAlign === 'center'"
+                  (click)="onTextAlignChange('center')"
+                  title="Align Center"
+                >&#8633;</button>
+                <button
+                  class="toggle-btn"
+                  [class.active]="el.style.textAlign === 'right'"
+                  (click)="onTextAlignChange('right')"
+                  title="Align Right"
+                >&#8614;</button>
               </div>
             </div>
           </div>

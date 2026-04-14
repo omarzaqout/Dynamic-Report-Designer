@@ -220,8 +220,11 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     if (this.resizeMode === 'table-bounds') {
       const dx = event.clientX - this.startMouseX;
       const dy = event.clientY - this.startMouseY;
-      this.resizeTableColumn(this.resizeColumnIndex, this.resizeStartColumnWidth + dx);
-      this.resizeTableRow(this.resizeRowIndex, this.resizeStartRowHeight + dy);
+      
+      // Update start positions to be current after applying delta for frame-by-frame 
+      // or just use total delta and initial state. 
+      // Let's use movementX/Y for simplicity or total delta from start.
+      this.resizeTableUniformly(event.movementX, event.movementY);
       return;
     }
 
@@ -345,6 +348,25 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     if (rowIndex === null) return;
     this.updateTable((table) => {
       table.rowHeights[rowIndex] = Math.max(24, Math.round(nextHeight));
+      return table;
+    });
+  }
+
+  private resizeTableUniformly(moveX: number, moveY: number): void {
+    this.updateTable((table) => {
+      // Scale columns uniformly
+      const visibleCols = this.visibleColumnIndexes();
+      if (visibleCols.length > 0) {
+        const dxPerCol = moveX / visibleCols.length;
+        visibleCols.forEach(idx => {
+          table.columnSettings[idx].width = Math.max(20, table.columnSettings[idx].width + dxPerCol);
+        });
+      }
+      // Scale rows uniformly
+      if (table.rows > 0) {
+        const dyPerRow = moveY / table.rows;
+        table.rowHeights = table.rowHeights.map(h => Math.max(16, h + dyPerRow));
+      }
       return table;
     });
   }

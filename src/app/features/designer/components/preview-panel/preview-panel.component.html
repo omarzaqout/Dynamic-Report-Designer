@@ -86,7 +86,10 @@
                     @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
                       <tr [style.height.px]="rowHeight(el.table, rowIndex)">
                         @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
-                          <td [style.width.px]="columnWidth(el.table, colIndex)">
+                          <td 
+                            [style.width.px]="columnWidth(el.table, colIndex)"
+                            [style.textAlign]="el.style.textAlign || 'left'"
+                          >
                             {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
                           </td>
                         }

@@ -36,6 +36,17 @@ export class RightPanelComponent {
   readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
   readonly fields = computed(() => this.dataService.getFields(this.dataRows()[0]));
   readonly leafFields = computed(() => this.flattenLeafFields(this.fields()));
+  readonly arrayFields = computed(() => this.flattenArrayFields(this.fields()));
+  
+  readonly filteredLeafFields = computed(() => {
+    const el = this.element();
+    const all = this.leafFields();
+    if (el?.type === 'table' && el.datasetPath) {
+      // Find the array field to see its children or just match path prefix
+      return all.filter(f => f.path?.startsWith(el.datasetPath + '[0].') || f.path?.startsWith(el.datasetPath + '.'));
+    }
+    return all;
+  });
   readonly sectionLabel = computed(() => {
     const s = this.templateService.selectedElementSection();
     if (!s) return '';
@@ -110,6 +121,10 @@ export class RightPanelComponent {
   toggleUnderline(): void {
     const el = this.element();
     if (el) this.updateStyle({ textDecoration: el.style.textDecoration === 'underline' ? 'none' : 'underline' });
+  }
+
+  onTextAlignChange(align: 'left' | 'center' | 'right'): void {
+    this.updateStyle({ textAlign: align });
   }
 
   onXChange(event: Event): void {
@@ -238,6 +253,22 @@ export class RightPanelComponent {
     });
   }
 
+  onTableFullWidthChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.updateTable((table) => {
+      table.fullWidth = checked;
+      return table;
+    });
+  }
+
+  onTableDatasetChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    const el = this.element();
+    if (el) {
+      this.templateService.updateElement(el.id, { datasetPath: value || undefined });
+    }
+  }
+
   tableRowIndexes(table: TableData): number[] {
     return Array.from({ length: table.rows }, (_, i) => i);
   }
@@ -344,5 +375,18 @@ export class RightPanelComponent {
       }
     }
     return leaves;
+  }
+
+  private flattenArrayFields(fields: Field[]): Field[] {
+    const arrays: Field[] = [];
+    for (const field of fields) {
+      if (field.type === 'array') {
+        arrays.push(field);
+      }
+      if (field.children?.length) {
+        arrays.push(...this.flattenArrayFields(field.children));
+      }
+    }
+    return arrays;
   }
 }
