@@ -39,15 +39,106 @@ export class PreviewPanelComponent implements OnInit {
     this.renderedReport().sections.filter(s => s.templateSection?.repeatOnEveryPage && s.sectionType === 'footer')
   );
 
+  readonly repeatingSectionsHeight = computed(() => {
+    return this.repeatingSections().reduce((sum, s) => sum + this.getSectionHeight(s), 0);
+  });
+
+  readonly repeatingFootersHeight = computed(() => {
+    return this.repeatingFooters().reduce((sum, s) => sum + this.getSectionHeight(s), 0);
+  });
+
   readonly mainSections = computed(() => 
     this.renderedReport().sections.filter(s => !s.templateSection?.repeatOnEveryPage)
   );
 
   ngOnInit(): void {}
 
+  /**
+   * Calculates dynamic Y offsets for elements to prevent overlapping
+   * when tables or images grow beyond their original designer height.
+   *
+   * BUG FIX: `processed.originalHeight` was always `undefined` before.
+   * We now read the original height from `el.size?.height` (set by the designer)
+   * or fall back to a font-based estimate.
+   */
+  getElementsWithOffsets(section: RenderedSection): any[] {
+    const sorted = [...section.elements].sort((a, b) => a.y - b.y);
+    const result: any[] = [];
+    
+    // We track the bottom of the last flow element (table) to compute exact margins
+    let currentFlowBottom = 0;
+
+    for (const el of sorted) {
+      // Attach originalHeight so the push-down math can use it both here
+      // and in getSectionHeight.
+      const originalHeight = this.getElementOriginalHeight(el);
+      let currentElOffset = 0;
+
+      // Accumulate push-down from every previously placed element that expanded
+      for (const processed of result) {
+        const actualH  = this.getElementActualHeight(processed);
+        const origH    = processed.originalHeight;
+
+        if (actualH > origH) {
+          // This element expands downward – push everything originally
+          // below its original bottom edge
+          if (el.y >= processed.y + origH - 2) {
+            currentElOffset += (actualH - origH);
+          }
+        }
+      }
+
+      const renderedY = el.y + currentElOffset;
+      let printMarginTop = 0;
+
+      // In print mode, tables must be placed in normal document flow to paginate properly.
+      // We calculate their margin-top as the distance from the bottom of the previous table.
+      if (el.type === 'table') {
+        printMarginTop = Math.max(0, renderedY - currentFlowBottom);
+        const actualHeight = this.getElementActualHeight(el);
+        currentFlowBottom += printMarginTop + actualHeight;
+      }
+
+      result.push({ ...el, originalHeight, renderedY, printMarginTop });
+    }
+    return result;
+  }
+
+  /** Height the element occupies in the RENDERED output (after data expansion). */
+  private getElementActualHeight(el: any): number {
+    if (el.type === 'table' && el.table) {
+      return this.tableHeight(el.table);
+    }
+    if (el.type === 'image' && el.size) {
+      return el.size.height;
+    }
+    return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
+  }
+
+  /** Height the element was given in the DESIGNER (before data expansion). */
+  private getElementOriginalHeight(el: any): number {
+    // Images carry an explicit designer size
+    if (el.size?.height) return el.size.height;
+
+    // Tables: reconstruct the designer height from the ORIGINAL row count
+    // using the per-row heights stored in the rendered table.
+    // designerRows is the pre-expansion count saved by RenderService.
+    if (el.type === 'table' && el.table && el.designerRows != null) {
+      const designerRowHeights = (el.table.rowHeights as number[])
+        .slice(0, el.designerRows);
+      if (designerRowHeights.length > 0) {
+        return designerRowHeights.reduce((s: number, h: number) => s + h, 0);
+      }
+    }
+
+    // Fallback for text/field elements
+    return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
+  }
+
   print(): void {
     window.print();
   }
+
 
   isLastDetail(index: number): boolean {
     const sections = this.renderedReport().sections;
@@ -79,17 +170,11 @@ export class PreviewPanelComponent implements OnInit {
   }
 
   getSectionHeight(section: RenderedSection): number {
+    const offsetElements = this.getElementsWithOffsets(section);
     let maxContentY = 0;
-    for (const el of section.elements) {
-      let elHeight = 30;
-      if (el.type === 'table' && el.table) {
-        elHeight = this.tableHeight(el.table);
-      } else if (el.type === 'image' && el.size) {
-        elHeight = el.size.height;
-      } else if (el.style) {
-        elHeight = Math.max(30, el.style.fontSize * 1.5);
-      }
-      const bottomY = el.y + elHeight;
+    for (const el of offsetElements) {
+      const elHeight = this.getElementActualHeight(el);
+      const bottomY = el.renderedY + elHeight;
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
     return Math.max(section.height, maxContentY + 20);

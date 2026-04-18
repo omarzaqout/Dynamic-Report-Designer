@@ -1,167 +1,339 @@
-    :host {
-      display: flex;
-      flex: 1;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-    .preview-host {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: #f8fafc;
-      overflow: hidden;
-    }
-    .preview-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      background: #fff;
-      border-bottom: 1px solid #e2e8f0;
-      min-height: 42px;
-    }
-    .preview-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #1e293b;
-    }
-    .preview-icon { color: #10b981; }
-    .live-badge {
-      font-size: 9px;
-      font-weight: 700;
-      background: #d1fae5;
-      color: #059669;
-      padding: 2px 6px;
-      border-radius: 10px;
-      letter-spacing: 0.5px;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-    .preview-stats { display: flex; gap: 12px; }
-    .stat { font-size: 11px; color: #94a3b8; }
-    .preview-scroll {
-      flex: 1;
-      overflow: auto;
-      padding: 20px;
-    }
-    .preview-scroll::-webkit-scrollbar { width: 8px; }
-    .preview-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    
-    .print-layout-table {
-      width: 794px;
-      margin: 0 auto;
-      background: #fff;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-      border-radius: 3px;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    .print-layout-table td { padding: 0; vertical-align: top; }
+:host {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
 
-    .preview-section {
-      border-bottom: 1px solid #f1f5f9;
-      position: relative;
-    }
-    .ps-reportHeader { background: #fffef7; border-left: 3px solid #f59e0b; }
-    .ps-pageHeader { background: #f8fbff; border-left: 3px solid #3b82f6; }
-    .ps-details { background: #fff; border-left: 3px solid #e2e8f0; }
-    .ps-footer { background: #fafafa; border-left: 3px solid #8b5cf6; }
-    .section-body { position: relative; overflow: hidden; }
-    .preview-el { position: absolute; white-space: nowrap; line-height: 1.4; }
-    .preview-el.is-table { white-space: normal; }
-    .preview-table-wrap { background: #fff; min-width: 180px; min-height: 56px; }
-    .preview-table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
-    .preview-table td {
-      border: 1px solid #cbd5e1;
-      padding: 4px 6px;
-      line-height: 1.3;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      vertical-align: top;
-    }
-    .empty-section {
-      padding: 12px 16px;
-      font-size: 11px;
-      color: #cbd5e1;
-      font-style: italic;
-    }
-    .row-divider { height: 1px; background: #f1f5f9; }
+.preview-host {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #f8fafc;
+    overflow: hidden;
+}
 
-    .print-btn {
-      background: #10b981;
-      color: #fff;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-    .print-btn:hover { background: #059669; transform: translateY(-1px); }
+.preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    min-height: 42px;
+}
 
-    @media print {
-      @page {
+.preview-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.preview-icon {
+    color: #10b981;
+}
+
+.live-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: #d1fae5;
+    color: #059669;
+    padding: 2px 6px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.preview-stats {
+    display: flex;
+    gap: 12px;
+}
+
+.stat {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.preview-scroll {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+}
+
+.preview-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.preview-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.preview-page-paper {
+    width: 794px;
+    margin: 0 auto 16px auto;
+    background: #fff;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.page-header-inline {
+    border-bottom: 2px solid #3b82f6;
+}
+
+.page-footer-inline {
+    border-top: 2px solid #8b5cf6;
+}
+
+.preview-section {
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+}
+
+.ps-reportHeader {
+    background: #fffef7;
+    border-left: 3px solid #f59e0b;
+}
+
+.ps-pageHeader {
+    background: #f8fbff;
+    border-left: 3px solid #3b82f6;
+}
+
+.ps-details {
+    background: #fff;
+    border-left: 3px solid #e2e8f0;
+}
+
+.ps-footer {
+    background: #fafafa;
+    border-left: 3px solid #8b5cf6;
+}
+
+.section-body {
+    position: relative;
+}
+
+.preview-el {
+    position: absolute;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.preview-el.is-table {
+    white-space: normal;
+}
+
+.preview-table-wrap {
+    background: #fff;
+    min-width: 180px;
+    min-height: 56px;
+}
+
+.preview-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.preview-table td {
+    border: 1px solid #cbd5e1;
+    padding: 4px 6px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.empty-section {
+    padding: 12px 16px;
+    font-size: 11px;
+    color: #cbd5e1;
+    font-style: italic;
+}
+
+.row-divider {
+    height: 1px;
+    background: #f1f5f9;
+}
+
+.print-btn {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.print-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+/* Hidden in normal view; only made visible by @media print */
+.print-fixed-header,
+.print-fixed-footer,
+.fixed-footer-container {
+    display: none;
+}
+
+/* ===================================================
+   PRINT STYLES
+   =================================================== */
+@media print {
+    @page {
+        /* Default fallback – real values injected as <style> by print() */
         margin: 5mm;
         size: auto;
-      }
-      :host, .preview-host, .preview-scroll {
+    }
+
+    /* ---- Make host / scroll wrapper printable ---- */
+    :host,
+    .preview-host,
+    .preview-scroll {
         display: block !important;
         overflow: visible !important;
         background: white !important;
         height: auto !important;
-        min-height: 100% !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
-      }
-      .preview-toolbar, .stat, .live-badge, .row-divider, .empty-section, .print-btn {
+    }
+
+    /* ---- Hide UI chrome ---- */
+    .preview-toolbar,
+    .stat,
+    .live-badge,
+    .row-divider,
+    .empty-section,
+    .print-btn,
+    .footer-preview-wrap,
+    .fixed-footer-container {
         display: none !important;
-      }
-      .print-layout-table {
+    }
+
+    /* ---- Page paper: flat, full-width block ---- */
+    .preview-page-paper {
+        display: table !important;
         box-shadow: none !important;
         margin: 0 !important;
         width: 100% !important;
         border: none !important;
+        border-radius: 0 !important;
         background: white !important;
-        display: table !important;
-      }
-      thead.print-header-repeater {
+    }
+
+    /* 
+     * Let the native HTML table headers and footers handle repeating!
+     * This is the exact reason spacing now matches the designer mathematically. 
+     */
+    .print-table-header {
         display: table-header-group !important;
-      }
-      tbody.print-body-content {
-        display: table-row-group !important;
-      }
-      tfoot.print-footer-repeater {
+    }
+    .print-table-footer {
         display: table-footer-group !important;
-      }
-      .preview-section {
-        border-left: none !important;
-        border-bottom: 1px solid #eee !important;
-        background: white !important;
-        page-break-inside: avoid;
+    }
+    .print-table-body {
+        display: table-row-group !important;
+    }
+
+    /* ---- Section wrapper ----
+       break-inside:avoid keeps each section on one page when possible.
+       Remove it if sections are taller than a page. */
+    .preview-section {
         display: block !important;
         width: 100% !important;
-      }
-      .section-body {
-        overflow: visible !important;
-        height: auto !important;
-        display: block !important;
-      }
-      .preview-table-wrap, .preview-table {
-        height: auto !important;
-        overflow: visible !important;
-      }
+        position: relative !important;
+        border-left: none !important;
+        border-bottom: none !important;
+        background: white !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
     }
+
+    /*
+     * CRITICAL for pagination: Allow section-body to stretch.
+     * We replaced inline height with min-height in HTML, so 
+     * it naturally grows when flow tables expand and shrink correctly.
+     */
+    .section-body {
+        position: relative !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    /* Standard elements remain absolute. They don't usually cross page boundaries. */
+    .preview-el {
+        position: absolute !important;
+        overflow: visible !important;
+    }
+
+    /*
+     * MAGIC FIX FOR MISSING DATA:
+     * Tables contain massive repeating rows. If they are absolute, they get clipped
+     * by the browser's paginator. We MUST put them in exact flow.
+     * By using position: relative and applying margin-top and margin-left
+     * we perfectly position them while letting the browser break their rows across pages!
+     */
+    .preview-el.is-table {
+        position: relative !important;
+        display: block !important;
+        left: auto !important; /* override inline */
+        top: auto !important;  /* override inline */
+        margin-top: var(--print-mt) !important;
+        margin-left: var(--print-ml) !important;
+    }
+
+    /* ---- Table layout fixes ---- */
+    .preview-table-wrap {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .preview-table {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /*
+     * Never let a table row split across a page boundary.
+     * Works because overflow:visible is now set on all ancestors.
+     */
+    .preview-table tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Allow text to wrap inside cells */
+    .preview-table td {
+        white-space: normal !important;
+        overflow: visible !important;
+        word-break: break-word !important;
+    }
+}

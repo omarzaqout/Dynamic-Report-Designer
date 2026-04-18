@@ -7,6 +7,8 @@ export interface RenderedElement {
   imageUrl?: string;
   table?: TableData;
   size?: { width: number; height: number };
+  /** Original row count from the designer template (before dynamic-row expansion). */
+  designerRows?: number;
   x: number;
   y: number;
   style: TemplateElement['style'];
@@ -59,6 +61,9 @@ export class RenderService {
         content: renderedContent,
         imageUrl: (el as any).imageUrl,
         table: el.type === 'table' ? this.renderTable(el, row, fullData, rawData) : undefined,
+        // Preserve the original (pre-expansion) row count so the preview can compute
+        // how much the table has grown relative to its designer size.
+        designerRows: el.type === 'table' && el.table ? el.table.rows : undefined,
         size: el.size,
         x: el.position.x,
         y: el.position.y,
