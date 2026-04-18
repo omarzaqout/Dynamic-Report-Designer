@@ -45,6 +45,21 @@
       min-width: 0;
     }
     .api-input:focus { border-color: #3b82f6; }
+    
+    select.api-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 12px;
+      padding-right: 28px;
+      cursor: pointer;
+    }
+    select.api-input option {
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+
     .load-btn {
       background: #3b82f6;
       color: white;
@@ -161,4 +176,3 @@
     .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
     .stat-label { font-size: 10px; color: #475569; }
     .stat-value { font-size: 11px; font-weight: 600; color: #60a5fa; }
-  

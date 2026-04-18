@@ -30,25 +30,25 @@ export interface RenderedReport {
 
 @Injectable({ providedIn: 'root' })
 export class RenderService {
-  renderReport(data: ReportData[], template: ReportTemplate): RenderedReport {
+  renderReport(data: ReportData[], template: ReportTemplate, rawData?: any): RenderedReport {
     const sections: RenderedSection[] = [];
 
     for (const section of template.sections) {
       if (section.repeatPerRow) {
         const rows = data.length > 0 ? data : [{}];
         for (const row of rows) {
-          sections.push(this.renderSection(section, row as ReportData, true, data));
+          sections.push(this.renderSection(section, row as ReportData, true, data, rawData));
         }
       } else {
         const baseRow = section.type === 'details' && data.length > 0 ? data[0] : {};
-        sections.push(this.renderSection(section, baseRow as ReportData, false, data));
+        sections.push(this.renderSection(section, baseRow as ReportData, false, data, rawData));
       }
     }
 
     return { sections };
   }
 
-  private renderSection(section: TemplateSection, row: ReportData, isDetail: boolean, fullData: ReportData[]): RenderedSection {
+  private renderSection(section: TemplateSection, row: ReportData, isDetail: boolean, fullData: ReportData[], rawData?: any): RenderedSection {
     const elements: RenderedElement[] = section.elements.map((el) => {
       let renderedContent = el.content || '';
       if (el.type === 'field') {
@@ -58,7 +58,7 @@ export class RenderService {
         id: el.id,
         content: renderedContent,
         imageUrl: (el as any).imageUrl,
-        table: el.type === 'table' ? this.renderTable(el.table, row, fullData) : undefined,
+        table: el.type === 'table' ? this.renderTable(el, row, fullData, rawData) : undefined,
         size: el.size,
         x: el.position.x,
         y: el.position.y,
@@ -78,10 +78,23 @@ export class RenderService {
     };
   }
 
-  private renderTable(table: TableData | undefined, contextRow: ReportData, fullData: ReportData[]): TableData | undefined {
+  private renderTable(el: TemplateElement, contextRow: ReportData, fullData: ReportData[], rawData?: any): TableData | undefined {
+    const table = el.table;
     if (!table) return undefined;
     
-    if (table.dynamicRows && fullData && fullData.length > 0) {
+    // Choose the data source for the table
+    let tableSource = fullData;
+    if (el.datasetPath && rawData) {
+      const resolved = this.getValueByPath(rawData, el.datasetPath);
+      if (Array.isArray(resolved)) {
+        tableSource = resolved;
+      } else if (resolved && typeof resolved === 'object' && resolved !== null) {
+        // Treat single object as a list of 1 for repeating rows
+        tableSource = [resolved];
+      }
+    }
+    
+    if (table.dynamicRows && tableSource && tableSource.length > 0) {
       if (table.cells.length === 0) return table;
       
       const templateBlock = table.cells;
@@ -90,7 +103,7 @@ export class RenderService {
       const newCells: any[][] = [];
       const newRowHeights: number[] = [];
       
-      fullData.forEach(row => {
+      tableSource.forEach(row => {
         templateBlock.forEach((tRow, idx) => {
           newCells.push(tRow.map(cell => this.processCell(cell, row, true)));
           newRowHeights.push(templateRowHeights[idx]);
@@ -147,6 +160,7 @@ export class RenderService {
 
   getValueByPath(obj: any, path: string): any {
     if (!obj || !path) return undefined;
-    return path.split('.').reduce((acc, key) => acc?.[key], obj);
+    const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
+    return normalizedPath.split('.').filter(p => p).reduce((acc, key) => acc?.[key], obj);
   }
 }

@@ -33,20 +33,35 @@ export class RightPanelComponent {
 
   readonly element = this.templateService.selectedElement;
   readonly selectedElementIds = this.templateService.selectedElementIds;
-  readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
-  readonly fields = computed(() => this.dataService.getFields(this.dataRows()[0]));
-  readonly leafFields = computed(() => this.flattenLeafFields(this.fields()));
-  readonly arrayFields = computed(() => this.flattenArrayFields(this.fields()));
   
-  readonly filteredLeafFields = computed(() => {
+  // Use datasets from DataService instead of calculating here
+  readonly datasets = this.dataService.datasets;
+  readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
+  
+  // Cache fields and avoid frequent re-computation if possible
+  readonly fields = computed(() => {
     const el = this.element();
-    const all = this.leafFields();
+    // Re-check rawData in service to ensure we didn't lose state
+    if (!this.dataService.datasets().length) return [];
+    
     if (el?.type === 'table' && el.datasetPath) {
-      // Find the array field to see its children or just match path prefix
-      return all.filter(f => f.path?.startsWith(el.datasetPath + '[0].') || f.path?.startsWith(el.datasetPath + '.'));
+      return this.dataService.getFieldsForPath(el.datasetPath);
     }
-    return all;
+    return this.dataService.getFields();
   });
+
+  readonly leafFields = computed(() => this.flattenLeafFields(this.fields()));
+  
+  readonly arrayFields = computed(() => {
+    // Return all datasets found by DataService
+    return this.datasets().map(ds => ({
+      label: ds.name,
+      path: ds.path,
+      count: ds.count
+    }));
+  });
+  
+  readonly filteredLeafFields = computed(() => this.leafFields());
   readonly sectionLabel = computed(() => {
     const s = this.templateService.selectedElementSection();
     if (!s) return '';
@@ -190,18 +205,28 @@ export class RightPanelComponent {
     const value = (event.target as HTMLInputElement).value;
     this.updateTable((table) => {
       table.cells[row][col].content = value;
-      if (!value && !table.cells[row][col].fieldPath) {
-        table.cells[row][col].content = '';
+      // If content is cleared, also clear the field binding
+      if (!value) {
+        table.cells[row][col].fieldPath = undefined;
       }
       return table;
     });
   }
 
-  onTableCellFieldChange(row: number, col: number, event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  onTableCellFieldChange(row: number, col: number, value: string | undefined): void {
+    const el = this.element();
+    if (!el || el.type !== 'table' || !el.table) return;
+
+    const currentPath = el.table.cells[row][col].fieldPath;
+    
+    // GUARD: If value is undefined/empty but we know it should have a path, 
+    // and the field explorer is currently empty (it means we are switching views)
+    if (!value && currentPath && !this.isKeyInFields(currentPath)) {
+      return;
+    }
+
     this.updateTable((table) => {
       table.cells[row][col].fieldPath = value || undefined;
-      // Also update content to match the field for consistent preview
       if (value) {
         table.cells[row][col].content = `{{${value}}}`;
       }
@@ -286,12 +311,16 @@ export class RightPanelComponent {
     });
   }
 
-  onTableDatasetChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  onTableDatasetChange(value: string | undefined): void {
     const el = this.element();
-    if (el) {
-      this.templateService.updateElement(el.id, { datasetPath: value || undefined });
+    if (!el || el.type !== 'table') return;
+
+    // GUARD: Prevent auto-reset by browser during view transitions
+    if (!value && el.datasetPath && !this.isPathInDatasets(el.datasetPath)) {
+      return;
     }
+
+    this.templateService.updateElement(el.id, { datasetPath: value || undefined });
   }
 
   tableRowIndexes(table: TableData): number[] {
@@ -402,16 +431,11 @@ export class RightPanelComponent {
     return leaves;
   }
 
-  private flattenArrayFields(fields: Field[]): Field[] {
-    const arrays: Field[] = [];
-    for (const field of fields) {
-      if (field.type === 'array') {
-        arrays.push(field);
-      }
-      if (field.children?.length) {
-        arrays.push(...this.flattenArrayFields(field.children));
-      }
-    }
-    return arrays;
+  isPathInDatasets(path: string): boolean {
+    return this.arrayFields().some(a => a.path === path);
+  }
+
+  isKeyInFields(key: string): boolean {
+    return this.filteredLeafFields().some(f => f.key === key);
   }
 }

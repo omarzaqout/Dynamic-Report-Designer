@@ -90,15 +90,29 @@
                   <span>Full Width (100%)</span>
                 </label>
 
-                <div class="prop-col" style="margin-top: 8px;">
-                  <label class="prop-label" style="font-size: 10px;">Context Array (Dataset)</label>
-                  <select class="prop-select" [value]="el.datasetPath || ''" (change)="onTableDatasetChange($event)" style="height: 24px; font-size: 11px;">
-                    <option value="">— Global Row —</option>
+                <!-- Dataset Selection Area -->
+                <div class="prop-col" style="margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label class="prop-label" style="font-size: 10px; margin: 0;">Context Array (Dataset)</label>
+                    <span style="font-size: 9px; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; color: #475569;">{{ datasets().length }} found</span>
+                  </div>
+                  <select class="prop-select" 
+                    [(ngModel)]="el.datasetPath" 
+                    (ngModelChange)="onTableDatasetChange($event)"
+                    style="height: 24px; font-size: 11px; width: 100%;"
+                    name="dataset-path"
+                  >
+                    <option [ngValue]="undefined">Default (Full Data List)</option>
+                    @if (el.datasetPath && !isPathInDatasets(el.datasetPath)) {
+                      <option [value]="el.datasetPath" hidden>{{ el.datasetPath }}</option>
+                    }
                     @for (arr of arrayFields(); track arr.path) {
-                      <option [value]="arr.path">{{ arr.label }} ({{ arr.path }})</option>
+                      @if (arr.path) {
+                        <option [value]="arr.path">{{ arr.label }} ({{ arr.count }} items)</option>
+                      }
                     }
                   </select>
-                  <div class="hint-text" style="font-size: 9px;">Limits field selection to this array.</div>
+                  <div class="hint-text" style="font-size: 9px; margin-top: 4px;">Limits field selection to this specific array.</div>
                 </div>
                 <div class="table-summary">{{ table.rows }} rows &times; {{ table.columns }} cols</div>
                 <div class="table-summary">Preview size: {{ tablePreviewWidth(table) }} &times; {{ tablePreviewHeight(table) }} px</div>
@@ -169,16 +183,20 @@
                               (input)="onTableCellContentChange(rowIndex, colIndex, $event)"
                               placeholder="Cell text"
                             />
-                            <select
-                              class="table-cell-select"
-                              [value]="table.cells[rowIndex][colIndex].fieldPath || ''"
-                              (change)="onTableCellFieldChange(rowIndex, colIndex, $event)"
-                            >
-                              <option value="">Static text</option>
-                              @for (f of filteredLeafFields(); track f.key) {
-                                <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
-                              }
-                            </select>
+                             <select
+                               class="table-cell-select"
+                               [(ngModel)]="table.cells[rowIndex][colIndex].fieldPath"
+                               (ngModelChange)="onTableCellFieldChange(rowIndex, colIndex, $event)"
+                               [name]="'cell-' + rowIndex + '-' + colIndex"
+                             >
+                               <option [ngValue]="undefined">Static text</option>
+                               @if (table.cells[rowIndex][colIndex].fieldPath && !isKeyInFields(table.cells[rowIndex][colIndex].fieldPath!)) {
+                                 <option [value]="table.cells[rowIndex][colIndex].fieldPath" hidden>{{ table.cells[rowIndex][colIndex].fieldPath }}</option>
+                               }
+                               @for (f of filteredLeafFields(); track f.key) {
+                                 <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+                               }
+                             </select>
                           </td>
                         }
                       </tr>

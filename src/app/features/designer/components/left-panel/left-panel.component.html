@@ -20,6 +20,18 @@
             </button>
           </div>
         </div>
+
+        @if (datasets().length > 0) {
+          <div class="api-input-group" style="margin-top: 12px;">
+            <label>Context Array (Dataset)</label>
+            <select class="api-input" (change)="onDatasetChange($event)" [value]="activeDataset()?.path">
+              @for (ds of datasets(); track ds.path) {
+                <option [value]="ds.path">{{ ds.name }} ({{ ds.count }} items)</option>
+              }
+            </select>
+          </div>
+        }
+
         @if (errorMsg()) {
           <div class="error-msg">{{ errorMsg() }}</div>
         }
@@ -123,4 +135,3 @@
         </div>
       </div>
     </div>
-  

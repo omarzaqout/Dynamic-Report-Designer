@@ -25,7 +25,8 @@ export class PreviewPanelComponent implements OnInit {
   readonly renderedReport = computed<RenderedReport>(() => {
     const template = this.templateService.template();
     const data = this.dataRows();
-    return this.renderService.renderReport(data, template);
+    const rawData = this.dataService.rawResponse();
+    return this.renderService.renderReport(data, template, rawData);
   });
 
   readonly renderedSectionCount = computed(() => this.renderedReport().sections.length);

@@ -19,7 +19,15 @@ export class LeftPanelComponent {
   readonly isLoading = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
-  readonly fields = signal<Field[]>(this.dataService.getFields());
+  readonly datasets = this.dataService.datasets;
+  readonly activeDataset = this.dataService.activeDataset;
+
+  readonly fields = computed(() => {
+    // Accessing activeDataset() ensures this re-runs when it changes
+    const active = this.activeDataset();
+    return this.dataService.getFields();
+  });
+
   readonly draggingKey = signal<string | null>(null);
 
   readonly sections = computed(() => this.templateService.template().sections);
@@ -33,17 +41,22 @@ export class LeftPanelComponent {
     this.isLoading.set(true);
     this.errorMsg.set(null);
     try {
-      const data = await this.dataService.getData(this.apiUrl());
-      if (!data || data.length === 0) {
-        this.errorMsg.set('No fields available');
-        this.fields.set([]);
-      } else {
-        this.fields.set(this.dataService.getFields(data[0]));
+      await this.dataService.getData(this.apiUrl());
+      if (this.datasets().length === 0 && !this.activeDataset()) {
+        this.errorMsg.set('No datasets found in response');
       }
     } catch (err) {
       this.errorMsg.set('Invalid API -> ' + (err as Error).message);
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  onDatasetChange(event: Event) {
+    const path = (event.target as HTMLSelectElement).value;
+    const dataset = this.datasets().find(d => d.path === path);
+    if (dataset) {
+      this.dataService.selectDataset(dataset);
     }
   }
 
