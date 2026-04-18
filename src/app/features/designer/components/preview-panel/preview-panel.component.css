@@ -264,8 +264,8 @@
     }
 
     /* ---- Section wrapper ----
-       break-inside:avoid keeps each section on one page when possible.
-       Remove it if sections are taller than a page. */
+       We allow sections to break across pages so that a massive Details 
+       data section isn't forced to start on a new empty page. */
     .preview-section {
         display: block !important;
         width: 100% !important;
@@ -273,8 +273,8 @@
         border-left: none !important;
         border-bottom: none !important;
         background: white !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
     }
 
     /*
