@@ -46,7 +46,13 @@
                   @for (colIndex of visibleColumnIndexes(); track colIndex) {
                     <td 
                       [style.width.px]="columnWidth(colIndex)"
-                      [style.textAlign]="element.style.textAlign || 'left'"
+                      [style.textAlign]="getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign ?? 'left'"
+                      [style.color]="getTableRows()[rowIndex][colIndex].style?.color ?? element.style.color"
+                      [style.fontSize.px]="getTableRows()[rowIndex][colIndex].style?.fontSize ?? element.style.fontSize"
+                      [style.fontFamily]="getTableRows()[rowIndex][colIndex].style?.fontFamily ?? element.style.fontFamily"
+                      [style.fontWeight]="getTableRows()[rowIndex][colIndex].style?.fontWeight ?? element.style.fontWeight"
+                      [style.fontStyle]="getTableRows()[rowIndex][colIndex].style?.fontStyle ?? element.style.fontStyle"
+                      [style.textDecoration]="getTableRows()[rowIndex][colIndex].style?.textDecoration ?? element.style.textDecoration"
                       (dragover)="onCellDragOver($event, rowIndex, colIndex)"
                       (dragleave)="onCellDragLeave($event, rowIndex, colIndex)"
                       (drop)="onCellDrop($event, rowIndex, colIndex)"

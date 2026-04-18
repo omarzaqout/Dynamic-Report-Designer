@@ -13,6 +13,7 @@ export interface ElementStyle {
 export interface TableCell {
   content: string;
   fieldPath?: string;
+  style?: Partial<ElementStyle>;
 }
 
 export interface TableColumnSetting {

@@ -38,15 +38,19 @@
 
       <div class="designer-body">
         @if (activeView() === 'design') {
-          <aside class="left-sidebar">
+          <aside class="left-sidebar" [style.width.px]="leftWidth()">
             <app-left-panel />
           </aside>
+
+          <div class="resizer" (mousedown)="onMouseDownLeft($event)"></div>
 
           <main class="canvas-area">
             <app-canvas />
           </main>
 
-          <aside class="right-sidebar">
+          <div class="resizer" (mousedown)="onMouseDownRight($event)"></div>
+
+          <aside class="right-sidebar" [style.width.px]="rightWidth()">
             <app-right-panel />
           </aside>
         }

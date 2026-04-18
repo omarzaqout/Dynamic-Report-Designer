@@ -64,6 +64,17 @@ export class TemplateService {
   private _selectedElementIds = signal<string[]>([]);
   readonly selectedElementIds = this._selectedElementIds.asReadonly();
 
+  private _focusedTableCell = signal<{ elementId: string, row: number, col: number } | null>(null);
+  readonly focusedTableCell = this._focusedTableCell.asReadonly();
+
+  setFocusedTableCell(elementId: string, row: number, col: number): void {
+    if (row === -1) {
+      this._focusedTableCell.set(null);
+    } else {
+      this._focusedTableCell.set({ elementId, row, col });
+    }
+  }
+
   readonly selectedElementId = computed(() => {
     const ids = this._selectedElementIds();
     return ids.length === 1 ? ids[0] : null;
@@ -147,8 +158,16 @@ export class TemplateService {
   selectElement(id: string | null, append = false): void {
     if (!id) {
       this._selectedElementIds.set([]);
+      this._focusedTableCell.set(null);
       return;
     }
+    
+    // Clear cell focus if switching to a different element
+    const currentFocus = this._focusedTableCell();
+    if (currentFocus && currentFocus.elementId !== id) {
+      this._focusedTableCell.set(null);
+    }
+
     if (append) {
       const current = this._selectedElementIds();
       if (current.includes(id)) {
@@ -349,14 +368,14 @@ export class TemplateService {
     this.pushToHistory();
   }
 
-  updateTableCell(elementId: string, row: number, col: number, data: { content: string; fieldPath: string }): void {
+  updateTableCell(elementId: string, row: number, col: number, data: { content?: string; fieldPath?: string; style?: any }): void {
     this._template.update(t => {
       const newSections = t.sections.map(s => ({
         ...s,
         elements: s.elements.map(el => {
           if (el.id === elementId && el.table) {
             const newCells = el.table.cells.map((cellsRow, rIdx) => 
-               rIdx === row ? cellsRow.map((cell, cIdx) => cIdx === col ? { ...cell, ...data } : cell) : cellsRow
+               rIdx === row ? cellsRow.map((cell, cIdx) => cIdx === col ? { ...cell, ...data, style: { ...cell.style, ...data.style } } : cell) : cellsRow
             );
             return { ...el, table: { ...el.table, cells: newCells } };
           }

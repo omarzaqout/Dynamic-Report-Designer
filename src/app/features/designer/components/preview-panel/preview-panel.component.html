@@ -88,7 +88,13 @@
                         @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
                           <td 
                             [style.width.px]="columnWidth(el.table, colIndex)"
-                            [style.textAlign]="el.style.textAlign || 'left'"
+                            [style.textAlign]="el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign ?? 'left'"
+                            [style.color]="el.table.cells[rowIndex][colIndex].style?.color ?? el.style.color"
+                            [style.fontSize.px]="el.table.cells[rowIndex][colIndex].style?.fontSize ?? el.style.fontSize"
+                            [style.fontFamily]="el.table.cells[rowIndex][colIndex].style?.fontFamily ?? el.style.fontFamily"
+                            [style.fontWeight]="el.table.cells[rowIndex][colIndex].style?.fontWeight ?? el.style.fontWeight"
+                            [style.fontStyle]="el.table.cells[rowIndex][colIndex].style?.fontStyle ?? el.style.fontStyle"
+                            [style.textDecoration]="el.table.cells[rowIndex][colIndex].style?.textDecoration ?? el.style.textDecoration"
                           >
                             {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
                           </td>

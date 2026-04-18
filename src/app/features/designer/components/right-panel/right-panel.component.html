@@ -24,6 +24,69 @@
             </div>
           </div>
 
+          <!-- GUARANTEED CELL STYLE SECTION -->
+          @if (el.type === 'table' && el.table) {
+            <div class="prop-section cell-style-box" style="background: #fffbeb; border: 2px solid #fbbf24; margin: 12px; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <div class="prop-section-title" style="color: #92400e; margin-bottom: 12px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">Cell Specific Styling</div>
+              
+              @if (focusedCell(); as focus) {
+                <div style="font-size: 10px; font-weight: 800; background: #92400e; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px;">
+                  Editing Cell R{{ focus.row + 1 }} : C{{ focus.col + 1 }}
+                </div>
+                
+                <div class="prop-row">
+                  <label style="color: #92400e; font-weight: 700;">Font Type</label>
+                  <select class="prop-select" 
+                    [value]="el.table.cells[focus.row][focus.col].style?.fontFamily || el.style.fontFamily"
+                    (change)="onTableCellStyleChange({ fontFamily: $any($event.target).value })"
+                  >
+                    @for (font of fontFamilies; track font.value) {
+                      <option [value]="font.value">{{ font.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="prop-row">
+                  <label style="color: #92400e; font-weight: 700;">Size & Color</label>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <div class="stepper">
+                      <button (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) - 1 })">-</button>
+                      <span style="min-width: 30px; text-align: center;">{{ el.table.cells[focus.row][focus.col].style?.fontSize || 12 }}</span>
+                      <button (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) + 1 })">+</button>
+                    </div>
+                    <input type="color" class="color-picker" [value]="el.table.cells[focus.row][focus.col].style?.color || '#000000'" (input)="onTableCellStyleChange({ color: $any($event.target).value })">
+                  </div>
+                </div>
+
+                <div class="prop-row">
+                  <label style="color: #92400e; font-weight: 700;">Format</label>
+                  <div class="toggle-group">
+                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold'" (click)="onTableCellStyleChange({ fontWeight: el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold' ? 'normal' : 'bold' })">B</button>
+                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic'" (click)="onTableCellStyleChange({ fontStyle: el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic' ? 'normal' : 'italic' })">I</button>
+                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline'" (click)="onTableCellStyleChange({ textDecoration: el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline' ? 'none' : 'underline' })">U</button>
+                  </div>
+                </div>
+
+                <div class="prop-row">
+                  <label style="color: #92400e; font-weight: 700;">Align</label>
+                  <div class="toggle-group">
+                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'left'" (click)="onTableCellStyleChange({ textAlign: 'left' })">L</button>
+                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'center'" (click)="onTableCellStyleChange({ textAlign: 'center' })">C</button>
+                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'right'" (click)="onTableCellStyleChange({ textAlign: 'right' })">R</button>
+                  </div>
+                </div>
+
+                <button (click)="setFocusedCell(-1, -1)" style="width: 100%; margin-top: 8px; padding: 4px; font-size: 9px; cursor: pointer; border: 1px dashed #92400e; background: transparent; color: #92400e;">Deselect Cell</button>
+              } @else {
+                <div style="padding: 20px; text-align: center; border: 1px dashed #fbbf24; border-radius: 8px; background: #fff;">
+                  <div style="font-size: 18px; margin-bottom: 4px;">&#9732;</div>
+                  <div style="font-size: 11px; color: #92400e; font-weight: 600;">Double-click a cell below</div>
+                  <div style="font-size: 9px; color: #b45309;">to edit its individual style</div>
+                </div>
+              }
+            </div>
+          }
+
           <div class="prop-section">
             <div class="prop-section-title">Content</div>
             
@@ -138,33 +201,26 @@
 
               <div class="prop-col">
                 <label class="prop-label">Columns (Width / Order / Visible)</label>
-                <div class="table-column-list">
-                  @for (colIndex of orderedColumnIndexes(table); track colIndex) {
+                <div class="table-column-list" style="margin-top: 8px;">
+                  @for (col of table.columnSettings; track $index) {
                     <div class="table-column-item">
-                      <span class="table-column-label">C{{ colIndex + 1 }}</span>
-                      <input
-                        type="number"
-                        class="prop-number"
-                        [value]="tableColumnWidth(table, colIndex)"
-                        (change)="onTableColumnWidthChange(colIndex, $event)"
-                        min="48"
-                        title="Column width"
-                      />
-                      <input
-                        type="number"
-                        class="prop-number"
-                        [value]="tableColumnOrder(table, colIndex)"
-                        (change)="onTableColumnOrderChange(colIndex, $event)"
-                        title="Order"
-                      />
-                      <label class="column-visible-toggle">
-                        <input
-                          type="checkbox"
-                          [checked]="tableColumnVisible(table, colIndex)"
-                          (change)="onTableColumnVisibilityChange(colIndex, $event)"
-                        />
-                        <span>Show</span>
-                      </label>
+                      <div class="column-header">
+                        <span class="table-column-label">Column {{ $index + 1 }}</span>
+                        <label class="column-visible-toggle">
+                          <input type="checkbox" [checked]="col.visible" (change)="onTableColumnVisibilityChange($index, $event)">
+                          <span>Visible</span>
+                        </label>
+                      </div>
+                      <div class="column-main">
+                        <div class="dimension-item">
+                          <label>Width</label>
+                          <input type="number" class="prop-number" [value]="col.width" (change)="onTableColumnWidthChange($index, $event)">
+                        </div>
+                        <div class="dimension-item">
+                          <label>Order</label>
+                          <input type="number" class="prop-number" [value]="col.order" (change)="onTableColumnOrderChange($index, $event)">
+                        </div>
+                      </div>
                     </div>
                   }
                 </div>
@@ -176,7 +232,10 @@
                     @for (rowIndex of tableRowIndexes(table); track rowIndex) {
                       <tr>
                         @for (colIndex of orderedColumnIndexes(table); track colIndex) {
-                          <td>
+                          <td 
+                            (dblclick)="setFocusedCell(rowIndex, colIndex)"
+                            [class.cell-focused]="focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"
+                          >
                             <input
                               class="table-cell-input"
                               [value]="table.cells[rowIndex][colIndex].content"
@@ -346,4 +405,3 @@
         </div>
       }
     </div>
-  

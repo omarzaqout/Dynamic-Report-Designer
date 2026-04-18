@@ -70,6 +70,9 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     if (!this.isEditingInline) {
       // Pass ctrlKey info to support multi-select toggle on click
       this.templateService.selectElement(this.element.id, event.ctrlKey || event.metaKey);
+      
+      // Clear focused cell on single click to allow manual deselection
+      this.templateService.setFocusedTableCell('', -1, -1);
     }
   }
 
@@ -435,6 +438,11 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   onCellDblClick(event: MouseEvent, row: number, col: number): void {
     event.stopPropagation();
+    
+    // Notify Service to highlight cell in Right Panel with element context
+    this.templateService.setFocusedTableCell(this.element.id, row, col);
+    this.templateService.selectElement(this.element.id);
+    
     this.editingCell = { row, col };
     setTimeout(() => {
       const input = this.elRef.nativeElement.querySelector('.cell-edit-input') as HTMLInputElement;

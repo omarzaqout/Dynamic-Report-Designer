@@ -1,4 +1,4 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -437,5 +437,37 @@ export class RightPanelComponent {
 
   isKeyInFields(key: string): boolean {
     return this.filteredLeafFields().some(f => f.key === key);
+  }
+
+  readonly focusedCell = this.templateService.focusedTableCell;
+
+  setFocusedCell(row: number, col: number): void {
+    const el = this.element();
+    if (el) {
+      this.templateService.setFocusedTableCell(el.id, row, col);
+    }
+  }
+
+  onTableCellStyleChange(patch: Partial<ElementStyle>): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    
+    this.updateTable((table) => {
+      const cell = table.cells[focus.row][focus.col];
+      cell.style = { ...(cell.style || {}), ...patch };
+      return table;
+    });
+  }
+
+  resetTableCellStyle(): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    
+    this.updateTable((table) => {
+      table.cells[focus.row][focus.col].style = undefined;
+      return table;
+    });
   }
 }

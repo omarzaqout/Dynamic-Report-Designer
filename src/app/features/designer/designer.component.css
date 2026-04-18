@@ -53,18 +53,37 @@
       width: 240px;
       flex-shrink: 0;
       overflow: hidden;
-      border-right: 1px solid rgba(255,255,255,0.05);
+      background: #f8fafc;
+    }
+    .resizer {
+      width: 4px;
+      cursor: col-resize;
+      background: transparent;
+      transition: background 0.2s;
+      flex-shrink: 0;
+      z-index: 10;
+      position: relative;
+    }
+    .resizer:hover, .resizer:active {
+      background: #3b82f6;
+    }
+    .resizer::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -2px; right: -2px; bottom: 0;
     }
     .canvas-area {
       flex: 1;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      background: #f1f5f9;
     }
     .right-sidebar {
-      width: 260px;
+      width: 280px;
       flex-shrink: 0;
       overflow: hidden;
+      background: #fff;
     }
     .preview-full {
       flex: 1;
