@@ -24,39 +24,39 @@
       This eliminates arbitrary gaps and overlaps naturally!
     -->
     <table class="preview-page-paper">
-      
+
       @if (repeatingSections().length > 0) {
-        <thead class="print-table-header">
-          <tr>
-            <td>
-              @for (section of repeatingSections(); track $index) {
-                <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
-              }
-            </td>
-          </tr>
-        </thead>
+      <thead class="print-table-header">
+        <tr>
+          <td>
+            @for (section of repeatingSections(); track $index) {
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            }
+          </td>
+        </tr>
+      </thead>
       }
 
       <tbody class="print-table-body">
         <tr>
           <td>
             @for (section of mainSections(); track $index) {
-              <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
             }
           </td>
         </tr>
       </tbody>
 
       @if (repeatingFooters().length > 0) {
-        <tfoot class="print-table-footer">
-          <tr>
-            <td>
-              @for (section of repeatingFooters(); track $index) {
-                <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
-              }
-            </td>
-          </tr>
-        </tfoot>
+      <tfoot class="print-table-footer">
+        <tr>
+          <td>
+            @for (section of repeatingFooters(); track $index) {
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            }
+          </td>
+        </tr>
+      </tfoot>
       }
 
     </table><!-- /.preview-page-paper -->
@@ -81,8 +81,8 @@
         [style.whiteSpace]="el.style.whiteSpace || 'nowrap'"
         [style.wordBreak]="el.style.whiteSpace === 'normal' ? 'break-word' : 'normal'"
         [style.border]="el.style.border || (el.type === 'table' ? '1px solid' : 'none')"
-        [style.borderColor]="el.style.borderColor || '#cbd5e1'"
-        [class.is-image]="el.type === 'image'" [class.is-table]="el.type === 'table'">
+        [style.borderColor]="el.style.borderColor || '#cbd5e1'" [class.is-image]="el.type === 'image'"
+        [class.is-table]="el.type === 'table'">
         @if (el.type === 'table' && el.table) {
         <div class="preview-table-wrap" [style.width.px]="tableWidth(el.table)"
           [style.height.px]="tableHeight(el.table)">
