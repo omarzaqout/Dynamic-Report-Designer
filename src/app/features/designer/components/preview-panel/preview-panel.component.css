@@ -304,8 +304,9 @@
     .preview-el.is-table {
         position: relative !important;
         display: block !important;
-        left: auto !important; /* override inline */
-        top: auto !important;  /* override inline */
+        left: auto !important;
+        top: auto !important;
+        height: auto !important; /* CRITICAL: Override absolute height bounding box for table to wrap rows natively */
         margin-top: var(--print-mt) !important;
         margin-left: var(--print-ml) !important;
     }

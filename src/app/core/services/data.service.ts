@@ -101,7 +101,31 @@ export class DataService {
     if (!path) return obj;
     // Replace [index] with .index to unify splitting
     const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
-    return normalizedPath.split('.').filter(p => p).reduce((o, i) => o?.[i], obj);
+    const parts = normalizedPath.split('.').filter(p => p);
+    
+    return parts.reduce((acc, key) => {
+      if (acc === undefined || acc === null) return undefined;
+      
+      if (Array.isArray(acc)) {
+        if (key === '0') return acc;
+        if (!isNaN(Number(key))) return acc[Number(key)];
+        
+        const plucked: any[] = [];
+        for (const item of acc) {
+          const val = item?.[key];
+          if (val !== undefined) {
+            if (Array.isArray(val)) {
+              plucked.push(...val);
+            } else {
+              plucked.push(val);
+            }
+          }
+        }
+        return plucked.length > 0 ? plucked : undefined;
+      }
+      
+      return acc[key];
+    }, obj);
   }
 
   getFields(sampleData?: any): Field[] {

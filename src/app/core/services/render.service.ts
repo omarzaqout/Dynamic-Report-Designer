@@ -87,16 +87,21 @@ export class RenderService {
     const table = el.table;
     if (!table) return undefined;
     
-    // Choose the data source for the table
-    let tableSource = fullData;
-    if (el.datasetPath && rawData) {
-      const resolved = this.getValueByPath(rawData, el.datasetPath);
+    // Choose the data source for the table entirely independent of the layout context.
+    // Table data should strictly resolve from the root raw JSON using datasetPath.
+    let tableSource: any[] = [];
+    
+    if (rawData) {
+      const resolved = el.datasetPath ? this.getValueByPath(rawData, el.datasetPath) : rawData;
+
       if (Array.isArray(resolved)) {
         tableSource = resolved;
       } else if (resolved && typeof resolved === 'object' && resolved !== null) {
-        // Treat single object as a list of 1 for repeating rows
         tableSource = [resolved];
       }
+    } else {
+      // Safe fallback if rawData is not provided
+      tableSource = Array.isArray(fullData) ? fullData : [fullData];
     }
     
     if (table.dynamicRows && tableSource && tableSource.length > 0) {
@@ -110,7 +115,7 @@ export class RenderService {
       
       tableSource.forEach(row => {
         templateBlock.forEach((tRow, idx) => {
-          newCells.push(tRow.map(cell => this.processCell(cell, row, true)));
+          newCells.push(tRow.map(cell => this.processCell(cell, row, true, el.datasetPath, rawData)));
           newRowHeights.push(templateRowHeights[idx]);
         });
       });
@@ -128,27 +133,85 @@ export class RenderService {
       ...table,
       rowHeights: table.rowHeights?.length === table.rows ? [...table.rowHeights] : Array.from({ length: table.rows }, () => 36),
       columnSettings: table.columnSettings?.length === table.columns ? table.columnSettings.map(col => ({ ...col })) : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true })),
-      cells: table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData))),
+      cells: table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData, el.datasetPath, rawData))),
     };
   }
 
-  private processCell(cell: any, row: ReportData, hasData: boolean): any {
+  private processCell(cell: any, row: ReportData, hasData: boolean, datasetPath?: string, rawData?: any): any {
     if (cell.fieldPath) {
-      const value = this.getValueByPath(row, cell.fieldPath);
+      let value: any;
+      const usedPath = cell.fieldPath;
+      
+      // The datasetPath might be "0.items", but the user field is just "items.name"
+      // We must clean both of array index notation for prefix matching
+      let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
+      
+      // 1. Try stripping dataset path prefix if explicitly mapped from full tree
+      if (cleanDatasetPath && usedPath.startsWith(cleanDatasetPath)) {
+        let relativePath = usedPath.substring(cleanDatasetPath.length);
+        if (relativePath.startsWith('.')) relativePath = relativePath.substring(1);
+        value = relativePath ? this.getValueByPath(row, relativePath) : row;
+      }
+      
+      // 2. Try against the local element context (works for 'id' directly inside array)
+      if (value === undefined) {
+        value = this.getValueByPath(row, usedPath);
+        
+        if (value === undefined) {
+          const parts = usedPath.split('.');
+          while (parts.length > 1 && value === undefined) {
+            parts.shift();
+            value = this.getValueByPath(row, parts.join('.'));
+          }
+        }
+      }
+      
+      // 3. Try global context fallback (external fields)
+      if (value === undefined && rawData) {
+        value = this.getValueByPath(rawData, usedPath);
+      }
+
       return {
         ...cell,
         content: value === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : typeof value === 'object' ? JSON.stringify(value) : String(value),
       };
     }
-    return { ...cell, content: this.interpolate(cell.content || '', row) };
+    return { ...cell, content: this.interpolate(cell.content || '', row, rawData, datasetPath) };
   }
 
-  interpolate(content: string, row: ReportData): string {
+  interpolate(content: string, row: ReportData, rawData?: any, datasetPath?: string): string {
     return content.replace(/\{\{([^}]+)\}\}/g, (_match, expr) => {
       try {
         const trimmed = expr.trim();
-        let result = this.getValueByPath(row, trimmed);
+        let result: any = undefined;
         
+        let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
+        
+        // 1.
+        if (cleanDatasetPath && trimmed.startsWith(cleanDatasetPath)) {
+          let relPath = trimmed.substring(cleanDatasetPath.length);
+          if (relPath.startsWith('.')) relPath = relPath.substring(1);
+          result = relPath ? this.getValueByPath(row, relPath) : row;
+        } 
+        
+        // 2.
+        if (result === undefined) {
+          result = this.getValueByPath(row, trimmed);
+          if (result === undefined) {
+            const parts = trimmed.split('.');
+            while (parts.length > 1 && result === undefined) {
+              parts.shift();
+              result = this.getValueByPath(row, parts.join('.'));
+            }
+          }
+        }
+        
+        // 3.
+        if (result === undefined && rawData) {
+          result = this.getValueByPath(rawData, trimmed);
+        }
+        
+        // 4. Function execution
         if (result === undefined) {
           const keys = Object.keys(row);
           const values = Object.values(row);
@@ -166,6 +229,31 @@ export class RenderService {
   getValueByPath(obj: any, path: string): any {
     if (!obj || !path) return undefined;
     const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
-    return normalizedPath.split('.').filter(p => p).reduce((acc, key) => acc?.[key], obj);
+    const parts = normalizedPath.split('.').filter(p => p);
+    
+    return parts.reduce((acc, key) => {
+      if (acc === undefined || acc === null) return undefined;
+      
+      if (Array.isArray(acc)) {
+        if (key === '0') return acc;
+        if (!isNaN(Number(key))) return acc[Number(key)];
+        
+        const plucked: any[] = [];
+        for (const item of acc) {
+          const val = item?.[key];
+          if (val !== undefined) {
+            if (Array.isArray(val)) {
+              plucked.push(...val);
+            } else {
+              plucked.push(val);
+            }
+          }
+        }
+        return plucked.length > 0 ? plucked : undefined;
+      }
+      
+      return acc[key];
+    }, obj);
   }
 }
+
