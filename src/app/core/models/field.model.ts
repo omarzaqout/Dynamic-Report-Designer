@@ -5,4 +5,5 @@ export interface Field {
   path?: string;
   children?: Field[];
   isExpanded?: boolean;
+  fullLabel?: string;
 }

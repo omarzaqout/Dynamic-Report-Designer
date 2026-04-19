@@ -28,13 +28,14 @@ export class DataService {
     this.rawResponse.set(res);
     
     const datasets: Dataset[] = [];
+    const isRootArray = Array.isArray(res);
     
-    // Always add a "Default / Full Data" option
+    // Add a root dataset option
     datasets.push({
-      name: 'Default (Full Data List)',
+      name: isRootArray ? 'Default (Full Context)' : 'Document Detail (Root)',
       path: '',
-      sample: Array.isArray(res) ? res[0] : res,
-      count: Array.isArray(res) ? res.length : 1
+      sample: isRootArray ? res[0] : res,
+      count: isRootArray ? res.length : 1
     });
 
     this.findDatasets(res, '', datasets);
@@ -63,12 +64,14 @@ export class DataService {
         });
       }
       if (obj[0] && typeof obj[0] === 'object') {
+        // Continue searching inside items, but don't add the [0] index as a separate dataset option
         this.findDatasets(obj[0], path ? `${path}[0]` : '0', datasets);
       }
       return;
     }
 
-    if (path) {
+    // Only push as a dataset if it's a structural object and NOT a specific index iteration (e.g. [0])
+    if (path && !path.endsWith(']')) {
       datasets.push({
         name: this.cleanPathForLabel(path),
         path: path,
@@ -144,26 +147,36 @@ export class DataService {
     return this.generateFieldsTree(sample, cleanedPrefix);
   }
 
-  private generateFieldsTree(sample: any, prefix = ''): Field[] {
+  private generateFieldsTree(sample: any, prefix = '', parentLabel = ''): Field[] {
     if (!sample || typeof sample !== 'object') return [];
-    return Object.keys(sample).map(key => {
+    
+    const fields: Field[] = [];
+    Object.keys(sample).forEach(key => {
       const value = sample[key];
-      const path = prefix ? `${prefix}.${key}` : key;
+      const newPath = prefix ? `${prefix}.${key}` : key;
+      const label = this.formatLabel(key);
       const type = this.inferType(value);
+      const fullLabel = parentLabel ? `${parentLabel} » ${label}` : label;
       
       const field: Field = {
-        key: path,
-        label: this.formatLabel(key),
-        path: path,
+        key: newPath,
+        label: label,
+        path: newPath,
         type: type as any,
-        isExpanded: false // Start collapsed for complex objects
+        isExpanded: false,
+        fullLabel: fullLabel
       };
 
       if (type === 'object' && value !== null && !Array.isArray(value)) {
-        field.children = this.generateFieldsTree(value, path);
+        field.children = this.generateFieldsTree(value, newPath, fullLabel);
+      } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
+        // Recurse into array item to show its fields
+        field.children = this.generateFieldsTree(value[0], newPath, fullLabel);
       }
-      return field;
+      
+      fields.push(field);
     });
+    return fields;
   }
 
   private formatLabel(key: string): string {
