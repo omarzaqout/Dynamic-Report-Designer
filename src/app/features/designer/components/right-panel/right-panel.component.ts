@@ -142,6 +142,21 @@ export class RightPanelComponent {
     this.updateStyle({ textAlign: align });
   }
 
+  onWordWrapChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.updateStyle({ whiteSpace: checked ? 'normal' : 'nowrap' });
+  }
+
+  onBorderToggle(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.updateStyle({ border: checked ? '1px solid' : 'none' });
+  }
+
+  onBorderColorChange(event: Event): void {
+    const color = (event.target as HTMLInputElement).value;
+    this.updateStyle({ borderColor: color });
+  }
+
   onXChange(event: Event): void {
     const el = this.element();
     if (el) {
@@ -394,6 +409,45 @@ export class RightPanelComponent {
     const cloned = this.cloneTable(el.table);
     const nextTable = mutator(cloned);
     this.templateService.updateElement(el.id, { table: nextTable });
+  }
+
+  alignElement(side: 'left' | 'center' | 'right'): void {
+    const el = this.element();
+    if (!el) return;
+
+    const CANVAS_WIDTH = 794;
+    let elementWidth = 0;
+
+    // Try to get width from DOM for accurate measurement (especially for auto-sized text)
+    const domEl = document.getElementById(el.id);
+    if (domEl) {
+      elementWidth = domEl.offsetWidth;
+    } else {
+      // Fallback if not in DOM or not found
+      if (el.type === 'table') {
+        const table = el.table;
+        if (table) {
+          const visibleCols = table.columnSettings.filter(c => c.visible);
+          elementWidth = visibleCols.reduce((sum, c) => sum + c.width, 0);
+        }
+      } else if (el.type === 'image' && el.size) {
+        elementWidth = el.size.width;
+      } else {
+        elementWidth = 100; // Generic fallback
+      }
+    }
+
+    let newX = el.position.x;
+    if (side === 'left') {
+      newX = 0;
+    } else if (side === 'center') {
+      newX = Math.round((CANVAS_WIDTH - elementWidth) / 2);
+    } else if (side === 'right') {
+      newX = CANVAS_WIDTH - elementWidth;
+    }
+
+    this.templateService.updateElementPosition(el.id, Math.max(0, newX), el.position.y);
+    this.templateService.pushToHistory(); // Record the action
   }
 
   private cloneTable(table: TableData): TableData {

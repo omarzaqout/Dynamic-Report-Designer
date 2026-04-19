@@ -78,6 +78,10 @@
         [style.fontSize.px]="el.style.fontSize" [style.fontFamily]="el.style.fontFamily"
         [style.fontWeight]="el.style.fontWeight" [style.fontStyle]="el.style.fontStyle"
         [style.textDecoration]="el.style.textDecoration" [style.color]="el.style.color"
+        [style.whiteSpace]="el.style.whiteSpace || 'nowrap'"
+        [style.wordBreak]="el.style.whiteSpace === 'normal' ? 'break-word' : 'normal'"
+        [style.border]="el.style.border || (el.type === 'table' ? '1px solid' : 'none')"
+        [style.borderColor]="el.style.borderColor || '#cbd5e1'"
         [class.is-image]="el.type === 'image'" [class.is-table]="el.type === 'table'">
         @if (el.type === 'table' && el.table) {
         <div class="preview-table-wrap" [style.width.px]="tableWidth(el.table)"
@@ -94,7 +98,11 @@
                   [style.fontFamily]="el.table.cells[rowIndex][colIndex].style?.fontFamily ?? el.style.fontFamily"
                   [style.fontWeight]="el.table.cells[rowIndex][colIndex].style?.fontWeight ?? el.style.fontWeight"
                   [style.fontStyle]="el.table.cells[rowIndex][colIndex].style?.fontStyle ?? el.style.fontStyle"
-                  [style.textDecoration]="el.table.cells[rowIndex][colIndex].style?.textDecoration ?? el.style.textDecoration">
+                  [style.textDecoration]="el.table.cells[rowIndex][colIndex].style?.textDecoration ?? el.style.textDecoration"
+                  [style.whiteSpace]="el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap'"
+                  [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace) === 'normal' ? 'break-word' : 'normal'"
+                  [style.border]="el.table.cells[rowIndex][colIndex].style?.border ?? '1px solid'"
+                  [style.borderColor]="el.table.cells[rowIndex][colIndex].style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'">
                   {{ el.table.cells[rowIndex][colIndex].content || ' ' }}
                 </td>
                 }

@@ -112,7 +112,7 @@ export class TemplateService {
     this.pushToHistory();
   }
 
-  private pushToHistory(): void {
+  pushToHistory(): void {
     const currentState = JSON.stringify(this._template());
     if (this.historyIndex >= 0 && this.history[this.historyIndex] === currentState) return;
 

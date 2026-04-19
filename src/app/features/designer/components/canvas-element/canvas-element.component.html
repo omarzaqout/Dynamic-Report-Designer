@@ -1,5 +1,6 @@
     <div
       #elRef
+      [id]="element.id"
       class="canvas-el"
       [class.selected]="selected"
       [class.is-image]="element.type === 'image'"
@@ -12,6 +13,9 @@
       [style.fontWeight]="element.style.fontWeight"
       [style.fontStyle]="element.style.fontStyle"
       [style.textDecoration]="element.style.textDecoration"
+      [style.whiteSpace]="element.style.whiteSpace || 'nowrap'"
+      [style.border]="element.style.border || (element.type === 'table' ? '1px solid' : 'none')"
+      [style.borderColor]="element.style.borderColor || '#cbd5e1'"
       [style.color]="element.style.color"
       (mousedown)="onMouseDown($event)"
       (click)="onClick($event)"
@@ -53,6 +57,10 @@
                       [style.fontWeight]="getTableRows()[rowIndex][colIndex].style?.fontWeight ?? element.style.fontWeight"
                       [style.fontStyle]="getTableRows()[rowIndex][colIndex].style?.fontStyle ?? element.style.fontStyle"
                       [style.textDecoration]="getTableRows()[rowIndex][colIndex].style?.textDecoration ?? element.style.textDecoration"
+                      [style.whiteSpace]="getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap'"
+                      [style.wordBreak]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace) === 'normal' ? 'break-word' : 'normal'"
+                      [style.border]="getTableRows()[rowIndex][colIndex].style?.border ?? '1px solid'"
+                      [style.borderColor]="getTableRows()[rowIndex][colIndex].style?.borderColor ?? element.style.borderColor ?? '#cbd5e1'"
                       (dragover)="onCellDragOver($event, rowIndex, colIndex)"
                       (dragleave)="onCellDragLeave($event, rowIndex, colIndex)"
                       (drop)="onCellDrop($event, rowIndex, colIndex)"

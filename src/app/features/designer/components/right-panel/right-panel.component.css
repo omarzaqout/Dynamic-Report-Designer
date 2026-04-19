@@ -94,6 +94,36 @@
     }
     .toggle-btn:hover { background: rgba(0,0,0,0.03); color: #1e293b; }
     .toggle-btn.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .danger-zone { margin-top: 16px; padding-top: 16px; border-top: 1px solid #fee2e2; }
+    .delete-btn { width: 100%; padding: 10px; border: 1px solid #fecaca; background: #fff1f2; color: #e11d48; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .delete-btn:hover { background: #ffe4e6; border-color: #fda4af; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.1); }
+    .align-tool-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      padding-top: 10px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #475569;
+      transition: all 0.2s;
+    }
+    .align-tool-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #1e293b;
+      transform: translateY(-1px);
+    }
+    .align-tool-btn:active {
+      background: #f1f5f9;
+      transform: translateY(0);
+    }
+    .align-tool-btn span {
+      line-height: 1;
+    }
     .prop-number {
       width: 100%; max-width: 80px; padding: 5px 8px; border: 1px solid #e2e8f0;
       border-radius: 6px; font-size: 11px; color: #1e293b;

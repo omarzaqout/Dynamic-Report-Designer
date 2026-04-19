@@ -8,6 +8,9 @@ export interface ElementStyle {
   textDecoration: 'none' | 'underline';
   color: string;
   textAlign?: 'left' | 'center' | 'right';
+  whiteSpace?: 'nowrap' | 'normal' | 'pre-wrap';
+  border?: string;
+  borderColor?: string;
 }
 
 export interface TableCell {

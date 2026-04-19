@@ -76,6 +76,35 @@
                   </div>
                 </div>
 
+                <div class="prop-row">
+                  <label style="color: #92400e; font-weight: 700;">Wrap Text</label>
+                  <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+                    <input type="checkbox" 
+                      [checked]="el.table.cells[focus.row][focus.col].style?.whiteSpace === 'normal'" 
+                      (change)="onTableCellStyleChange({ whiteSpace: $any($event.target).checked ? 'normal' : 'nowrap' })"
+                    >
+                    <span style="font-size: 10px; color: #92400e;">Allow multi-line wrap</span>
+                  </label>
+                </div>
+
+                <div class="prop-row">
+                  <label style="color: #92400e; font-weight: 700;">Border</label>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+                      <input type="checkbox" 
+                        [checked]="el.table.cells[focus.row][focus.col].style?.border !== 'none'" 
+                        (change)="onTableCellStyleChange({ border: $any($event.target).checked ? '1px solid' : 'none' })"
+                      >
+                      <span style="font-size: 10px; color: #92400e;">Show Border</span>
+                    </label>
+                    <input type="color" class="color-picker" 
+                      [value]="el.table.cells[focus.row][focus.col].style?.borderColor || '#cbd5e1'" 
+                      (input)="onTableCellStyleChange({ borderColor: $any($event.target).value })"
+                      style="width: 24px; height: 24px;"
+                    >
+                  </div>
+                </div>
+
                 <button (click)="setFocusedCell(-1, -1)" style="width: 100%; margin-top: 8px; padding: 4px; font-size: 9px; cursor: pointer; border: 1px dashed #92400e; background: transparent; color: #92400e;">Deselect Cell</button>
               } @else {
                 <div style="padding: 20px; text-align: center; border: 1px dashed #fbbf24; border-radius: 8px; background: #fff;">
@@ -347,6 +376,51 @@
                   title="Align Right"
                 >&#8614;</button>
               </div>
+            </div>
+            <div class="prop-row">
+              <label>Word Wrap</label>
+              <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+                <input type="checkbox" 
+                  [checked]="el.style.whiteSpace === 'normal'" 
+                  (change)="onWordWrapChange($event)"
+                >
+                <span style="font-size: 10px;">Wrap long text</span>
+              </label>
+            </div>
+            <div class="prop-row">
+              <label>Border</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+                  <input type="checkbox" 
+                    [checked]="el.style.border && el.style.border !== 'none'" 
+                    (change)="onBorderToggle($event)"
+                  >
+                  <span style="font-size: 10px;">Show Border</span>
+                </label>
+                <input type="color" class="color-picker" 
+                  [value]="el.style.borderColor || '#cbd5e1'" 
+                  (input)="onBorderColorChange($event)"
+                  style="width: 24px; height: 24px;"
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="prop-section">
+            <div class="prop-section-title">Canvas Alignment</div>
+            <div class="alignment-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px;">
+              <button class="align-tool-btn" (click)="alignElement('left')" title="Align to Left Edge">
+                <span style="font-size: 16px;">&#8676;</span>
+                <span style="font-size: 9px; margin-top: 2px;">Left</span>
+              </button>
+              <button class="align-tool-btn" (click)="alignElement('center')" title="Center on Canvas">
+                <span style="font-size: 16px;">&#8633;</span>
+                <span style="font-size: 9px; margin-top: 2px;">Center</span>
+              </button>
+              <button class="align-tool-btn" (click)="alignElement('right')" title="Align to Right Edge">
+                <span style="font-size: 16px;">&#8677;</span>
+                <span style="font-size: 9px; margin-top: 2px;">Right</span>
+              </button>
             </div>
           </div>
 
