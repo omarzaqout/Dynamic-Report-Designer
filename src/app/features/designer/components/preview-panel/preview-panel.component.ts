@@ -50,29 +50,26 @@ export class PreviewPanelComponent {
     const result: any[] = [];
     
     let currentFlowBottom = 0;
-    const sectionTopY = this.getSectionMinY(section);
 
     for (const el of sorted) {
       const originalHeight = this.getElementOriginalHeight(el);
       let currentElOffset = 0;
-      const relativeY = el.y - sectionTopY;
-
-      // 3. SMART PUSH-DOWN: Preserve the original gaps from the designer
+      // SMART OFFSET (Push & Pull): 
+      // Maintains the design's "Visual Proximity" by expanding or shrinking gaps 
+      // based on the actual rendered content of elements above.
       for (const processed of result) {
         const actualH = this.getElementActualHeight(processed);
         const origH = processed.originalHeight;
 
-        if (actualH > origH) {
-          // If the processed element above was originally ABOVE this element
-          // We add a 2px tolerance for designer snapping
-          if (processed.y + origH <= el.y + 2) {
-            currentElOffset += (actualH - origH);
-          }
+        // If this element was originally positioned below the processed element
+        if (processed.y + origH <= el.y + 2) {
+          // Add the delta (positive if grew, negative if shrank)
+          currentElOffset += (actualH - origH);
         }
       }
 
-      // 4. Smart Rounding & Buffer
-      const renderedY = Math.round(relativeY + currentElOffset);
+      // Final Rendered Y = Original Y + Accumulated Smart Offset
+      const renderedY = Math.round(el.y + currentElOffset);
       let printMarginTop = 0;
 
       if (el.type === 'table') {
@@ -88,22 +85,23 @@ export class PreviewPanelComponent {
 
   private getElementActualHeight(el: any): number {
     if (el.type === 'table' && el.table) {
+      // The actual height is the sum of all rows (could be many more than in designer)
       return this.tableHeight(el.table);
     }
-    if (el.type === 'image' && el.size) {
-      return el.size.height;
-    }
+    if (el.size?.height) return el.size.height;
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }
 
+  /** Height the element was given in the DESIGNER. */
   private getElementOriginalHeight(el: any): number {
+    // 1. If it has a size set in the designer, that's our baseline
     if (el.size?.height) return el.size.height;
-    if (el.type === 'table' && el.table && el.designerRows != null) {
-      const designerRowHeights = (el.table.rowHeights as number[]).slice(0, el.designerRows);
-      if (designerRowHeights.length > 0) {
-        return designerRowHeights.reduce((s, h) => s + h, 0);
-      }
+
+    // 2. Fallback for tables if size is missing
+    if (el.type === 'table' && el.table) {
+      return this.tableHeight(el.table);
     }
+
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }
 
