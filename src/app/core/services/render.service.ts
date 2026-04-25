@@ -36,14 +36,26 @@ export class RenderService {
     const sections: RenderedSection[] = [];
 
     for (const section of template.sections) {
+      // Choose the data source for this specific section. 
+      // If a section has a datasetPath, it resolves from the raw API response.
+      let sectionData = data;
+      if (section.datasetPath && rawData) {
+        const resolved = this.getValueByPath(rawData, section.datasetPath);
+        if (Array.isArray(resolved)) {
+          sectionData = resolved as ReportData[];
+        } else if (resolved && typeof resolved === 'object' && resolved !== null) {
+          sectionData = [resolved] as ReportData[];
+        }
+      }
+
       if (section.repeatPerRow) {
-        const rows = data.length > 0 ? data : [{}];
+        const rows = sectionData.length > 0 ? sectionData : [{}];
         for (const row of rows) {
-          sections.push(this.renderSection(section, row as ReportData, true, data, rawData));
+          sections.push(this.renderSection(section, row as ReportData, true, sectionData, rawData));
         }
       } else {
-        const baseRow = section.type === 'details' && data.length > 0 ? data[0] : {};
-        sections.push(this.renderSection(section, baseRow as ReportData, false, data, rawData));
+        const baseRow = (section.type === 'details' || section.type === 'pageHeader' || section.type === 'reportHeader' || section.type === 'footer') && sectionData.length > 0 ? sectionData[0] : {};
+        sections.push(this.renderSection(section, baseRow as ReportData, false, sectionData, rawData));
       }
     }
 
@@ -53,16 +65,26 @@ export class RenderService {
   private renderSection(section: TemplateSection, row: ReportData, isDetail: boolean, fullData: ReportData[], rawData?: any): RenderedSection {
     const elements: RenderedElement[] = section.elements.map((el) => {
       let renderedContent = el.content || '';
-      if (el.type === 'field') {
-        renderedContent = this.interpolate(renderedContent, row);
+      
+      // Use unified resolution logic for both fields and interpolated text
+      if (el.type === 'field' || (renderedContent && renderedContent.includes('{{'))) {
+        renderedContent = this.interpolate(renderedContent, row, rawData, section.datasetPath);
       }
+
+      let imageUrl = (el as any).imageUrl;
+      if (el.type === 'image' && (el as any).isQRCode && ((el as any).fieldPath || (el as any).qrCodeField)) {
+        const fieldToUse = (el as any).fieldPath || (el as any).qrCodeField;
+        const val = this.interpolate(`{{${fieldToUse}}}`, row, rawData, section.datasetPath);
+        if (val) {
+          imageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(val)}`;
+        }
+      }
+
       return {
         id: el.id,
         content: renderedContent,
-        imageUrl: (el as any).imageUrl,
+        imageUrl: imageUrl,
         table: el.type === 'table' ? this.renderTable(el, row, fullData, rawData) : undefined,
-        // Preserve the original (pre-expansion) row count so the preview can compute
-        // how much the table has grown relative to its designer size.
         designerRows: el.type === 'table' && el.table ? el.table.rows : undefined,
         size: el.size,
         x: el.position.x,
@@ -87,20 +109,16 @@ export class RenderService {
     const table = el.table;
     if (!table) return undefined;
     
-    // Choose the data source for the table entirely independent of the layout context.
-    // Table data should strictly resolve from the root raw JSON using datasetPath.
+    // Table data resolution
     let tableSource: any[] = [];
-    
     if (rawData) {
       const resolved = el.datasetPath ? this.getValueByPath(rawData, el.datasetPath) : rawData;
-
       if (Array.isArray(resolved)) {
         tableSource = resolved;
       } else if (resolved && typeof resolved === 'object' && resolved !== null) {
         tableSource = [resolved];
       }
     } else {
-      // Safe fallback if rawData is not provided
       tableSource = Array.isArray(fullData) ? fullData : [fullData];
     }
     
@@ -139,87 +157,93 @@ export class RenderService {
 
   private processCell(cell: any, row: ReportData, hasData: boolean, datasetPath?: string, rawData?: any): any {
     if (cell.fieldPath) {
-      let value: any;
-      const usedPath = cell.fieldPath;
-      
-      // The datasetPath might be "0.items", but the user field is just "items.name"
-      // We must clean both of array index notation for prefix matching
-      let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
-      
-      // 1. Try stripping dataset path prefix if explicitly mapped from full tree
-      if (cleanDatasetPath && usedPath.startsWith(cleanDatasetPath)) {
-        let relativePath = usedPath.substring(cleanDatasetPath.length);
-        if (relativePath.startsWith('.')) relativePath = relativePath.substring(1);
-        value = relativePath ? this.getValueByPath(row, relativePath) : row;
-      }
-      
-      // 2. Try against the local element context (works for 'id' directly inside array)
-      if (value === undefined) {
-        value = this.getValueByPath(row, usedPath);
-        
-        if (value === undefined) {
-          const parts = usedPath.split('.');
-          while (parts.length > 1 && value === undefined) {
-            parts.shift();
-            value = this.getValueByPath(row, parts.join('.'));
-          }
-        }
-      }
-      
-      // 3. Try global context fallback (external fields)
-      if (value === undefined && rawData) {
-        value = this.getValueByPath(rawData, usedPath);
-      }
-
+      const val = this.resolveValue(cell.fieldPath, row, rawData, datasetPath);
       return {
         ...cell,
-        content: value === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : typeof value === 'object' ? JSON.stringify(value) : String(value),
+        content: val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val)
       };
     }
     return { ...cell, content: this.interpolate(cell.content || '', row, rawData, datasetPath) };
   }
 
+  private resolveValue(expression: string, row: ReportData, rawData?: any, datasetPath?: string): any {
+    const trimmed = expression.trim();
+    let result: any = undefined;
+    
+    // 1. Dataset Path Prefix Stripping (Crystal Reports style)
+    let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
+    if (cleanDatasetPath && trimmed.startsWith(cleanDatasetPath)) {
+      let relPath = trimmed.substring(cleanDatasetPath.length);
+      if (relPath.startsWith('.')) relPath = relPath.substring(1);
+      result = relPath ? this.getValueByPath(row, relPath) : row;
+      
+      // CRITICAL: If we matched the prefix, we treat this as a STRICT BINDING.
+      // We do not fallback to global rawData because that would cause "plucking" of the whole array.
+      if (result !== undefined) return result;
+      // Even if result is undefined, we return it to prevent global fallback if it was intended for this row
+      return undefined;
+    } 
+    
+    // 2. Local Context Resolution (with fallback to shifted parts)
+    result = this.getValueByPath(row, trimmed);
+    if (result === undefined) {
+      const parts = trimmed.split('.');
+      while (parts.length > 1 && result === undefined) {
+        parts.shift();
+        result = this.getValueByPath(row, parts.join('.'));
+      }
+    }
+    
+    // 3. Global Context Fallback (only if not explicitly prefixed with a different dataset)
+    if (result === undefined && rawData) {
+      result = this.getValueByPath(rawData, trimmed);
+    }
+
+    // 4. Primitive Context
+    if (result === undefined && (trimmed === '.' || trimmed === 'this' || trimmed === 'value')) {
+      result = row;
+    }
+    
+    return result;
+  }
+
+  private formatValue(value: any): string {
+    if (value === undefined || value === null) return '';
+    if (Array.isArray(value)) return JSON.stringify(value);
+    if (typeof value === 'object') return JSON.stringify(value);
+    
+    // Auto-format dates
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}/${month}/${year}`;
+      }
+    }
+    
+    return String(value);
+  }
+
   interpolate(content: string, row: ReportData, rawData?: any, datasetPath?: string): string {
     return content.replace(/\{\{([^}]+)\}\}/g, (_match, expr) => {
       try {
-        const trimmed = expr.trim();
-        let result: any = undefined;
+        const result = this.resolveValue(expr, row, rawData, datasetPath);
         
-        let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
-        
-        // 1.
-        if (cleanDatasetPath && trimmed.startsWith(cleanDatasetPath)) {
-          let relPath = trimmed.substring(cleanDatasetPath.length);
-          if (relPath.startsWith('.')) relPath = relPath.substring(1);
-          result = relPath ? this.getValueByPath(row, relPath) : row;
-        } 
-        
-        // 2.
-        if (result === undefined) {
-          result = this.getValueByPath(row, trimmed);
-          if (result === undefined) {
-            const parts = trimmed.split('.');
-            while (parts.length > 1 && result === undefined) {
-              parts.shift();
-              result = this.getValueByPath(row, parts.join('.'));
-            }
-          }
+        if (result !== undefined && result !== null) {
+          return this.formatValue(result);
         }
         
-        // 3.
-        if (result === undefined && rawData) {
-          result = this.getValueByPath(rawData, trimmed);
-        }
-        
-        // 4. Function execution
-        if (result === undefined) {
+        // Final fallback: try as JS expression if scalar resolution failed
+        try {
           const keys = Object.keys(row);
           const values = Object.values(row);
-          const fn = new Function(...keys, `return ${trimmed}`);
-          result = fn(...values);
+          const fn = new Function(...keys, `return ${expr.trim()}`);
+          return this.formatValue(fn(...values));
+        } catch {
+          return `{{${expr}}}`;
         }
-        
-        return result !== undefined && result !== null ? typeof result === 'object' ? JSON.stringify(result) : String(result) : '';
       } catch {
         return `{{${expr}}}`;
       }
@@ -256,4 +280,3 @@ export class RenderService {
     }, obj);
   }
 }
-

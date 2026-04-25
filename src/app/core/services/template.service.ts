@@ -413,6 +413,14 @@ export class TemplateService {
     this.pushToHistory();
   }
 
+  updateSectionDataset(sectionId: string, datasetPath: string | undefined): void {
+    this._template.update(t => ({
+      ...t,
+      sections: t.sections.map(s => s.id === sectionId ? { ...s, datasetPath } : s)
+    }));
+    this.pushToHistory();
+  }
+
   updateSectionRepeatOnPage(sectionId: string, repeatOnEveryPage: boolean): void {
     this._template.update(t => ({
       ...t,

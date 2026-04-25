@@ -3,21 +3,34 @@ import { CommonModule } from '@angular/common';
 import { TemplateSection, TemplateElement, DEFAULT_STYLE, TableData } from '../../../../core/models/template.model';
 import { CanvasElementComponent } from '../canvas-element/canvas-element.component';
 import { TemplateService } from '../../../../core/services/template.service';
+import { DataService } from '../../../../core/services/data.service';
+import { computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-canvas-section',
   standalone: true,
-  imports: [CommonModule, CanvasElementComponent],
+  imports: [CommonModule, CanvasElementComponent, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './canvas-section.component.html',
   styleUrl: './canvas-section.component.css',
 })
 export class CanvasSectionComponent {
   private templateService = inject(TemplateService);
+  private dataService = inject(DataService);
   
   @Input({ required: true }) section!: TemplateSection;
   @Input() selectedElementId: string | null = null;
   readonly selectedElementIds = this.templateService.selectedElementIds;
+
+  readonly datasets = this.dataService.datasets;
+  readonly arrayFields = computed(() => {
+    return this.datasets().map(ds => ({
+      label: ds.name,
+      path: ds.path,
+      count: ds.count
+    }));
+  });
 
   @Output() elementAdd = new EventEmitter<{ sectionId: string; element: Omit<TemplateElement, 'id'> }>();
   @Output() elementSelect = new EventEmitter<string>();
@@ -195,6 +208,10 @@ export class CanvasSectionComponent {
   onRepeatOnPageChange(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     this.templateService.updateSectionRepeatOnPage(this.section.id, checked);
+  }
+
+  onSectionDatasetChange(value: string | undefined): void {
+    this.templateService.updateSectionDataset(this.section.id, value || undefined);
   }
 
   onCanvasClick(event: MouseEvent): void {

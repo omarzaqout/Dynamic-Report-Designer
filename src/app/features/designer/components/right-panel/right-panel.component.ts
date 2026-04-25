@@ -41,11 +41,16 @@ export class RightPanelComponent {
   // Cache fields and avoid frequent re-computation if possible
   readonly fields = computed(() => {
     const el = this.element();
+    const section = this.templateService.selectedElementSection();
+    
     // Re-check rawData in service to ensure we didn't lose state
     if (!this.dataService.datasets().length) return [];
     
-    if (el?.type === 'table' && el.datasetPath) {
-      return this.dataService.getFieldsForPath(el.datasetPath);
+    // Use element path if specific (table), otherwise inherit from parent section
+    const effectivePath = (el?.type === 'table' ? el.datasetPath : undefined) || section?.datasetPath;
+    
+    if (effectivePath) {
+      return this.dataService.getFieldsForPath(effectivePath);
     }
     return this.dataService.getFields();
   });
@@ -84,10 +89,34 @@ export class RightPanelComponent {
     const val = (event.target as HTMLSelectElement).value;
     const el = this.element();
     if (!el) return;
+
+    if (el.type === 'image') {
+      this.templateService.updateElement(el.id, { fieldPath: val || undefined });
+      return;
+    }
+
     if (val) {
       this.templateService.updateElement(el.id, { content: `{{${val}}}`, boundField: val, fieldPath: val, type: 'field' });
+      
+      // AUTO-BIND SECTION: If this is a details section and has no dataset path, 
+      // try to infer it from the field being bound.
+      const section = this.templateService.selectedElementSection();
+      if (section && section.type === 'details' && !section.datasetPath) {
+        const ds = this.datasets().find(d => d.path && val.startsWith(d.path));
+        if (ds) {
+          this.templateService.updateSectionDataset(section.id, ds.path);
+        }
+      }
     } else {
       this.templateService.updateElement(el.id, { boundField: undefined, fieldPath: undefined, type: 'text' });
+    }
+  }
+
+  onQRCodeToggle(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const el = this.element();
+    if (el && el.type === 'image') {
+      this.templateService.updateElement(el.id, { isQRCode: checked });
     }
   }
 

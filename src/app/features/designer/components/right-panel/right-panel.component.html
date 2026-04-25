@@ -147,8 +147,27 @@
               <div class="prop-col">
                 <label class="prop-label">Upload Image</label>
                 <input type="file" accept="image/*" (change)="onImageUpload($event)" style="font-size: 11px;" />
-                @if (el.imageUrl) {
+                @if (el.imageUrl && !el.isQRCode) {
                   <img [src]="el.imageUrl" style="margin-top: 8px; max-width: 100%; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;"/>
+                }
+              </div>
+
+              <div class="prop-col" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                <label class="repeat-toggle" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                  <input type="checkbox" [checked]="el.isQRCode" (change)="onQRCodeToggle($event)" />
+                  <span style="font-weight: 600; color: #1e293b; font-size: 12px;">Convert to QR Code</span>
+                </label>
+                
+                @if (el.isQRCode) {
+                  <div style="margin-top: 8px;">
+                    <label class="prop-label" style="font-size: 11px;">Field to Encode</label>
+                    <select class="prop-select" [value]="el.fieldPath || ''" (change)="onBindField($event)" style="height: 28px; font-size: 11px;">
+                      <option value="">— Select Field —</option>
+                      @for (f of filteredLeafFields(); track f.key) {
+                        <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+                      }
+                    </select>
+                  </div>
                 }
               </div>
             }

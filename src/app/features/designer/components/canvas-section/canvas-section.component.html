@@ -14,15 +14,29 @@
           </label>
         }
         @if (section.type === 'details') {
-          <label class="repeat-toggle" title="Repeat this section for each data row">
-            <input
-              type="checkbox"
-              [checked]="section.repeatPerRow"
-              (change)="onRepeatPerRowChange($event)"
+          <div class="section-settings-group" style="display: flex; gap: 8px; align-items: center;">
+            <label class="repeat-toggle" title="Repeat this section for each data row" style="margin: 0;">
+              <input
+                type="checkbox"
+                [checked]="section.repeatPerRow"
+                (change)="onRepeatPerRowChange($event)"
+                (click)="$event.stopPropagation()"
+              />
+              <span>repeats per row</span>
+            </label>
+
+            <select class="section-dataset-select" 
+              [ngModel]="section.datasetPath" 
+              (ngModelChange)="onSectionDatasetChange($event)"
               (click)="$event.stopPropagation()"
-            />
-            <span>repeats per row</span>
-          </label>
+              style="height: 20px; font-size: 9px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; outline: none;"
+            >
+              <option [ngValue]="undefined">Default Dataset</option>
+              @for (arr of arrayFields(); track arr.path) {
+                <option [value]="arr.path">{{ arr.label }} ({{ arr.count }})</option>
+              }
+            </select>
+          </div>
         }
         <div class="section-actions">
           <button class="delete-section-btn" (click)="sectionDelete.emit(section.id); $event.stopPropagation()" title="Delete section">&#10005;</button>

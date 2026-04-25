@@ -48,6 +48,8 @@ export interface TemplateElement {
   style: ElementStyle;
   boundField?: string;
   datasetPath?: string;
+  isQRCode?: boolean;
+  qrCodeField?: string;
 }
 
 export interface TemplateSection {
@@ -58,6 +60,7 @@ export interface TemplateSection {
   height: number;
   repeatPerRow: boolean;
   repeatOnEveryPage?: boolean;
+  datasetPath?: string;
 }
 
 export interface ReportTemplate {
