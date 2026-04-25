@@ -226,15 +226,47 @@ export class RightPanelComponent {
   }
 
   addTableColumn(): void {
+    const CANVAS_WIDTH = 794;
+    const el = this.element();
+    if (!el) return;
+
     this.updateTable((table) => {
+      // 1. Prepare new column data
+      const newColIndex = table.columns;
       table.columns += 1;
       table.cells.forEach((row) => row.push({ content: '' }));
       const maxOrder = table.columnSettings.reduce((max, col) => Math.max(max, col.order), -1);
-      table.columnSettings.push({
-        width: 120,
-        order: maxOrder + 1,
-        visible: true,
-      });
+
+      // 2. Redistribution Logic
+      if (table.fullWidth) {
+        // Enforce X=0 for full width tables
+        this.templateService.updateElementPosition(el.id, 0, el.position.y);
+        
+        // Equal share for all columns including the new one
+        const share = Math.floor(CANVAS_WIDTH / table.columns);
+        table.columnSettings.forEach(c => c.width = share);
+        
+        // Push the new setting with correct width
+        const newWidth = CANVAS_WIDTH - (share * (table.columns - 1));
+        table.columnSettings.push({ width: newWidth, order: maxOrder + 1, visible: true });
+      } else {
+        let newWidth = 100;
+        const currentTotal = table.columnSettings.filter(c => c.visible).reduce((sum, c) => sum + c.width, 0);
+        
+        if (el.position.x + currentTotal + newWidth > CANVAS_WIDTH) {
+          // If adding it overflows relative to CURRENT position
+          if (el.position.x + currentTotal + 50 <= CANVAS_WIDTH) {
+            newWidth = CANVAS_WIDTH - (el.position.x + currentTotal);
+          } else {
+            // Shrink existing to fit within available space from current X
+            const available = CANVAS_WIDTH - el.position.x - 50; // leave 50 for new col
+            const factor = available / currentTotal;
+            table.columnSettings.forEach(c => c.width = Math.max(30, Math.floor(c.width * factor)));
+            newWidth = 50;
+          }
+        }
+        table.columnSettings.push({ width: newWidth, order: maxOrder + 1, visible: true });
+      }
       return table;
     });
   }
@@ -291,9 +323,19 @@ export class RightPanelComponent {
   }
 
   onTableColumnWidthChange(col: number, event: Event): void {
+    const CANVAS_WIDTH = 794;
     const value = parseInt((event.target as HTMLInputElement).value, 10);
+    if (!Number.isFinite(value)) return;
+
     this.updateTable((table) => {
-      table.columnSettings[col].width = Number.isFinite(value) ? Math.max(48, value) : table.columnSettings[col].width;
+      const otherTotal = table.columnSettings.reduce((sum, c, idx) => sum + (idx !== col && c.visible ? c.width : 0), 0);
+      let newWidth = Math.max(20, value);
+
+      if (otherTotal + newWidth > CANVAS_WIDTH) {
+        newWidth = CANVAS_WIDTH - otherTotal;
+      }
+
+      table.columnSettings[col].width = newWidth;
       return table;
     });
   }
@@ -328,6 +370,14 @@ export class RightPanelComponent {
 
   onTableFullWidthChange(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
+    const el = this.element();
+    if (!el) return;
+
+    if (checked) {
+      // Force position X to 0 when enabling full width
+      this.templateService.updateElementPosition(el.id, 0, el.position.y);
+    }
+
     this.updateTable((table) => {
       if (checked) {
         // Store original widths before scaling
@@ -335,15 +385,22 @@ export class RightPanelComponent {
 
         const visibleCols = table.columnSettings.filter(c => c.visible);
         const currentTotal = visibleCols.reduce((sum, c) => sum + c.width, 0);
-        const targetWidth = 790;
+        const targetWidth = 794;
         
-        if (currentTotal > 0 && currentTotal < targetWidth) {
+        if (currentTotal > 0) {
           const ratio = targetWidth / currentTotal;
           table.columnSettings.forEach(c => {
             if (c.visible) {
-              c.width = Math.round(c.width * ratio);
+              c.width = Math.max(20, Math.round(c.width * ratio));
             }
           });
+          
+          // Adjust last visible column for precision rounding errors
+          const finalTotal = table.columnSettings.filter(c => c.visible).reduce((sum, c) => sum + c.width, 0);
+          if (finalTotal !== targetWidth) {
+            const lastVisible = [...table.columnSettings].reverse().find(c => c.visible);
+            if (lastVisible) lastVisible.width += (targetWidth - finalTotal);
+          }
         }
       } else if (table.previousWidths) {
         // Restore previous widths when fullWidth is unchecked

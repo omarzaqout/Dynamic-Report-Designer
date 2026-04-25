@@ -199,8 +199,12 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
         // but moveSelectedElements is additive. Let's use it frame-by-frame.
         this.templateService.moveSelectedElements(event.movementX, event.movementY);
       } else {
+        const CANVAS_WIDTH = 794;
+        const domEl = document.getElementById(this.element.id);
+        const elementWidth = domEl ? domEl.offsetWidth : (this.element.size?.width || 100);
+        
         this.positionChange.emit({
-          x: Math.max(0, this.startElX + dx),
+          x: Math.max(0, Math.min(CANVAS_WIDTH - elementWidth, this.startElX + dx)),
           y: Math.max(0, this.startElY + dy),
         });
       }
@@ -343,8 +347,16 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   private resizeTableColumn(colIndex: number | null, nextWidth: number): void {
     if (colIndex === null) return;
+    const CANVAS_WIDTH = 794;
     this.updateTable((table) => {
-      table.columnSettings[colIndex].width = Math.max(48, Math.round(nextWidth));
+      const otherTotal = table.columnSettings.reduce((sum, c, idx) => sum + (idx !== colIndex && c.visible ? c.width : 0), 0);
+      let finalWidth = Math.max(24, Math.round(nextWidth));
+      
+      if (otherTotal + finalWidth > CANVAS_WIDTH) {
+        finalWidth = CANVAS_WIDTH - otherTotal;
+      }
+
+      table.columnSettings[colIndex].width = finalWidth;
       return table;
     });
   }
@@ -358,11 +370,19 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   }
 
   private resizeTableUniformly(moveX: number, moveY: number): void {
+    const CANVAS_WIDTH = 794;
     this.updateTable((table) => {
       // Scale columns uniformly
       const visibleCols = this.visibleColumnIndexes();
       if (visibleCols.length > 0) {
-        const dxPerCol = moveX / visibleCols.length;
+        const currentTotal = visibleCols.reduce((sum, idx) => sum + table.columnSettings[idx].width, 0);
+        let effectiveMoveX = moveX;
+        
+        if (currentTotal + effectiveMoveX > CANVAS_WIDTH) {
+          effectiveMoveX = CANVAS_WIDTH - currentTotal;
+        }
+
+        const dxPerCol = effectiveMoveX / visibleCols.length;
         visibleCols.forEach(idx => {
           table.columnSettings[idx].width = Math.max(20, table.columnSettings[idx].width + dxPerCol);
         });
