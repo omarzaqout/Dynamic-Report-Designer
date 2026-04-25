@@ -227,4 +227,49 @@
     .danger-zone { padding: 12px 14px; }
     .empty-title { font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
     .empty-hint { font-size: 11px; color: #cbd5e1; line-height: 1.6; }
-  
+
+    .table-cell-content-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 32px;
+      justify-content: center;
+    }
+
+    .cell-image-preview {
+      position: relative;
+      width: 100%;
+      height: 40px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cell-image-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .img-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #3b82f6;
+      color: white;
+      font-size: 7px;
+      font-weight: 800;
+      padding: 1px 3px;
+      border-radius: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    .prop-input {
+      width: 100%; padding: 6px 10px; border: 1px solid #e2e8f0;
+      border-radius: 6px; font-size: 11px; background: #f8fafc; color: #1e293b;
+      outline: none; box-sizing: border-box; transition: all 0.2s;
+    }
+    .prop-input:focus { border-color: #3b82f6; background: #fff; }

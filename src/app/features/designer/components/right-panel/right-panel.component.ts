@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TemplateService } from '../../../../core/services/template.service';
 import { DataService } from '../../../../core/services/data.service';
-import { ElementStyle, TableData } from '../../../../core/models/template.model';
+import { 
+  ElementStyle, TableData, TemplateElement, TemplateSection, TableColumnSetting, ReportTemplate 
+} from '../../../../core/models/template.model';
 import { Field } from '../../../../core/models/field.model';
 import { ReportData } from '../../../../core/models/report.model';
 
@@ -19,6 +21,7 @@ import { ReportData } from '../../../../core/models/report.model';
 export class RightPanelComponent {
   private templateService = inject(TemplateService);
   private dataService = inject(DataService);
+  protected readonly Math = Math;
 
   readonly placeholderHint = 'e.g. {{name}} or Hello {{name}}';
   readonly fontFamilies = [
@@ -67,6 +70,7 @@ export class RightPanelComponent {
   });
   
   readonly filteredLeafFields = computed(() => this.leafFields());
+
   readonly sectionLabel = computed(() => {
     const s = this.templateService.selectedElementSection();
     if (!s) return '';
@@ -456,8 +460,8 @@ export class RightPanelComponent {
       if (el.type === 'table') {
         const table = el.table;
         if (table) {
-          const visibleCols = table.columnSettings.filter(c => c.visible);
-          elementWidth = visibleCols.reduce((sum, c) => sum + c.width, 0);
+          const visibleCols = table.columnSettings.filter((c: TableColumnSetting) => c.visible);
+          elementWidth = visibleCols.reduce((sum: number, c: TableColumnSetting) => sum + c.width, 0);
         }
       } else if (el.type === 'image' && el.size) {
         elementWidth = el.size.width;
@@ -552,5 +556,37 @@ export class RightPanelComponent {
       table.cells[focus.row][focus.col].style = undefined;
       return table;
     });
+  }
+
+  onTableCellImageUpload(event: Event): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || el.type !== 'table') return;
+
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        this.templateService.updateTableCell(el.id, focus.row, focus.col, { imageUrl: result, isQRCode: false });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onTableCellClearImage(): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || el.type !== 'table') return;
+    this.templateService.updateTableCell(el.id, focus.row, focus.col, { imageUrl: undefined, isQRCode: false });
+  }
+
+  onTableCellQRCodeToggle(event: Event): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || el.type !== 'table') return;
+    const checked = (event.target as HTMLInputElement).checked;
+    this.templateService.updateTableCell(el.id, focus.row, focus.col, { isQRCode: checked });
   }
 }

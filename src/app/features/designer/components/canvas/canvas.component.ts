@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy, HostListener } from '@angul
 import { CommonModule } from '@angular/common';
 import { TemplateService } from '../../../../core/services/template.service';
 import { CanvasSectionComponent } from '../canvas-section/canvas-section.component';
-import { TemplateElement } from '../../../../core/models/template.model';
+import { TemplateElement, TemplateSection } from '../../../../core/models/template.model';
 import { UiService } from '../../../../core/services/ui.service';
 
 @Component({
@@ -21,7 +21,7 @@ export class CanvasComponent {
   readonly selectedId = this.templateService.selectedElementId;
 
   readonly sectionCount = () => this.template().sections.length;
-  readonly elementCount = () => this.template().sections.reduce((s, sec) => s + sec.elements.length, 0);
+  readonly elementCount = () => this.template().sections.reduce((s: number, sec: TemplateSection) => s + sec.elements.length, 0);
 
   deselect(): void {
     this.templateService.selectElement(null);

@@ -156,14 +156,31 @@ export class RenderService {
   }
 
   private processCell(cell: any, row: ReportData, hasData: boolean, datasetPath?: string, rawData?: any): any {
+    let imageUrl = cell.imageUrl;
+
     if (cell.fieldPath) {
       const val = this.resolveValue(cell.fieldPath, row, rawData, datasetPath);
+      
+      // If it's a field and it's bound to an image, it might be a URL
+      if (imageUrl && imageUrl.startsWith('{{')) {
+         const resolvedUrl = this.interpolate(imageUrl, row, rawData, datasetPath);
+         imageUrl = resolvedUrl;
+      }
+
       return {
         ...cell,
+        imageUrl,
+        isQRCode: cell.isQRCode,
         content: val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val)
       };
     }
-    return { ...cell, content: this.interpolate(cell.content || '', row, rawData, datasetPath) };
+    
+    return { 
+      ...cell, 
+      imageUrl, 
+      isQRCode: cell.isQRCode,
+      content: this.interpolate(cell.content || '', row, rawData, datasetPath) 
+    };
   }
 
   private resolveValue(expression: string, row: ReportData, rawData?: any, datasetPath?: string): any {

@@ -11,12 +11,15 @@ export interface ElementStyle {
   whiteSpace?: 'nowrap' | 'normal' | 'pre-wrap';
   border?: string;
   borderColor?: string;
+  padding?: number;
 }
 
 export interface TableCell {
   content: string;
   fieldPath?: string;
   style?: Partial<ElementStyle>;
+  imageUrl?: string;
+  isQRCode?: boolean;
 }
 
 export interface TableColumnSetting {

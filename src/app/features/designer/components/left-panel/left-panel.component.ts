@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DataService } from '../../../../core/services/data.service';
 import { TemplateService } from '../../../../core/services/template.service';
 import { Field } from '../../../../core/models/field.model';
+import { TemplateSection } from '../../../../core/models/template.model';
 
 @Component({
   selector: 'app-left-panel',
@@ -33,7 +34,7 @@ export class LeftPanelComponent {
   readonly sections = computed(() => this.templateService.template().sections);
 
   readonly totalElements = computed(() =>
-    this.templateService.template().sections.reduce((sum, s) => sum + s.elements.length, 0)
+    this.templateService.template().sections.reduce((sum: number, s: TemplateSection) => sum + s.elements.length, 0)
   );
 
   async loadData() {

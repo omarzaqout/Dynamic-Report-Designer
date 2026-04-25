@@ -190,4 +190,8 @@ export class PreviewPanelComponent implements OnInit {
     if (table.rows === 0) return 36;
     return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex), 0);
   }
+
+  protected encodeURIComponent(str: string): string {
+    return encodeURIComponent(str);
+  }
 }

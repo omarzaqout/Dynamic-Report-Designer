@@ -6,7 +6,8 @@
       [class.is-image]="element.type === 'image'"
       [class.is-table]="element.type === 'table'"
       [style.left.px]="element.table?.fullWidth ? 0 : element.position.x"
-      [style.width]="element.table?.fullWidth ? '100%' : null"
+      [style.width]="element.table?.fullWidth ? '100%' : (element.type === 'table' ? tableWidth() + 'px' : null)"
+      [style.height.px]="element.type === 'table' ? tableHeight() : null"
       [style.top.px]="element.position.y"
       [style.fontSize.px]="element.style.fontSize"
       [style.fontFamily]="element.style.fontFamily"
@@ -76,17 +77,32 @@
                       (drop)="onCellDrop($event, rowIndex, colIndex)"
                       (dblclick)="onCellDblClick($event, rowIndex, colIndex)"
                       [class.cell-drag-over]="activeCellDrop()?.row === rowIndex && activeCellDrop()?.col === colIndex"
+                      [class.cell-focused]="focusedCell()?.elementId === element.id && focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"
                     >
-                      @if (editingCell?.row === rowIndex && editingCell?.col === colIndex) {
-                        <input
-                          class="cell-edit-input"
-                          [value]="getTableRows()[rowIndex][colIndex].content || ''"
-                          (blur)="onCellEditBlur($event, rowIndex, colIndex)"
-                          (keydown)="onCellEditKeyDown($event)"
-                        />
-                      } @else {
-                        {{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}
-                      }
+                      <div class="cell-content-container" 
+                           [class.has-padding]="!getTableRows()[rowIndex][colIndex].imageUrl && !getTableRows()[rowIndex][colIndex].isQRCode">
+                        @if (editingCell?.row === rowIndex && editingCell?.col === colIndex && !getTableRows()[rowIndex][colIndex].imageUrl) {
+                          <input
+                            class="cell-edit-input"
+                            [value]="getTableRows()[rowIndex][colIndex].content || ''"
+                            (blur)="onCellEditBlur($event, rowIndex, colIndex)"
+                            (keydown)="onCellEditKeyDown($event)"
+                          />
+                        } @else {
+                          @if (getTableRows()[rowIndex][colIndex].isQRCode) {
+                            <div class="cell-qr-placeholder" style="width: 100%; height: 100%; background: #f8fafc; border: 1px dashed #3b82f6; color: #3b82f6; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 8px;">
+                              <span style="font-size: 14px;">&#9783;</span>
+                              <span>QR</span>
+                            </div>
+                          } @else if (getTableRows()[rowIndex][colIndex].imageUrl) {
+                            <img [src]="getTableRows()[rowIndex][colIndex].imageUrl" 
+                                 class="cell-image"
+                                 [style.padding.px]="getTableRows()[rowIndex][colIndex].style?.padding || 0">
+                          } @else {
+                            <span style="width: 100%;">{{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}</span>
+                          }
+                        }
+                      </div>
                     </td>
                   }
                 </tr>

@@ -33,7 +33,8 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   @ViewChild('elRef') elRef!: ElementRef<HTMLDivElement>;
 
-  private templateService = inject(TemplateService);
+  public templateService = inject(TemplateService);
+  readonly focusedCell = this.templateService.focusedTableCell;
 
   isEditingInline = false;
   editingCell: { row: number; col: number } | null = null;
@@ -273,6 +274,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   }
 
   displayCell(cell: TableCell): string {
+    if (cell.imageUrl) return 'IMAGE';
     if (cell.fieldPath) return `{{${cell.fieldPath}}}`;
     return cell.content || '';
   }
@@ -409,7 +411,16 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.activeCellDrop.set(null);
     
-    // Check for flat field key first (used by LeftPanel)
+    // 1. Static Elements (Images)
+    const staticType = event.dataTransfer?.getData('application/static-type');
+    if (staticType === 'image') {
+      this.templateService.updateTableCell(this.element.id, row, col, {
+        imageUrl: 'https://placehold.co/100x100?text=Image' // Default placeholder
+      });
+      return;
+    }
+
+    // 2. Fields
     const fieldPath = event.dataTransfer?.getData('application/field-key');
     if (fieldPath) {
       this.templateService.updateTableCell(this.element.id, row, col, {
@@ -419,7 +430,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Fallback for JSON format if used elsewhere
+    // 3. Fallback for JSON format
     const dataJson = event.dataTransfer?.getData('application/json');
     if (dataJson) {
       try {

@@ -1,500 +1,545 @@
-    <div class="right-panel">
-      <div class="panel-header">
-        <span class="panel-icon">&#9881;</span>
-        <span class="panel-title">Properties</span>
+<div class="right-panel">
+  <div class="panel-header">
+    <span class="panel-icon">&#9881;</span>
+    <span class="panel-title">Properties</span>
+  </div>
+
+  @if (element(); as el) {
+  <div class="props-content">
+    <div class="prop-section">
+      <div class="prop-section-title">Element Info</div>
+      <div class="prop-row">
+        <label>Type</label>
+        <span class="badge-text">{{ el.type }}</span>
+      </div>
+      @if (el.boundField) {
+      <div class="prop-row">
+        <label>Bound Field</label>
+        <span class="badge-field">{{ el.boundField }}</span>
+      </div>
+      }
+      <div class="prop-row">
+        <label>Section</label>
+        <span class="badge-section">{{ sectionLabel() }}</span>
+      </div>
+    </div>
+
+    <!-- GUARANTEED CELL STYLE SECTION -->
+    @if (el.type === 'table' && el.table) {
+    <div class="prop-section cell-style-box"
+      style="background: #fffbeb; border: 2px solid #fbbf24; margin: 12px; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+      <div class="prop-section-title"
+        style="color: #92400e; margin-bottom: 12px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">Cell
+        Specific Styling</div>
+
+      @if (focusedCell(); as focus) {
+      <div
+        style="font-size: 10px; font-weight: 800; background: #92400e; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px;">
+        Editing Cell R{{ focus.row + 1 }} : C{{ focus.col + 1 }}
       </div>
 
-      @if (element(); as el) {
-        <div class="props-content">
-          <div class="prop-section">
-            <div class="prop-section-title">Element Info</div>
-            <div class="prop-row">
-              <label>Type</label>
-              <span class="badge-text">{{ el.type }}</span>
-            </div>
-            @if (el.boundField) {
-              <div class="prop-row">
-                <label>Bound Field</label>
-                <span class="badge-field">{{ el.boundField }}</span>
-              </div>
-            }
-            <div class="prop-row">
-              <label>Section</label>
-              <span class="badge-section">{{ sectionLabel() }}</span>
-            </div>
-          </div>
-
-          <!-- GUARANTEED CELL STYLE SECTION -->
-          @if (el.type === 'table' && el.table) {
-            <div class="prop-section cell-style-box" style="background: #fffbeb; border: 2px solid #fbbf24; margin: 12px; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-              <div class="prop-section-title" style="color: #92400e; margin-bottom: 12px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">Cell Specific Styling</div>
-              
-              @if (focusedCell(); as focus) {
-                <div style="font-size: 10px; font-weight: 800; background: #92400e; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px;">
-                  Editing Cell R{{ focus.row + 1 }} : C{{ focus.col + 1 }}
-                </div>
-                
-                <div class="prop-row">
-                  <label style="color: #92400e; font-weight: 700;">Font Type</label>
-                  <select class="prop-select" 
-                    [value]="el.table.cells[focus.row][focus.col].style?.fontFamily || el.style.fontFamily"
-                    (change)="onTableCellStyleChange({ fontFamily: $any($event.target).value })"
-                  >
-                    @for (font of fontFamilies; track font.value) {
-                      <option [value]="font.value">{{ font.label }}</option>
-                    }
-                  </select>
-                </div>
-
-                <div class="prop-row">
-                  <label style="color: #92400e; font-weight: 700;">Size & Color</label>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <div class="stepper">
-                      <button (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) - 1 })">-</button>
-                      <span style="min-width: 30px; text-align: center;">{{ el.table.cells[focus.row][focus.col].style?.fontSize || 12 }}</span>
-                      <button (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) + 1 })">+</button>
-                    </div>
-                    <input type="color" class="color-picker" [value]="el.table.cells[focus.row][focus.col].style?.color || '#000000'" (input)="onTableCellStyleChange({ color: $any($event.target).value })">
-                  </div>
-                </div>
-
-                <div class="prop-row">
-                  <label style="color: #92400e; font-weight: 700;">Format</label>
-                  <div class="toggle-group">
-                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold'" (click)="onTableCellStyleChange({ fontWeight: el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold' ? 'normal' : 'bold' })">B</button>
-                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic'" (click)="onTableCellStyleChange({ fontStyle: el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic' ? 'normal' : 'italic' })">I</button>
-                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline'" (click)="onTableCellStyleChange({ textDecoration: el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline' ? 'none' : 'underline' })">U</button>
-                  </div>
-                </div>
-
-                <div class="prop-row">
-                  <label style="color: #92400e; font-weight: 700;">Align</label>
-                  <div class="toggle-group">
-                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'left'" (click)="onTableCellStyleChange({ textAlign: 'left' })">L</button>
-                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'center'" (click)="onTableCellStyleChange({ textAlign: 'center' })">C</button>
-                    <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'right'" (click)="onTableCellStyleChange({ textAlign: 'right' })">R</button>
-                  </div>
-                </div>
-
-                <div class="prop-row">
-                  <label style="color: #92400e; font-weight: 700;">Wrap Text</label>
-                  <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
-                    <input type="checkbox" 
-                      [checked]="el.table.cells[focus.row][focus.col].style?.whiteSpace === 'normal'" 
-                      (change)="onTableCellStyleChange({ whiteSpace: $any($event.target).checked ? 'normal' : 'nowrap' })"
-                    >
-                    <span style="font-size: 10px; color: #92400e;">Allow multi-line wrap</span>
-                  </label>
-                </div>
-
-                <div class="prop-row">
-                  <label style="color: #92400e; font-weight: 700;">Border</label>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
-                      <input type="checkbox" 
-                        [checked]="el.table.cells[focus.row][focus.col].style?.border !== 'none'" 
-                        (change)="onTableCellStyleChange({ border: $any($event.target).checked ? '1px solid' : 'none' })"
-                      >
-                      <span style="font-size: 10px; color: #92400e;">Show Border</span>
-                    </label>
-                    <input type="color" class="color-picker" 
-                      [value]="el.table.cells[focus.row][focus.col].style?.borderColor || '#cbd5e1'" 
-                      (input)="onTableCellStyleChange({ borderColor: $any($event.target).value })"
-                      style="width: 24px; height: 24px;"
-                    >
-                  </div>
-                </div>
-
-                <button (click)="setFocusedCell(-1, -1)" style="width: 100%; margin-top: 8px; padding: 4px; font-size: 9px; cursor: pointer; border: 1px dashed #92400e; background: transparent; color: #92400e;">Deselect Cell</button>
-              } @else {
-                <div style="padding: 20px; text-align: center; border: 1px dashed #fbbf24; border-radius: 8px; background: #fff;">
-                  <div style="font-size: 18px; margin-bottom: 4px;">&#9732;</div>
-                  <div style="font-size: 11px; color: #92400e; font-weight: 600;">Double-click a cell below</div>
-                  <div style="font-size: 9px; color: #b45309;">to edit its individual style</div>
-                </div>
-              }
-            </div>
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Font Type</label>
+        <select class="prop-select"
+          [value]="el.table.cells[focus.row][focus.col].style?.fontFamily || el.style.fontFamily"
+          (change)="onTableCellStyleChange({ fontFamily: $any($event.target).value })">
+          @for (font of fontFamilies; track font.value) {
+          <option [value]="font.value">{{ font.label }}</option>
           }
+        </select>
+      </div>
 
-          <div class="prop-section">
-            <div class="prop-section-title">Content</div>
-            
-            @if (el.type === 'text' || el.type === 'field') {
-              <div class="prop-col">
-                <label class="prop-label">Text / Expression</label>
-                <textarea
-                  class="prop-textarea"
-                  [value]="el.content || ''"
-                  (input)="onContentChange($event)"
-                  rows="3"
-                  [attr.placeholder]="placeholderHint"
-                ></textarea>
-                <div class="hint-text">Use <code>{{ '{' + '{field}' + '}' }}</code> for dynamic values. Expressions: <code>{{ '{' + '{age + 5}' + '}' }}</code></div>
-              </div>
-
-              <div class="prop-col">
-                <label class="prop-label">Bind to Field</label>
-                <select class="prop-select" [value]="el.boundField || ''" (change)="onBindField($event)">
-                  <option value="">— None —</option>
-                  @for (f of filteredLeafFields(); track f.key) {
-                    <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
-                  }
-                </select>
-              </div>
-            }
-
-            @if (el.type === 'image') {
-              <div class="prop-col">
-                <label class="prop-label">Upload Image</label>
-                <input type="file" accept="image/*" (change)="onImageUpload($event)" style="font-size: 11px;" />
-                @if (el.imageUrl && !el.isQRCode) {
-                  <img [src]="el.imageUrl" style="margin-top: 8px; max-width: 100%; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;"/>
-                }
-              </div>
-
-              <div class="prop-col" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
-                <label class="repeat-toggle" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
-                  <input type="checkbox" [checked]="el.isQRCode" (change)="onQRCodeToggle($event)" />
-                  <span style="font-weight: 600; color: #1e293b; font-size: 12px;">Convert to QR Code</span>
-                </label>
-                
-                @if (el.isQRCode) {
-                  <div style="margin-top: 8px;">
-                    <label class="prop-label" style="font-size: 11px;">Field to Encode</label>
-                    <select class="prop-select" [value]="el.fieldPath || ''" (change)="onBindField($event)" style="height: 28px; font-size: 11px;">
-                      <option value="">— Select Field —</option>
-                      @for (f of filteredLeafFields(); track f.key) {
-                        <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
-                      }
-                    </select>
-                  </div>
-                }
-              </div>
-            }
-
-            @if (el.type === 'table' && el.table; as table) {
-              <div class="prop-col">
-                <label class="prop-label">Table Structure</label>
-                <div class="table-actions">
-                  <button class="table-action-btn" (click)="addTableRow()">+ Row</button>
-                  <button class="table-action-btn" (click)="removeTableRow()">- Row</button>
-                  <button class="table-action-btn" (click)="addTableColumn()">+ Col</button>
-                  <button class="table-action-btn" (click)="removeTableColumn()">- Col</button>
-                </div>
-                <label class="repeat-toggle" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
-                  <input
-                    type="checkbox"
-                    [checked]="table.dynamicRows"
-                    (change)="onTableDynamicRowsChange($event)"
-                    style="margin: 0;"
-                  />
-                  <span>Bind to Dataset (Repeat Table Block)</span>
-                </label>
-
-                <label class="repeat-toggle" style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
-                  <input
-                    type="checkbox"
-                    [checked]="table.fullWidth"
-                    (change)="onTableFullWidthChange($event)"
-                    style="margin: 0;"
-                  />
-                  <span>Full Width (100%)</span>
-                </label>
-
-                <!-- Dataset Selection Area -->
-                <div class="prop-col" style="margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <label class="prop-label" style="font-size: 10px; margin: 0;">Context Array (Dataset)</label>
-                    <span style="font-size: 9px; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; color: #475569;">{{ datasets().length }} found</span>
-                  </div>
-                  <select class="prop-select" 
-                    [(ngModel)]="el.datasetPath" 
-                    (ngModelChange)="onTableDatasetChange($event)"
-                    style="height: 24px; font-size: 11px; width: 100%;"
-                    name="dataset-path"
-                  >
-                    <option [ngValue]="undefined">Default (Full Data List)</option>
-                    @if (el.datasetPath && !isPathInDatasets(el.datasetPath)) {
-                      <option [value]="el.datasetPath" hidden>{{ el.datasetPath }}</option>
-                    }
-                    @for (arr of arrayFields(); track arr.path) {
-                      @if (arr.path) {
-                        <option [value]="arr.path">{{ arr.label }} ({{ arr.count }} items)</option>
-                      }
-                    }
-                  </select>
-                  <div class="hint-text" style="font-size: 9px; margin-top: 4px;">Limits field selection to this specific array.</div>
-                </div>
-                <div class="table-summary">{{ table.rows }} rows &times; {{ table.columns }} cols</div>
-                <div class="table-summary">Preview size: {{ tablePreviewWidth(table) }} &times; {{ tablePreviewHeight(table) }} px</div>
-              </div>
-
-              <div class="prop-col">
-                <label class="prop-label">Row Heights</label>
-                <div class="table-dimension-grid">
-                  @for (rowIndex of tableRowIndexes(table); track rowIndex) {
-                    <label class="dimension-item">
-                      <span>R{{ rowIndex + 1 }}</span>
-                      <input
-                        type="number"
-                        class="prop-number"
-                        [value]="tableRowHeight(table, rowIndex)"
-                        (change)="onTableRowHeightChange(rowIndex, $event)"
-                        min="24"
-                      />
-                    </label>
-                  }
-                </div>
-              </div>
-
-              <div class="prop-col">
-                <label class="prop-label">Columns (Width / Order / Visible)</label>
-                <div class="table-column-list" style="margin-top: 8px;">
-                  @for (col of table.columnSettings; track $index) {
-                    <div class="table-column-item">
-                      <div class="column-header">
-                        <span class="table-column-label">Column {{ $index + 1 }}</span>
-                        <label class="column-visible-toggle">
-                          <input type="checkbox" [checked]="col.visible" (change)="onTableColumnVisibilityChange($index, $event)">
-                          <span>Visible</span>
-                        </label>
-                      </div>
-                      <div class="column-main">
-                        <div class="dimension-item">
-                          <label>Width</label>
-                          <input type="number" class="prop-number" [value]="col.width" (change)="onTableColumnWidthChange($index, $event)">
-                        </div>
-                        <div class="dimension-item">
-                          <label>Order</label>
-                          <input type="number" class="prop-number" [value]="col.order" (change)="onTableColumnOrderChange($index, $event)">
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <div class="table-editor-wrap">
-                <table class="table-editor">
-                  <tbody>
-                    @for (rowIndex of tableRowIndexes(table); track rowIndex) {
-                      <tr>
-                        @for (colIndex of orderedColumnIndexes(table); track colIndex) {
-                          <td 
-                            (dblclick)="setFocusedCell(rowIndex, colIndex)"
-                            [class.cell-focused]="focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"
-                          >
-                            <input
-                              class="table-cell-input"
-                              [value]="table.cells[rowIndex][colIndex].content"
-                              (input)="onTableCellContentChange(rowIndex, colIndex, $event)"
-                              placeholder="Cell text"
-                            />
-                             <select
-                               class="table-cell-select"
-                               [(ngModel)]="table.cells[rowIndex][colIndex].fieldPath"
-                               (ngModelChange)="onTableCellFieldChange(rowIndex, colIndex, $event)"
-                               [name]="'cell-' + rowIndex + '-' + colIndex"
-                             >
-                               <option [ngValue]="undefined">Static text</option>
-                               @if (table.cells[rowIndex][colIndex].fieldPath && !isKeyInFields(table.cells[rowIndex][colIndex].fieldPath!)) {
-                                 <option [value]="table.cells[rowIndex][colIndex].fieldPath" hidden>{{ table.cells[rowIndex][colIndex].fieldPath }}</option>
-                               }
-                               @for (f of filteredLeafFields(); track f.key) {
-                                 <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
-                               }
-                             </select>
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Size & Color</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div class="stepper">
+            <button
+              (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) - 1 })">-</button>
+            <span style="min-width: 30px; text-align: center;">{{ el.table.cells[focus.row][focus.col].style?.fontSize
+              || 12 }}</span>
+            <button
+              (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) + 1 })">+</button>
           </div>
-
-          <div class="prop-section">
-            <div class="prop-section-title">Typography</div>
-
-            @if (el.type === 'field' || el.type === 'text' || el.type === 'table') {
-              <div class="prop-col">
-                <label class="prop-label">Font Family</label>
-                <select class="prop-select" [value]="el.style.fontFamily" (change)="onFontFamilyChange($event)">
-                  @for (font of fontFamilies; track font.value) {
-                    <option [value]="font.value">{{ font.label }}</option>
-                  }
-                </select>
-              </div>
-            }
-
-            <div class="prop-row">
-              <label>Font Size</label>
-              <div class="stepper">
-                <button (click)="adjustSize(-1)">&#8722;</button>
-                <span>{{ el.style.fontSize }}px</span>
-                <button (click)="adjustSize(1)">&#43;</button>
-              </div>
-            </div>
-
-            <div class="prop-row">
-              <label>Color</label>
-              <div class="color-row">
-                <input
-                  type="color"
-                  class="color-picker"
-                  [value]="el.style.color"
-                  (input)="onColorChange($event)"
-                />
-                <span class="color-hex">{{ el.style.color }}</span>
-              </div>
-            </div>
-
-            <div class="prop-row">
-              <label>Style</label>
-              <div class="toggle-group">
-                <button
-                  class="toggle-btn"
-                  [class.active]="el.style.fontWeight === 'bold'"
-                  (click)="toggleBold()"
-                  title="Bold"
-                ><strong>B</strong></button>
-                <button
-                  class="toggle-btn"
-                  [class.active]="el.style.fontStyle === 'italic'"
-                  (click)="toggleItalic()"
-                  title="Italic"
-                ><em>I</em></button>
-                <button
-                  class="toggle-btn"
-                  [class.active]="el.style.textDecoration === 'underline'"
-                  (click)="toggleUnderline()"
-                  title="Underline"
-                ><u>U</u></button>
-              </div>
-            </div>
-            <div class="prop-row">
-              <label>Alignment</label>
-              <div class="toggle-group">
-                <button
-                  class="toggle-btn"
-                  [class.active]="el.style.textAlign === 'left' || !el.style.textAlign"
-                  (click)="onTextAlignChange('left')"
-                  title="Align Left"
-                >&#8612;</button>
-                <button
-                  class="toggle-btn"
-                  [class.active]="el.style.textAlign === 'center'"
-                  (click)="onTextAlignChange('center')"
-                  title="Align Center"
-                >&#8633;</button>
-                <button
-                  class="toggle-btn"
-                  [class.active]="el.style.textAlign === 'right'"
-                  (click)="onTextAlignChange('right')"
-                  title="Align Right"
-                >&#8614;</button>
-              </div>
-            </div>
-            <div class="prop-row">
-              <label>Word Wrap</label>
-              <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
-                <input type="checkbox" 
-                  [checked]="el.style.whiteSpace === 'normal'" 
-                  (change)="onWordWrapChange($event)"
-                >
-                <span style="font-size: 10px;">Wrap long text</span>
-              </label>
-            </div>
-            <div class="prop-row">
-              <label>Border</label>
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
-                  <input type="checkbox" 
-                    [checked]="el.style.border && el.style.border !== 'none'" 
-                    (change)="onBorderToggle($event)"
-                  >
-                  <span style="font-size: 10px;">Show Border</span>
-                </label>
-                <input type="color" class="color-picker" 
-                  [value]="el.style.borderColor || '#cbd5e1'" 
-                  (input)="onBorderColorChange($event)"
-                  style="width: 24px; height: 24px;"
-                >
-              </div>
-            </div>
-          </div>
-
-          <div class="prop-section">
-            <div class="prop-section-title">Canvas Alignment</div>
-            <div class="alignment-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px;">
-              <button class="align-tool-btn" (click)="alignElement('left')" title="Align to Left Edge">
-                <span style="font-size: 16px;">&#8676;</span>
-                <span style="font-size: 9px; margin-top: 2px;">Left</span>
-              </button>
-              <button class="align-tool-btn" (click)="alignElement('center')" title="Center on Canvas">
-                <span style="font-size: 16px;">&#8633;</span>
-                <span style="font-size: 9px; margin-top: 2px;">Center</span>
-              </button>
-              <button class="align-tool-btn" (click)="alignElement('right')" title="Align to Right Edge">
-                <span style="font-size: 16px;">&#8677;</span>
-                <span style="font-size: 9px; margin-top: 2px;">Right</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="prop-section">
-            <div class="prop-section-title">Position</div>
-            <div class="prop-row">
-              <label>X</label>
-              <input
-                type="number"
-                class="prop-number"
-                [value]="el.position.x"
-                (change)="onXChange($event)"
-                min="0"
-              />
-            </div>
-            <div class="prop-row">
-              <label>Y</label>
-              <input
-                type="number"
-                class="prop-number"
-                [value]="el.position.y"
-                (change)="onYChange($event)"
-                min="0"
-              />
-            </div>
-          </div>
-
-          <div class="danger-zone">
-            <button class="delete-btn" (click)="deleteElement()">
-              &#128465; Delete Element
-            </button>
-          </div>
+          <input type="color" class="color-picker"
+            [value]="el.table.cells[focus.row][focus.col].style?.color || '#000000'"
+            (input)="onTableCellStyleChange({ color: $any($event.target).value })">
         </div>
-      } @else if (selectedElementIds().length > 1) {
-        <div class="props-content" style="padding: 24px 16px; text-align: center; display: flex; flex-direction: column; align-items: center;">
-          <div style="font-size: 32px; color: #3b82f6; margin-bottom: 12px; background: #eff6ff; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #bfdbfe;">
-            &#9745;
-          </div>
-          <h3 style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #1e293b;">{{ selectedElementIds().length }} Elements Selected</h3>
-          <p style="font-size: 11px; color: #64748b; margin-bottom: 24px; line-height: 1.5;">You can apply group actions to the selected dynamic elements.</p>
-          
-          <div style="display: flex; gap: 8px; width: 100%;">
-            <button style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #bfdbfe; background: #eff6ff; color: #2563eb; font-weight: 600; cursor: pointer;" (click)="duplicateSelected()">
-              &#10063; Duplicate
-            </button>
-            <button style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #ef4444; font-weight: 600; cursor: pointer;" (click)="deleteSelected()">
-              &#128465; Delete
-            </button>
-          </div>
+      </div>
+
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Format</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold'"
+            (click)="onTableCellStyleChange({ fontWeight: el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold' ? 'normal' : 'bold' })">B</button>
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic'"
+            (click)="onTableCellStyleChange({ fontStyle: el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic' ? 'normal' : 'italic' })">I</button>
+          <button class="toggle-btn"
+            [class.active]="el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline'"
+            (click)="onTableCellStyleChange({ textDecoration: el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline' ? 'none' : 'underline' })">U</button>
         </div>
+      </div>
+
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Align</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'left'"
+            (click)="onTableCellStyleChange({ textAlign: 'left' })">L</button>
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'center'"
+            (click)="onTableCellStyleChange({ textAlign: 'center' })">C</button>
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'right'"
+            (click)="onTableCellStyleChange({ textAlign: 'right' })">R</button>
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Wrap Text</label>
+        <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+          <input type="checkbox" [checked]="el.table.cells[focus.row][focus.col].style?.whiteSpace === 'normal'"
+            (change)="onTableCellStyleChange({ whiteSpace: $any($event.target).checked ? 'normal' : 'nowrap' })">
+          <span style="font-size: 10px; color: #92400e;">Allow multi-line wrap</span>
+        </label>
+      </div>
+
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Border</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+            <input type="checkbox" [checked]="el.table.cells[focus.row][focus.col].style?.border !== 'none'"
+              (change)="onTableCellStyleChange({ border: $any($event.target).checked ? '1px solid' : 'none' })">
+            <span style="font-size: 10px; color: #92400e;">Show Border</span>
+          </label>
+          <input type="color" class="color-picker"
+            [value]="el.table.cells[focus.row][focus.col].style?.borderColor || '#cbd5e1'"
+            (input)="onTableCellStyleChange({ borderColor: $any($event.target).value })"
+            style="width: 24px; height: 24px;">
+        </div>
+      </div>
+
+      @if (el.table.cells[focus.row][focus.col].imageUrl) {
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Image Size (Padding)</label>
+        <div class="stepper">
+          <button
+            (click)="onTableCellStyleChange({ padding: (el.table.cells[focus.row][focus.col].style?.padding || 0) + 2 })">+</button>
+          <span style="min-width: 30px; text-align: center;">{{ (el.table.cells[focus.row][focus.col].style?.padding ||
+            0) }}px</span>
+          <button
+            (click)="onTableCellStyleChange({ padding: Math.max(0, (el.table.cells[focus.row][focus.col].style?.padding || 0) - 2) })">-</button>
+        </div>
+      </div>
+      <div class="hint-text" style="color: #b45309; font-size: 9px; margin-top: -8px; margin-bottom: 8px;">Increase
+        padding to make the image smaller within the cell.</div>
+      }
+
+      <div class="prop-section-title"
+        style="color: #92400e; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">
+        Cell Content</div>
+
+      <div class="prop-col"
+        style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #fde68a; margin-bottom: 12px;">
+        <label style="color: #92400e; font-weight: 700; display: block; margin-bottom: 8px;">Image / QR Control</label>
+
+        @if (el.table.cells[focus.row][focus.col].imageUrl || el.table.cells[focus.row][focus.col].isQRCode) {
+        <div
+          style="margin-bottom: 10px; position: relative; background: #f8fafc; border-radius: 6px; padding: 8px; border: 1px dashed #fde68a;">
+          @if (el.table.cells[focus.row][focus.col].isQRCode) {
+          <div style="text-align: center; color: #3b82f6;">
+            <div style="font-size: 24px;">&#9783;</div>
+            <div style="font-size: 9px; font-weight: 700;">QR CODE ACTIVE</div>
+          </div>
+          } @else {
+          <img [src]="el.table.cells[focus.row][focus.col].imageUrl"
+            style="max-width: 100%; max-height: 60px; border-radius: 4px; display: block; margin: 0 auto;" />
+          }
+          <button (click)="onTableCellClearImage()"
+            style="position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; background: #ef4444; color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+        </div>
+        }
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="upload-btn-wrapper"
+            style="position: relative; overflow: hidden; display: inline-block; width: 100%;">
+            <button
+              style="width: 100%; border: 1px solid #92400e; background: #fff; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;">
+              {{ el.table.cells[focus.row][focus.col].imageUrl ? 'Change Image' : 'Upload Image' }}
+            </button>
+            <input type="file" accept="image/*" (change)="onTableCellImageUpload($event)"
+              style="font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer;" />
+          </div>
+
+          <label class="repeat-toggle"
+            style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px; background: #fffbeb; border-radius: 4px; border: 1px solid #fde68a;">
+            <input type="checkbox" [checked]="el.table.cells[focus.row][focus.col].isQRCode"
+              (change)="onTableCellQRCodeToggle($event)" />
+            <span style="font-weight: 700; color: #92400e; font-size: 10px;">Use as QR Code</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="prop-col" style="margin-top: 8px;">
+        <label style="color: #92400e; font-weight: 700;">Text / Data</label>
+        <input type="text" class="prop-input" [value]="el.table.cells[focus.row][focus.col].content || ''"
+          (input)="onTableCellContentChange(focus.row, focus.col, $event)" placeholder="Cell text or {{'{{field}}'}}"
+          style="border-color: #fde68a; background: #fff;" />
+        <select class="prop-select" [value]="el.table.cells[focus.row][focus.col].fieldPath || ''"
+          (change)="onTableCellFieldChange(focus.row, focus.col, $any($event.target).value)"
+          style="margin-top: 4px; border-color: #fde68a; background: #fff; height: 24px; font-size: 10px;">
+          <option value="">— Static Text —</option>
+          @for (f of filteredLeafFields(); track f.key) {
+          <option [value]="f.key">{{ f.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 4px; margin-top: 12px;">
+        <button (click)="resetTableCellStyle()"
+          style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #fde68a; background: #fff; color: #92400e; border-radius: 4px;">Reset
+          Style</button>
+        <button (click)="setFocusedCell(-1, -1)"
+          style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #92400e; background: #92400e; color: #fff; border-radius: 4px;">Finish
+          Editing</button>
+      </div>
       } @else {
-        <div class="empty-state">
-          <div class="empty-icon">&#9654;</div>
-          <div class="empty-title">No element selected</div>
-          <div class="empty-hint">Click an element on the canvas to edit its properties</div>
-        </div>
+      <div style="padding: 20px; text-align: center; border: 1px dashed #fbbf24; border-radius: 8px; background: #fff;">
+        <div style="font-size: 18px; margin-bottom: 4px;">&#9732;</div>
+        <div style="font-size: 11px; color: #92400e; font-weight: 600;">Double-click a cell below</div>
+        <div style="font-size: 9px; color: #b45309;">to edit its individual style</div>
+      </div>
       }
     </div>
+    }
+
+    <div class="prop-section">
+      <div class="prop-section-title">Content</div>
+
+      @if (el.type === 'text' || el.type === 'field') {
+      <div class="prop-col">
+        <label class="prop-label">Text / Expression</label>
+        <textarea class="prop-textarea" [value]="el.content || ''" (input)="onContentChange($event)" rows="3"
+          [attr.placeholder]="placeholderHint"></textarea>
+        <div class="hint-text">Use <code>{{ '{' + '{field}' + '}' }}</code> for dynamic values. Expressions:
+          <code>{{ '{' + '{age + 5}' + '}' }}</code>
+        </div>
+      </div>
+
+      <div class="prop-col">
+        <label class="prop-label">Bind to Field</label>
+        <select class="prop-select" [value]="el.boundField || ''" (change)="onBindField($event)">
+          <option value="">— None —</option>
+          @for (f of filteredLeafFields(); track f.key) {
+          <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+          }
+        </select>
+      </div>
+      }
+
+      @if (el.type === 'image') {
+      <div class="prop-col">
+        <label class="prop-label">Upload Image</label>
+        <input type="file" accept="image/*" (change)="onImageUpload($event)" style="font-size: 11px;" />
+        @if (el.imageUrl && !el.isQRCode) {
+        <img [src]="el.imageUrl"
+          style="margin-top: 8px; max-width: 100%; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;" />
+        }
+      </div>
+
+      <div class="prop-col" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+        <label class="repeat-toggle" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+          <input type="checkbox" [checked]="el.isQRCode" (change)="onQRCodeToggle($event)" />
+          <span style="font-weight: 600; color: #1e293b; font-size: 12px;">Convert to QR Code</span>
+        </label>
+
+        @if (el.isQRCode) {
+        <div style="margin-top: 8px;">
+          <label class="prop-label" style="font-size: 11px;">Field to Encode</label>
+          <select class="prop-select" [value]="el.fieldPath || ''" (change)="onBindField($event)"
+            style="height: 28px; font-size: 11px;">
+            <option value="">— Select Field —</option>
+            @for (f of filteredLeafFields(); track f.key) {
+            <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+            }
+          </select>
+        </div>
+        }
+      </div>
+      }
+
+      @if (el.type === 'table' && el.table; as table) {
+      <div class="prop-col">
+        <label class="prop-label">Table Structure</label>
+        <div class="table-actions">
+          <button class="table-action-btn" (click)="addTableRow()">+ Row</button>
+          <button class="table-action-btn" (click)="removeTableRow()">- Row</button>
+          <button class="table-action-btn" (click)="addTableColumn()">+ Col</button>
+          <button class="table-action-btn" (click)="removeTableColumn()">- Col</button>
+        </div>
+        <label class="repeat-toggle"
+          style="margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
+          <input type="checkbox" [checked]="table.dynamicRows" (change)="onTableDynamicRowsChange($event)"
+            style="margin: 0;" />
+          <span>Bind to Dataset (Repeat Table Block)</span>
+        </label>
+
+        <label class="repeat-toggle"
+          style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
+          <input type="checkbox" [checked]="table.fullWidth" (change)="onTableFullWidthChange($event)"
+            style="margin: 0;" />
+          <span>Full Width (100%)</span>
+        </label>
+
+        <!-- Dataset Selection Area -->
+        <div class="prop-col"
+          style="margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="prop-label" style="font-size: 10px; margin: 0;">Context Array (Dataset)</label>
+            <span style="font-size: 9px; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; color: #475569;">{{
+              datasets().length }} found</span>
+          </div>
+          <select class="prop-select" [(ngModel)]="el.datasetPath" (ngModelChange)="onTableDatasetChange($event)"
+            style="height: 24px; font-size: 11px; width: 100%;" name="dataset-path">
+            <option [ngValue]="undefined">Default (Full Data List)</option>
+            @if (el.datasetPath && !isPathInDatasets(el.datasetPath)) {
+            <option [value]="el.datasetPath" hidden>{{ el.datasetPath }}</option>
+            }
+            @for (arr of arrayFields(); track arr.path) {
+            @if (arr.path) {
+            <option [value]="arr.path">{{ arr.label }} ({{ arr.count }} items)</option>
+            }
+            }
+          </select>
+          <div class="hint-text" style="font-size: 9px; margin-top: 4px;">Limits field selection to this specific array.
+          </div>
+        </div>
+        <div class="table-summary">{{ table.rows }} rows &times; {{ table.columns }} cols</div>
+        <div class="table-summary">Preview size: {{ tablePreviewWidth(table) }} &times; {{ tablePreviewHeight(table) }}
+          px</div>
+      </div>
+
+      <div class="prop-col">
+        <label class="prop-label">Row Heights</label>
+        <div class="table-dimension-grid">
+          @for (rowIndex of tableRowIndexes(table); track rowIndex) {
+          <label class="dimension-item">
+            <span>R{{ rowIndex + 1 }}</span>
+            <input type="number" class="prop-number" [value]="tableRowHeight(table, rowIndex)"
+              (change)="onTableRowHeightChange(rowIndex, $event)" min="24" />
+          </label>
+          }
+        </div>
+      </div>
+
+      <div class="prop-col">
+        <label class="prop-label">Columns (Width / Order / Visible)</label>
+        <div class="table-column-list" style="margin-top: 8px;">
+          @for (col of table.columnSettings; track $index) {
+          <div class="table-column-item">
+            <div class="column-header">
+              <span class="table-column-label">Column {{ $index + 1 }}</span>
+              <label class="column-visible-toggle">
+                <input type="checkbox" [checked]="col.visible" (change)="onTableColumnVisibilityChange($index, $event)">
+                <span>Visible</span>
+              </label>
+            </div>
+            <div class="column-main">
+              <div class="dimension-item">
+                <label>Width</label>
+                <input type="number" class="prop-number" [value]="col.width"
+                  (change)="onTableColumnWidthChange($index, $event)">
+              </div>
+              <div class="dimension-item">
+                <label>Order</label>
+                <input type="number" class="prop-number" [value]="col.order"
+                  (change)="onTableColumnOrderChange($index, $event)">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="table-editor-wrap">
+        <table class="table-editor">
+          <tbody>
+            @for (rowIndex of tableRowIndexes(table); track rowIndex) {
+            <tr>
+              @for (colIndex of orderedColumnIndexes(table); track colIndex) {
+              <td (dblclick)="setFocusedCell(rowIndex, colIndex)"
+                [class.cell-focused]="focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex">
+                <div class="table-cell-content-wrap">
+                  @if (table.cells[rowIndex][colIndex].imageUrl) {
+                  <div class="cell-image-preview">
+                    <img [src]="table.cells[rowIndex][colIndex].imageUrl" />
+                    <span class="img-badge">IMG</span>
+                  </div>
+                  } @else {
+                  <input class="table-cell-input" [value]="table.cells[rowIndex][colIndex].content"
+                    (input)="onTableCellContentChange(rowIndex, colIndex, $event)" placeholder="Cell text" />
+                  }
+                </div>
+                <select class="table-cell-select" [(ngModel)]="table.cells[rowIndex][colIndex].fieldPath"
+                  (ngModelChange)="onTableCellFieldChange(rowIndex, colIndex, $event)"
+                  [name]="'cell-' + rowIndex + '-' + colIndex">
+                  <option [ngValue]="undefined">Static text</option>
+                  @if (table.cells[rowIndex][colIndex].fieldPath &&
+                  !isKeyInFields(table.cells[rowIndex][colIndex].fieldPath!)) {
+                  <option [value]="table.cells[rowIndex][colIndex].fieldPath" hidden>{{
+                    table.cells[rowIndex][colIndex].fieldPath }}</option>
+                  }
+                  @for (f of filteredLeafFields(); track f.key) {
+                  <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+                  }
+                </select>
+              </td>
+              }
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
+
+    <div class="prop-section">
+      <div class="prop-section-title">Typography</div>
+
+      @if (el.type === 'field' || el.type === 'text' || el.type === 'table') {
+      <div class="prop-col">
+        <label class="prop-label">Font Family</label>
+        <select class="prop-select" [value]="el.style.fontFamily" (change)="onFontFamilyChange($event)">
+          @for (font of fontFamilies; track font.value) {
+          <option [value]="font.value">{{ font.label }}</option>
+          }
+        </select>
+      </div>
+      }
+
+      <div class="prop-row">
+        <label>Font Size</label>
+        <div class="stepper">
+          <button (click)="adjustSize(-1)">&#8722;</button>
+          <span>{{ el.style.fontSize }}px</span>
+          <button (click)="adjustSize(1)">&#43;</button>
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <label>Color</label>
+        <div class="color-row">
+          <input type="color" class="color-picker" [value]="el.style.color" (input)="onColorChange($event)" />
+          <span class="color-hex">{{ el.style.color }}</span>
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <label>Style</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="el.style.fontWeight === 'bold'" (click)="toggleBold()"
+            title="Bold"><strong>B</strong></button>
+          <button class="toggle-btn" [class.active]="el.style.fontStyle === 'italic'" (click)="toggleItalic()"
+            title="Italic"><em>I</em></button>
+          <button class="toggle-btn" [class.active]="el.style.textDecoration === 'underline'"
+            (click)="toggleUnderline()" title="Underline"><u>U</u></button>
+        </div>
+      </div>
+      <div class="prop-row">
+        <label>Alignment</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="el.style.textAlign === 'left' || !el.style.textAlign"
+            (click)="onTextAlignChange('left')" title="Align Left">&#8612;</button>
+          <button class="toggle-btn" [class.active]="el.style.textAlign === 'center'"
+            (click)="onTextAlignChange('center')" title="Align Center">&#8633;</button>
+          <button class="toggle-btn" [class.active]="el.style.textAlign === 'right'"
+            (click)="onTextAlignChange('right')" title="Align Right">&#8614;</button>
+        </div>
+      </div>
+      <div class="prop-row">
+        <label>Word Wrap</label>
+        <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+          <input type="checkbox" [checked]="el.style.whiteSpace === 'normal'" (change)="onWordWrapChange($event)">
+          <span style="font-size: 10px;">Wrap long text</span>
+        </label>
+      </div>
+      <div class="prop-row">
+        <label>Border</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
+            <input type="checkbox" [checked]="el.style.border && el.style.border !== 'none'"
+              (change)="onBorderToggle($event)">
+            <span style="font-size: 10px;">Show Border</span>
+          </label>
+          <input type="color" class="color-picker" [value]="el.style.borderColor || '#cbd5e1'"
+            (input)="onBorderColorChange($event)" style="width: 24px; height: 24px;">
+        </div>
+      </div>
+    </div>
+
+    <div class="prop-section">
+      <div class="prop-section-title">Canvas Alignment</div>
+      <div class="alignment-grid"
+        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px;">
+        <button class="align-tool-btn" (click)="alignElement('left')" title="Align to Left Edge">
+          <span style="font-size: 16px;">&#8676;</span>
+          <span style="font-size: 9px; margin-top: 2px;">Left</span>
+        </button>
+        <button class="align-tool-btn" (click)="alignElement('center')" title="Center on Canvas">
+          <span style="font-size: 16px;">&#8633;</span>
+          <span style="font-size: 9px; margin-top: 2px;">Center</span>
+        </button>
+        <button class="align-tool-btn" (click)="alignElement('right')" title="Align to Right Edge">
+          <span style="font-size: 16px;">&#8677;</span>
+          <span style="font-size: 9px; margin-top: 2px;">Right</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="prop-section">
+      <div class="prop-section-title">Position</div>
+      <div class="prop-row">
+        <label>X</label>
+        <input type="number" class="prop-number" [value]="el.position.x" (change)="onXChange($event)" min="0" />
+      </div>
+      <div class="prop-row">
+        <label>Y</label>
+        <input type="number" class="prop-number" [value]="el.position.y" (change)="onYChange($event)" min="0" />
+      </div>
+    </div>
+
+    <div class="danger-zone">
+      <button class="delete-btn" (click)="deleteElement()">
+        &#128465; Delete Element
+      </button>
+    </div>
+  </div>
+  } @else if (selectedElementIds().length > 1) {
+  <div class="props-content"
+    style="padding: 24px 16px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+    <div
+      style="font-size: 32px; color: #3b82f6; margin-bottom: 12px; background: #eff6ff; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #bfdbfe;">
+      &#9745;
+    </div>
+    <h3 style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #1e293b;">{{ selectedElementIds().length }}
+      Elements Selected</h3>
+    <p style="font-size: 11px; color: #64748b; margin-bottom: 24px; line-height: 1.5;">You can apply group actions to
+      the selected dynamic elements.</p>
+
+    <div style="display: flex; gap: 8px; width: 100%;">
+      <button
+        style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #bfdbfe; background: #eff6ff; color: #2563eb; font-weight: 600; cursor: pointer;"
+        (click)="duplicateSelected()">
+        &#10063; Duplicate
+      </button>
+      <button
+        style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #ef4444; font-weight: 600; cursor: pointer;"
+        (click)="deleteSelected()">
+        &#128465; Delete
+      </button>
+    </div>
+  </div>
+  } @else {
+  <div class="empty-state">
+    <div class="empty-icon">&#9654;</div>
+    <div class="empty-title">No element selected</div>
+    <div class="empty-hint">Click an element on the canvas to edit its properties</div>
+  </div>
+  }
+</div>

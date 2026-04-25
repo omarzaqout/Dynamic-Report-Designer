@@ -84,7 +84,7 @@ export class TemplateService {
     const id = this.selectedElementId();
     if (!id) return null;
     for (const section of this._template().sections) {
-      const el = section.elements.find((e) => e.id === id);
+      const el = section.elements.find((e: TemplateElement) => e.id === id);
       if (el) return el;
     }
     return null;
@@ -93,7 +93,7 @@ export class TemplateService {
   readonly selectedElementSection = computed(() => {
     const id = this.selectedElementId();
     if (!id) return null;
-    return this._template().sections.find((s) => s.elements.some((e) => e.id === id)) || null;
+    return this._template().sections.find((s: TemplateSection) => s.elements.some((e: TemplateElement) => e.id === id)) || null;
   });
 
   private history: string[] = [];
@@ -194,11 +194,11 @@ export class TemplateService {
     const ids = this._selectedElementIds();
     if (ids.length === 0) return;
 
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.filter((el) => !ids.includes(el.id)),
+        elements: s.elements.filter((el: TemplateElement) => !ids.includes(el.id)),
       })),
     }));
     this._selectedElementIds.set([]);
@@ -212,8 +212,8 @@ export class TemplateService {
     if (ids.length === 0) return;
 
     this.clipboard = [];
-    this._template().sections.forEach((s) => {
-      s.elements.forEach((el) => {
+    this._template().sections.forEach((s: TemplateSection) => {
+      s.elements.forEach((el: TemplateElement) => {
         if (ids.includes(el.id)) {
           this.clipboard.push({ ...el, sectionId: s.id });
         }
@@ -225,13 +225,13 @@ export class TemplateService {
     if (this.clipboard.length === 0) return;
 
     const newIds: string[] = [];
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => {
-        const toPaste = this.clipboard.filter((c) => c.sectionId === s.id);
+      sections: t.sections.map((s: TemplateSection) => {
+        const toPaste = this.clipboard.filter((c: any) => c.sectionId === s.id);
         if (toPaste.length === 0) return s;
 
-        const pasted = toPaste.map((c) => {
+        const pasted = toPaste.map((c: any) => {
           const newId = 'el-' + Math.random().toString(36).substr(2, 9);
           newIds.push(newId);
           return {
@@ -272,22 +272,22 @@ export class TemplateService {
   }
 
   removeElement(elementId: string): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.filter((el) => el.id !== elementId),
+        elements: s.elements.filter((el: TemplateElement) => el.id !== elementId),
       })),
     }));
     this.pushToHistory();
   }
 
   updateElement(id: string, partial: Partial<TemplateElement>): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map((el) =>
+        elements: s.elements.map((el: TemplateElement) =>
           el.id === id ? { ...el, ...partial } : el
         ),
       })),
@@ -296,11 +296,11 @@ export class TemplateService {
   }
 
   updateElementPosition(elementId: string, x: number, y: number): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map((el) =>
+        elements: s.elements.map((el: TemplateElement) =>
           el.id === elementId ? { ...el, position: { x, y } } : el
         ),
       })),
@@ -313,11 +313,11 @@ export class TemplateService {
     const ids = this._selectedElementIds();
     if (ids.length === 0) return;
 
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map((el) =>
+        elements: s.elements.map((el: TemplateElement) =>
           ids.includes(el.id)
             ? {
                 ...el,
@@ -330,11 +330,11 @@ export class TemplateService {
   }
 
   updateElementStyle(elementId: string, style: any): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map((el) =>
+        elements: s.elements.map((el: TemplateElement) =>
           el.id === elementId ? { ...el, style: { ...el.style, ...style } } : el
         ),
       })),
@@ -343,11 +343,11 @@ export class TemplateService {
   }
 
   updateElementSize(elementId: string, width: number, height: number): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map((el) =>
+        elements: s.elements.map((el: TemplateElement) =>
           el.id === elementId ? { ...el, size: { width, height } } : el
         ),
       })),
@@ -356,11 +356,11 @@ export class TemplateService {
   }
 
   updateTableData(elementId: string, table: TableData): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) => ({
+      sections: t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map((el) =>
+        elements: s.elements.map((el: TemplateElement) =>
           el.id === elementId ? { ...el, table } : el
         ),
       })),
@@ -368,14 +368,14 @@ export class TemplateService {
     this.pushToHistory();
   }
 
-  updateTableCell(elementId: string, row: number, col: number, data: { content?: string; fieldPath?: string; style?: any }): void {
-    this._template.update(t => {
-      const newSections = t.sections.map(s => ({
+  updateTableCell(elementId: string, row: number, col: number, data: { content?: string; fieldPath?: string; imageUrl?: string; isQRCode?: boolean; style?: any }): void {
+    this._template.update((t: ReportTemplate) => {
+      const newSections = t.sections.map((s: TemplateSection) => ({
         ...s,
-        elements: s.elements.map(el => {
+        elements: s.elements.map((el: TemplateElement) => {
           if (el.id === elementId && el.table) {
-            const newCells = el.table.cells.map((cellsRow, rIdx) => 
-               rIdx === row ? cellsRow.map((cell, cIdx) => cIdx === col ? { ...cell, ...data, style: { ...cell.style, ...data.style } } : cell) : cellsRow
+            const newCells = el.table.cells.map((cellsRow: any[], rIdx: number) => 
+               rIdx === row ? cellsRow.map((cell: any, cIdx: number) => cIdx === col ? { ...cell, ...data, style: { ...cell.style, ...data.style } } : cell) : cellsRow
             );
             return { ...el, table: { ...el.table, cells: newCells } };
           }
@@ -388,9 +388,9 @@ export class TemplateService {
   }
 
   updateSectionHeight(sectionId: string, height: number): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map((s) =>
+      sections: t.sections.map((s: TemplateSection) =>
         s.id === sectionId ? { ...s, height } : s
       ),
     }));
@@ -398,33 +398,33 @@ export class TemplateService {
   }
 
   removeSection(sectionId: string): void {
-    this._template.update((t) => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.filter((s) => s.id !== sectionId),
+      sections: t.sections.filter((s: TemplateSection) => s.id !== sectionId),
     }));
     this.pushToHistory();
   }
 
   updateSectionRepeat(sectionId: string, repeatPerRow: boolean): void {
-    this._template.update(t => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map(s => s.id === sectionId ? { ...s, repeatPerRow } : s)
+      sections: t.sections.map((s: TemplateSection) => s.id === sectionId ? { ...s, repeatPerRow } : s)
     }));
     this.pushToHistory();
   }
 
   updateSectionDataset(sectionId: string, datasetPath: string | undefined): void {
-    this._template.update(t => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map(s => s.id === sectionId ? { ...s, datasetPath } : s)
+      sections: t.sections.map((s: TemplateSection) => s.id === sectionId ? { ...s, datasetPath } : s)
     }));
     this.pushToHistory();
   }
 
   updateSectionRepeatOnPage(sectionId: string, repeatOnEveryPage: boolean): void {
-    this._template.update(t => ({
+    this._template.update((t: ReportTemplate) => ({
       ...t,
-      sections: t.sections.map(s => s.id === sectionId ? { ...s, repeatOnEveryPage } : s)
+      sections: t.sections.map((s: TemplateSection) => s.id === sectionId ? { ...s, repeatOnEveryPage } : s)
     }));
     this.pushToHistory();
   }
