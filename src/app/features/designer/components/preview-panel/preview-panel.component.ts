@@ -68,27 +68,16 @@ export class PreviewPanelComponent implements OnInit {
     // We track the bottom of the last flow element (table) to compute exact margins
     let currentFlowBottom = 0;
 
+    // Calculate section start Y to convert absolute designer Y to relative preview Y
+    const sectionTopY = this.getSectionMinY(section);
+
     for (const el of sorted) {
-      // Attach originalHeight so the push-down math can use it both here
-      // and in getSectionHeight.
-      const originalHeight = this.getElementOriginalHeight(el);
-      let currentElOffset = 0;
+      // 1. Get relative Y from designer (Absolute Y - Section Start Y)
+      const relativeY = Math.round(el.y - sectionTopY);
 
-      // Accumulate push-down from every previously placed element that expanded
-      for (const processed of result) {
-        const actualH  = this.getElementActualHeight(processed);
-        const origH    = processed.originalHeight;
-
-        if (actualH > origH) {
-          // This element expands downward – push everything originally
-          // below its original bottom edge
-          if (el.y >= processed.y + origH - 2) {
-            currentElOffset += (actualH - origH);
-          }
-        }
-      }
-
-      const renderedY = el.y + currentElOffset;
+      // 2. In Preview, we strictly follow the designer's Y.
+      // We removed the 'push-down' logic to avoid random offsets and gaps.
+      const renderedY = relativeY;
       let printMarginTop = 0;
 
       // In print mode, tables must be placed in normal document flow to paginate properly.
@@ -99,7 +88,7 @@ export class PreviewPanelComponent implements OnInit {
         currentFlowBottom += printMarginTop + actualHeight;
       }
 
-      result.push({ ...el, originalHeight, renderedY, printMarginTop });
+      result.push({ ...el, renderedY, printMarginTop });
     }
     return result;
   }
@@ -133,6 +122,11 @@ export class PreviewPanelComponent implements OnInit {
 
     // Fallback for text/field elements
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
+  }
+
+  private getSectionMinY(section: RenderedSection): number {
+    if (!section.elements || section.elements.length === 0) return 0;
+    return Math.min(...section.elements.map(el => el.y));
   }
 
   print(): void {

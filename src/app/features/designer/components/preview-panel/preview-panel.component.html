@@ -73,8 +73,7 @@
     <div class="section-body" [style.position]="'relative'" [style.min-height.px]="getSectionHeight(section)">
 
       @for (el of getElementsWithOffsets(section); track el.id) {
-      <div class="preview-el" 
-        [style.left.px]="el.x" [style.top.px]="el.renderedY"
+      <div class="preview-el" [style.left.px]="el.x" [style.top.px]="el.renderedY"
         [style.width]="el.type === 'table' ? tableWidth(el.table) + 'px' : null"
         [style.height.px]="el.type === 'table' ? tableHeight(el.table) : null"
         [style.--print-mt.px]="el.printMarginTop || 0" [style.--print-ml.px]="el.x"
@@ -95,8 +94,7 @@
               @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
               <tr [style.height.px]="rowHeight(el.table, rowIndex)">
                 @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
-                <td [style.width.px]="columnWidth(el.table, colIndex)"
-                  [style.height.px]="rowHeight(el.table, rowIndex)"
+                <td [style.width.px]="columnWidth(el.table, colIndex)" [style.height.px]="rowHeight(el.table, rowIndex)"
                   [style.textAlign]="el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign ?? 'left'"
                   [style.color]="el.table.cells[rowIndex][colIndex].style?.color ?? el.style.color"
                   [style.fontSize.px]="el.table.cells[rowIndex][colIndex].style?.fontSize ?? el.style.fontSize"
@@ -108,16 +106,17 @@
                   [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace) === 'normal' ? 'break-word' : 'normal'"
                   [style.border]="el.table.cells[rowIndex][colIndex].style?.border ?? '1px solid'"
                   [style.borderColor]="el.table.cells[rowIndex][colIndex].style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'">
-                  <div class="cell-content-container" [class.has-padding]="!el.table.cells[rowIndex][colIndex].imageUrl && !el.table.cells[rowIndex][colIndex].isQRCode">
+                  <div class="cell-content-container"
+                    [class.has-padding]="!el.table.cells[rowIndex][colIndex].imageUrl && !el.table.cells[rowIndex][colIndex].isQRCode">
                     @if (el.table.cells[rowIndex][colIndex].isQRCode) {
-                      <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(el.table.cells[rowIndex][colIndex].content || '')" 
-                           class="cell-image">
+                    <img
+                      [src]="'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(el.table.cells[rowIndex][colIndex].content || '')"
+                      class="cell-image">
                     } @else if (el.table.cells[rowIndex][colIndex].imageUrl) {
-                      <img [src]="el.table.cells[rowIndex][colIndex].imageUrl" 
-                           class="cell-image"
-                           [style.padding.px]="el.table.cells[rowIndex][colIndex].style?.padding || 0">
+                    <img [src]="el.table.cells[rowIndex][colIndex].imageUrl" class="cell-image"
+                      [style.padding.px]="el.table.cells[rowIndex][colIndex].style?.padding || 0">
                     } @else {
-                      <span style="width: 100%;">{{ el.table.cells[rowIndex][colIndex].content || ' ' }}</span>
+                    <span style="width: 100%;">{{ el.table.cells[rowIndex][colIndex].content || ' ' }}</span>
                     }
                   </div>
                 </td>
