@@ -57,17 +57,21 @@ export class PreviewPanelComponent {
       let currentElOffset = 0;
       const relativeY = el.y - sectionTopY;
 
+      // 3. SMART PUSH-DOWN: Preserve the original gaps from the designer
       for (const processed of result) {
         const actualH = this.getElementActualHeight(processed);
         const origH = processed.originalHeight;
 
         if (actualH > origH) {
-          if (el.y >= processed.y + origH - 2) {
+          // If the processed element above was originally ABOVE this element
+          // We add a 2px tolerance for designer snapping
+          if (processed.y + origH <= el.y + 2) {
             currentElOffset += (actualH - origH);
           }
         }
       }
 
+      // 4. Smart Rounding & Buffer
       const renderedY = Math.round(relativeY + currentElOffset);
       let printMarginTop = 0;
 

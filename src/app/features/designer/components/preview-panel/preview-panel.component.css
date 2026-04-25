@@ -136,6 +136,12 @@
     position: absolute;
     white-space: nowrap;
     line-height: 1.4;
+    box-sizing: border-box;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 
 .preview-el.is-table {
@@ -146,6 +152,12 @@
     background: #fff;
     min-width: 180px;
     min-height: 56px;
+}
+
+.preview-table-row {
+    display: table-row;
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 
 .preview-table {

@@ -92,7 +92,7 @@
           <table class="preview-table">
             <tbody>
               @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
-              <tr [style.height.px]="rowHeight(el.table, rowIndex)">
+              <tr class="preview-table-row" [style.height.px]="rowHeight(el.table, rowIndex)">
                 @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
                 <td [style.width.px]="columnWidth(el.table, colIndex)" [style.height.px]="rowHeight(el.table, rowIndex)"
                   [style.textAlign]="el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign ?? 'left'"
