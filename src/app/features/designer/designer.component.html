@@ -28,10 +28,25 @@
         <div class="header-actions">
           <div class="status-indicator">
             <span class="status-dot"></span>
-            <span class="status-text">Auto-saved</span>
+            <span class="status-text">Draft Saved</span>
           </div>
-          <button class="action-btn secondary" (click)="setView('preview')">
-            Preview Report
+
+          <div class="button-group">
+            <button class="action-btn icon-btn" (click)="exportTemplate()" title="Export JSON Template">
+              <span>&#10515;</span> Export
+            </button>
+            <button class="action-btn icon-btn" (click)="fileInput.click()" title="Import JSON Template">
+              <span>&#10514;</span> Import
+            </button>
+            <input #fileInput type="file" (change)="importTemplate($event)" accept=".json" style="display: none">
+            
+            <button class="action-btn icon-btn danger" (click)="resetTemplate()" title="Reset Canvas">
+              <span>&#8635;</span> Reset
+            </button>
+          </div>
+
+          <button class="action-btn primary" (click)="setView(activeView() === 'design' ? 'preview' : 'design')">
+            {{ activeView() === 'design' ? 'Live Preview' : 'Back to Design' }}
           </button>
         </div>
       </header>

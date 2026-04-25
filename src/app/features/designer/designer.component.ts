@@ -5,6 +5,7 @@ import { CanvasComponent } from './components/canvas/canvas.component';
 import { RightPanelComponent } from './components/right-panel/right-panel.component';
 import { PreviewPanelComponent } from './components/preview-panel/preview-panel.component';
 import { UiService } from '../../core/services/ui.service';
+import { TemplateService } from '../../core/services/template.service';
 
 @Component({
   selector: 'app-designer',
@@ -16,6 +17,7 @@ import { UiService } from '../../core/services/ui.service';
 })
 export class DesignerComponent {
   private uiService = inject(UiService);
+  private templateService = inject(TemplateService);
   readonly activeView = this.uiService.activeView;
 
   // Sidebar widths
@@ -27,6 +29,28 @@ export class DesignerComponent {
 
   setView(view: 'design' | 'preview'): void {
     this.uiService.setView(view);
+  }
+
+  exportTemplate(): void {
+    this.templateService.exportTemplate();
+  }
+
+  importTemplate(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.templateService.importTemplate(input.files[0])
+        .then(() => {
+          input.value = ''; // Reset input
+          alert('Template imported successfully!');
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+  }
+
+  resetTemplate(): void {
+    if (confirm('Are you sure you want to reset the template? All unsaved changes will be lost.')) {
+      this.templateService.resetTemplate();
+    }
   }
 
   onMouseDownLeft(event: MouseEvent) {

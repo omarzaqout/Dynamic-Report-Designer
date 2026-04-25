@@ -211,7 +211,7 @@ export class CanvasSectionComponent {
   }
 
   onSectionDatasetChange(value: string | undefined): void {
-    this.templateService.updateSectionDataset(this.section.id, value || undefined);
+    this.templateService.updateSectionDataset(this.section.id, value || '');
   }
 
   onCanvasClick(event: MouseEvent): void {
