@@ -1,11 +1,10 @@
-import { Component, inject, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateService } from '../../../../core/services/template.service';
-import { DataService } from '../../../../core/services/data.service';
-import { RenderService, RenderedReport, RenderedSection } from '../../../../core/services/render.service';
-import { ReportData } from '../../../../core/models/report.model';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { RenderService, RenderedSection } from '../../../../core/services/render.service';
 import { TableData } from '../../../../core/models/template.model';
+import { DataService } from '../../../../core/services/data.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-preview-panel',
@@ -15,85 +14,74 @@ import { TableData } from '../../../../core/models/template.model';
   templateUrl: './preview-panel.component.html',
   styleUrl: './preview-panel.component.css',
 })
-export class PreviewPanelComponent implements OnInit {
+export class PreviewPanelComponent {
   private templateService = inject(TemplateService);
-  private dataService = inject(DataService);
   private renderService = inject(RenderService);
+  private dataService = inject(DataService);
 
-  readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
+  readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] });
 
-  readonly renderedReport = computed<RenderedReport>(() => {
+  readonly renderedReport = computed(() => {
     const template = this.templateService.template();
     const data = this.dataRows();
-    const rawData = this.dataService.rawResponse();
-    return this.renderService.renderReport(data, template, rawData);
+    return this.renderService.renderReport(data, template, data);
   });
 
   readonly renderedSectionCount = computed(() => this.renderedReport().sections.length);
 
-  readonly repeatingSections = computed(() => 
-    this.renderedReport().sections.filter(s => s.templateSection?.repeatOnEveryPage && s.sectionType !== 'footer')
-  );
-
-  readonly repeatingFooters = computed(() => 
-    this.renderedReport().sections.filter(s => s.templateSection?.repeatOnEveryPage && s.sectionType === 'footer')
-  );
-
-  readonly repeatingSectionsHeight = computed(() => {
-    return this.repeatingSections().reduce((sum, s) => sum + this.getSectionHeight(s), 0);
+  readonly repeatingSections = computed(() => {
+    return this.renderedReport().sections.filter((s: any) => s.sectionType === 'pageHeader' && s.templateSection?.repeatOnEveryPage);
   });
 
-  readonly repeatingFootersHeight = computed(() => {
-    return this.repeatingFooters().reduce((sum, s) => sum + this.getSectionHeight(s), 0);
+  readonly repeatingFooters = computed(() => {
+    return this.renderedReport().sections.filter((s: any) => s.sectionType === 'footer' && s.templateSection?.repeatOnEveryPage);
   });
 
-  readonly mainSections = computed(() => 
-    this.renderedReport().sections.filter(s => !s.templateSection?.repeatOnEveryPage)
-  );
+  readonly mainSections = computed(() => {
+    return this.renderedReport().sections.filter((s: any) => {
+      const isRepeatingHeader = s.sectionType === 'pageHeader' && s.templateSection?.repeatOnEveryPage;
+      const isRepeatingFooter = s.sectionType === 'footer' && s.templateSection?.repeatOnEveryPage;
+      return !isRepeatingHeader && !isRepeatingFooter;
+    });
+  });
 
-  ngOnInit(): void {}
-
-  /**
-   * Calculates dynamic Y offsets for elements to prevent overlapping
-   * when tables or images grow beyond their original designer height.
-   *
-   * BUG FIX: `processed.originalHeight` was always `undefined` before.
-   * We now read the original height from `el.size?.height` (set by the designer)
-   * or fall back to a font-based estimate.
-   */
   getElementsWithOffsets(section: RenderedSection): any[] {
     const sorted = [...section.elements].sort((a, b) => a.y - b.y);
     const result: any[] = [];
     
-    // We track the bottom of the last flow element (table) to compute exact margins
     let currentFlowBottom = 0;
-
-    // Calculate section start Y to convert absolute designer Y to relative preview Y
     const sectionTopY = this.getSectionMinY(section);
 
     for (const el of sorted) {
-      // 1. Get relative Y from designer (Absolute Y - Section Start Y)
-      const relativeY = Math.round(el.y - sectionTopY);
+      const originalHeight = this.getElementOriginalHeight(el);
+      let currentElOffset = 0;
+      const relativeY = el.y - sectionTopY;
 
-      // 2. In Preview, we strictly follow the designer's Y.
-      // We removed the 'push-down' logic to avoid random offsets and gaps.
-      const renderedY = relativeY;
+      for (const processed of result) {
+        const actualH = this.getElementActualHeight(processed);
+        const origH = processed.originalHeight;
+
+        if (actualH > origH) {
+          if (el.y >= processed.y + origH - 2) {
+            currentElOffset += (actualH - origH);
+          }
+        }
+      }
+
+      const renderedY = Math.round(relativeY + currentElOffset);
       let printMarginTop = 0;
 
-      // In print mode, tables must be placed in normal document flow to paginate properly.
-      // We calculate their margin-top as the distance from the bottom of the previous table.
       if (el.type === 'table') {
         printMarginTop = Math.max(0, renderedY - currentFlowBottom);
         const actualHeight = this.getElementActualHeight(el);
         currentFlowBottom += printMarginTop + actualHeight;
       }
 
-      result.push({ ...el, renderedY, printMarginTop });
+      result.push({ ...el, originalHeight, renderedY, printMarginTop });
     }
     return result;
   }
 
-  /** Height the element occupies in the RENDERED output (after data expansion). */
   private getElementActualHeight(el: any): number {
     if (el.type === 'table' && el.table) {
       return this.tableHeight(el.table);
@@ -104,40 +92,41 @@ export class PreviewPanelComponent implements OnInit {
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }
 
-  /** Height the element was given in the DESIGNER (before data expansion). */
   private getElementOriginalHeight(el: any): number {
-    // Images carry an explicit designer size
     if (el.size?.height) return el.size.height;
-
-    // Tables: reconstruct the designer height from the ORIGINAL row count
-    // using the per-row heights stored in the rendered table.
-    // designerRows is the pre-expansion count saved by RenderService.
     if (el.type === 'table' && el.table && el.designerRows != null) {
-      const designerRowHeights = (el.table.rowHeights as number[])
-        .slice(0, el.designerRows);
+      const designerRowHeights = (el.table.rowHeights as number[]).slice(0, el.designerRows);
       if (designerRowHeights.length > 0) {
-        return designerRowHeights.reduce((s: number, h: number) => s + h, 0);
+        return designerRowHeights.reduce((s, h) => s + h, 0);
       }
     }
-
-    // Fallback for text/field elements
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }
 
   private getSectionMinY(section: RenderedSection): number {
     if (!section.elements || section.elements.length === 0) return 0;
-    return Math.min(...section.elements.map(el => el.y));
+    return Math.min(...section.elements.map((el: any) => el.y));
+  }
+
+  getSectionHeight(section: RenderedSection): number {
+    const offsetElements = this.getElementsWithOffsets(section);
+    let maxContentY = 0;
+    for (const el of offsetElements) {
+      const elHeight = this.getElementActualHeight(el);
+      const bottomY = el.renderedY + elHeight;
+      if (bottomY > maxContentY) maxContentY = bottomY;
+    }
+    return Math.max(section.height, maxContentY + 20);
   }
 
   print(): void {
     window.print();
   }
 
-
   isLastDetail(index: number): boolean {
     const sections = this.renderedReport().sections;
     const remaining = sections.slice(index + 1);
-    return !remaining.some((s) => s.isDetail);
+    return !remaining.some((s: any) => s.isDetail);
   }
 
   tableRowIndexes(table: TableData): number[] {
@@ -161,17 +150,6 @@ export class PreviewPanelComponent implements OnInit {
 
   columnWidth(table: TableData, colIndex: number): number {
     return table.columnSettings?.[colIndex]?.width ?? 120;
-  }
-
-  getSectionHeight(section: RenderedSection): number {
-    const offsetElements = this.getElementsWithOffsets(section);
-    let maxContentY = 0;
-    for (const el of offsetElements) {
-      const elHeight = this.getElementActualHeight(el);
-      const bottomY = el.renderedY + elHeight;
-      if (bottomY > maxContentY) maxContentY = bottomY;
-    }
-    return Math.max(section.height, maxContentY + 20);
   }
 
   tableWidth(table: TableData): number {
