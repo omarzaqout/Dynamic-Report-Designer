@@ -94,7 +94,7 @@ export class PreviewPanelComponent {
     let currentFlowBottom = 0;
 
     for (const el of sorted) {
-      const originalHeight = this.getElementOriginalHeight(el);
+      const originalHeight = this.getElementOriginalHeight(el, section);
       let currentElOffset = 0;
       // SMART OFFSET (Push & Pull): 
       // Maintains the design's "Visual Proximity" by expanding or shrinking gaps 
@@ -135,14 +135,16 @@ export class PreviewPanelComponent {
   }
 
   /** Height the element was given in the DESIGNER. */
-  private getElementOriginalHeight(el: any): number {
-    // 1. If it has a size set in the designer, that's our baseline
-    if (el.size?.height) return el.size.height;
+  private getElementOriginalHeight(el: any, section: RenderedSection): number {
+    const originalEl = section.templateSection?.elements?.find((e: any) => e.id === el.id);
 
-    // 2. Fallback for tables if size is missing
-    if (el.type === 'table' && el.table) {
-      return this.tableHeight(el.table);
+    // 1. Fallback for tables: visually tables are dictated by their original rows in design
+    if (el.type === 'table') {
+      if (originalEl?.table) return this.tableHeight(originalEl.table);
+      if (el.table) return this.tableHeight(el.table);
     }
+    // 2. If it has a size set in the designer, that's our baseline for non-tables
+    if (el.size?.height) return el.size.height;
 
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }
