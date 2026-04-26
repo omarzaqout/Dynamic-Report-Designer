@@ -45,6 +45,48 @@ export class PreviewPanelComponent {
     });
   });
 
+  getBands(section: RenderedSection): any[] {
+    const offsetElements = this.getElementsWithOffsets(section);
+    if (offsetElements.length === 0) return [];
+
+    const sorted = [...offsetElements].sort((a, b) => a.renderedY - b.renderedY);
+    const bands: any[] = [];
+    
+    for (const el of sorted) {
+      const elTop = el.renderedY;
+      const elHeight = this.getElementActualHeight(el);
+      const elBottom = elTop + elHeight;
+
+      if (bands.length > 0) {
+        const lastBand = bands[bands.length - 1];
+        const bTop = lastBand.renderedY;
+        const bBottom = lastBand.renderedY + lastBand.height;
+        
+        if (elTop <= bBottom + 2) {
+          lastBand.elements.push(el);
+          lastBand.height = Math.max(bBottom, elBottom) - lastBand.renderedY;
+          continue;
+        }
+      }
+
+      bands.push({
+        id: el.id,
+        renderedY: elTop,
+        height: elHeight,
+        marginTop: 0,
+        elements: [el]
+      });
+    }
+
+    let currentFlowBottom = 0;
+    for (const band of bands) {
+      band.marginTop = Math.max(0, band.renderedY - currentFlowBottom);
+      currentFlowBottom = band.renderedY + band.height;
+    }
+
+    return bands;
+  }
+
   getElementsWithOffsets(section: RenderedSection): any[] {
     const sorted = [...section.elements].sort((a, b) => a.y - b.y);
     const result: any[] = [];

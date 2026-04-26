@@ -132,6 +132,11 @@
     position: relative;
 }
 
+.preview-band {
+    position: relative;
+    width: 100%;
+}
+
 .preview-el {
     position: absolute;
     white-space: nowrap;
@@ -324,6 +329,15 @@
         display: block !important;
     }
 
+    .preview-band {
+        height: auto !important;
+        min-height: var(--band-height) !important;
+        position: relative !important;
+        display: block !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
     /* Standard elements remain absolute. They don't usually cross page boundaries. */
     .preview-el {
         position: absolute !important;
@@ -334,7 +348,7 @@
      * MAGIC FIX FOR MISSING DATA:
      * Tables contain massive repeating rows. If they are absolute, they get clipped
      * by the browser's paginator. We MUST put them in exact flow.
-     * By using position: relative and applying margin-top and margin-left
+     * By using position: relative and applying margin-left and margin-top
      * we perfectly position them while letting the browser break their rows across pages!
      */
     .preview-el.is-table {
