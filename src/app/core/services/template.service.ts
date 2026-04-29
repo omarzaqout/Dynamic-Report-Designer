@@ -12,10 +12,10 @@ export class TemplateService {
     id: 'template-1',
     name: 'New Report',
     sections: [
-      { id: 'sh-1', type: 'reportHeader', label: 'Report Header', height: 100, repeatPerRow: false, elements: [] },
-      { id: 'ph-1', type: 'pageHeader', label: 'Page Header', height: 60, repeatPerRow: false, elements: [] },
-      { id: 'det-1', type: 'details', label: 'Details', height: 100, repeatPerRow: true, elements: [] },
-      { id: 'ft-1', type: 'footer', label: 'Page Footer', height: 60, repeatPerRow: false, repeatOnEveryPage: true, elements: [] }
+      { id: 'sh-1', type: 'reportHeader', label: 'Report Header', height: 40, repeatPerRow: false, elements: [] },
+      { id: 'ph-1', type: 'pageHeader', label: 'Page Header', height: 30, repeatPerRow: false, elements: [] },
+      { id: 'det-1', type: 'details', label: 'Details', height: 40, repeatPerRow: true, elements: [] },
+      { id: 'ft-1', type: 'footer', label: 'Page Footer', height: 30, repeatPerRow: false, repeatOnEveryPage: true, elements: [] }
     ],
   });
 
@@ -243,7 +243,7 @@ export class TemplateService {
       id: 'section-' + Math.random().toString(36).substring(2, 11),
       type,
       label: type.charAt(0).toUpperCase() + type.slice(1),
-      height: 100,
+      height: 40,
       repeatPerRow: type === 'details',
       elements: [],
     };
@@ -426,10 +426,10 @@ export class TemplateService {
       id: 'template-' + Date.now(),
       name: 'New Report',
       sections: [
-        { id: 'sh-1', type: 'reportHeader', label: 'Report Header', height: 100, repeatPerRow: false, elements: [] },
-        { id: 'ph-1', type: 'pageHeader', label: 'Page Header', height: 60, repeatPerRow: false, elements: [] },
-        { id: 'det-1', type: 'details', label: 'Details', height: 100, repeatPerRow: true, elements: [] },
-        { id: 'ft-1', type: 'footer', label: 'Page Footer', height: 60, repeatPerRow: false, repeatOnEveryPage: true, elements: [] }
+        { id: 'sh-1', type: 'reportHeader', label: 'Report Header', height: 40, repeatPerRow: false, elements: [] },
+        { id: 'ph-1', type: 'pageHeader', label: 'Page Header', height: 30, repeatPerRow: false, elements: [] },
+        { id: 'det-1', type: 'details', label: 'Details', height: 40, repeatPerRow: true, elements: [] },
+        { id: 'ft-1', type: 'footer', label: 'Page Footer', height: 30, repeatPerRow: false, repeatOnEveryPage: true, elements: [] }
       ]
     });
   }

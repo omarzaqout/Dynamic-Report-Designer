@@ -264,10 +264,10 @@ export class CanvasSectionComponent {
 
     this.resizeMoveHandler = (e: MouseEvent) => {
       const dy = e.clientY - this.resizeStartY;
-      let targetHeight = Math.max(30, this.resizeStartHeight + dy);
+      let targetHeight = Math.max(4, this.resizeStartHeight + dy);
 
       // Calculate the absolute minimum height needed to contain current elements without moving them
-      let minRequiredHeight = 30;
+      let minRequiredHeight = 4;
       for (const el of this.section.elements) {
         const bottomY = el.position.y + this.getElementHeight(el);
         if (bottomY > minRequiredHeight) minRequiredHeight = bottomY;
@@ -295,8 +295,8 @@ export class CanvasSectionComponent {
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
     
-    // Set to 30 minimum to keep header/handle visible
-    const newHeight = Math.max(30, Math.ceil(maxContentY));
+    // Set to 4 minimum to keep header/handle visible
+    const newHeight = Math.max(4, Math.ceil(maxContentY));
     this.sectionResize.emit({ sectionId: this.section.id, height: newHeight });
   }
 

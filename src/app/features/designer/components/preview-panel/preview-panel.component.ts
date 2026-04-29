@@ -162,7 +162,7 @@ export class PreviewPanelComponent {
       const bottomY = el.renderedY + elHeight;
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
-    return Math.max(section.height, maxContentY + 20);
+    return Math.max(section.height, maxContentY);
   }
 
   print(): void {
