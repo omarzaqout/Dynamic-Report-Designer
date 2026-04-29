@@ -41,6 +41,30 @@ export class DataService {
     this.findDatasets(res, '', datasets);
     this.datasets.set(datasets);
 
+    // ============================================================
+    // 🐛 DEBUG: Print everything loaded from API
+    // ============================================================
+    console.group('%c📦 DataService.getData() — API Load Debug', 'color:#4CAF50;font-size:14px;font-weight:bold');
+    console.log('%c🔵 Raw API Response:', 'color:#2196F3;font-weight:bold', res);
+    console.log('%c📂 Datasets found:', 'color:#FF9800;font-weight:bold', datasets.length);
+    datasets.forEach((ds, i) => {
+      console.group(`%c  [${i}] Dataset: "${ds.name}" | path: "${ds.path}" | count: ${ds.count}`, 'color:#9C27B0');
+      console.log('    sample:', ds.sample);
+      const fields = this.generateFieldsTree(ds.sample, ds.path.replace(/\[\d+\]/g, '').replace(/^0\.?/, ''));
+      console.log('%c    Fields generated:', 'color:#00BCD4;font-weight:bold', fields.length);
+      fields.forEach(f => {
+        console.log(`      📌 key: "${f.key}" | label: "${f.label}" | type: ${f.type}${f.children?.length ? ` | children: ${f.children.length}` : ''}`);
+        if (f.children?.length) {
+          f.children.forEach(c => {
+            console.log(`          ↳ key: "${c.key}" | label: "${c.label}" | type: ${c.type}`);
+          });
+        }
+      });
+      console.groupEnd();
+    });
+    console.groupEnd();
+    // ============================================================
+
     // Only reset if current selection is invalid
     const current = this.activeDataset();
     const exists = datasets.find(d => d.path === current?.path);
