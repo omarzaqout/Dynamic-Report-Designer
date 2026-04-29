@@ -59,7 +59,9 @@ export class CanvasSectionComponent {
       const bottomY = el.position.y + elHeight;
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
-    return Math.max(this.section.height, maxContentY + 20);
+    // Match exactly the height or content, whichever is larger. 
+    // No extra padding to avoid handle jumps.
+    return Math.max(this.section.height, maxContentY);
   }
 
   alignmentLines = signal<{ x: number[], y: number[] }>({ x: [], y: [] });
@@ -264,63 +266,17 @@ export class CanvasSectionComponent {
       const dy = e.clientY - this.resizeStartY;
       let targetHeight = Math.max(30, this.resizeStartHeight + dy);
 
-      // Elements state for simulation
-      const els = this.section.elements.map(el => ({
-        id: el.id,
-        y: el.position.y,
-        height: this.getElementHeight(el),
-        x: el.position.x,
-        width: (el.type === 'table' && el.table) 
-          ? (el.table.columnSettings?.reduce((acc, c) => acc + (c.visible ? c.width : 0), 0) || 120) 
-          : (el.size?.width || 120)
-      }));
-
-      // Sort by original bottom Y descending to process from bottom up
-      els.sort((a, b) => (b.y + b.height) - (a.y + a.height));
-
-      let activeHeight = targetHeight;
-      
-      for (let i = 0; i < els.length; i++) {
-        const target = els[i];
-        
-        // 1. Push element up if it overflows current bottom
-        if (target.y + target.height > activeHeight) {
-          target.y = activeHeight - target.height;
-        }
-        
-        // 2. Immediate ceiling check
-        if (target.y < 0) {
-          const shift = -target.y;
-          for (let k = 0; k <= i; k++) els[k].y += shift;
-          activeHeight += shift;
-        }
-
-        // 3. Cascade collisions with elements "above" it in the sorted list
-        for (let j = i + 1; j < els.length; j++) {
-          const above = els[j];
-          const overlapX = target.x < (above.x + above.width) && (target.x + target.width) > above.x;
-          
-          if (overlapX && target.y < (above.y + above.height)) {
-            above.y = target.y - above.height;
-            // Ceiling check for the cascaded element
-            if (above.y < 0) {
-              const shift = -above.y;
-              for (let k = 0; k <= j; k++) els[k].y += shift;
-              activeHeight += shift;
-            }
-          }
-        }
+      // Calculate the absolute minimum height needed to contain current elements without moving them
+      let minRequiredHeight = 30;
+      for (const el of this.section.elements) {
+        const bottomY = el.position.y + this.getElementHeight(el);
+        if (bottomY > minRequiredHeight) minRequiredHeight = bottomY;
       }
 
-      // Apply moves
-      els.forEach(simEl => {
-        const original = this.section.elements.find(e => e.id === simEl.id);
-        if (original && Math.abs(original.position.y - simEl.y) > 0.1) {
-          this.elementMove.emit({ id: simEl.id, x: simEl.x, y: simEl.y });
-        }
-      });
+      // Constrain the height: cannot be smaller than the content
+      const finalHeight = Math.max(targetHeight, minRequiredHeight);
 
-      this.sectionResize.emit({ sectionId: this.section.id, height: activeHeight });
+      this.sectionResize.emit({ sectionId: this.section.id, height: finalHeight });
     };
 
     this.resizeUpHandler = () => {
@@ -338,7 +294,10 @@ export class CanvasSectionComponent {
       const bottomY = el.position.y + elHeight;
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
-    this.sectionResize.emit({ sectionId: this.section.id, height: Math.max(30, maxContentY) });
+    
+    // Set to 30 minimum to keep header/handle visible
+    const newHeight = Math.max(30, Math.ceil(maxContentY));
+    this.sectionResize.emit({ sectionId: this.section.id, height: newHeight });
   }
 
   private createTableData(rows: number, columns: number): TableData {
