@@ -168,7 +168,8 @@ export class DataService {
     
     // Use the path as prefix, but clean it from array notation for user expressions
     const cleanedPrefix = path.replace(/\[\d+\]/g, '').replace(/^0\.?/, '');
-    return this.generateFieldsTree(sample, cleanedPrefix);
+    const initialLabel = cleanedPrefix ? this.formatLabel(cleanedPrefix.split('.').pop() || '') : '';
+    return this.generateFieldsTree(sample, cleanedPrefix, initialLabel);
   }
 
   private generateFieldsTree(sample: any, prefix = '', parentLabel = ''): Field[] {

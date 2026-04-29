@@ -14,12 +14,23 @@ export interface ElementStyle {
   padding?: number;
 }
 
+export type AggregationType = 'none' | 'sum' | 'avg' | 'min' | 'max' | 'count' | 'join';
+
+export interface FieldCondition {
+  field: string;
+  operator: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'contains';
+  value: any;
+}
+
 export interface TableCell {
   content: string;
   fieldPath?: string;
   style?: Partial<ElementStyle>;
   imageUrl?: string;
   isQRCode?: boolean;
+  icon?: string;
+  aggregation?: AggregationType;
+  conditions?: FieldCondition[];
 }
 
 export interface TableColumnSetting {
@@ -53,6 +64,9 @@ export interface TemplateElement {
   datasetPath?: string;
   isQRCode?: boolean;
   qrCodeField?: string;
+  icon?: string;
+  aggregation?: AggregationType;
+  conditions?: FieldCondition[];
 }
 
 export interface TemplateSection {

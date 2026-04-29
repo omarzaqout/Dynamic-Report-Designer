@@ -273,3 +273,58 @@
       outline: none; box-sizing: border-box; transition: all 0.2s;
     }
     .prop-input:focus { border-color: #3b82f6; background: #fff; }
+
+    /* Condition Item Styling */
+    .conditions-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .condition-item {
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
+    }
+    .condition-item:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .condition-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: #fee2e2;
+      color: #ef4444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .condition-item:hover .condition-remove { opacity: 1; }
+    .condition-remove:hover { background: #fecaca; }
+
+    .icon-preview {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      flex-shrink: 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+    .icon-preview.active {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #3b82f6;
+    }

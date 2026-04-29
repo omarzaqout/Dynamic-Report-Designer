@@ -68,7 +68,14 @@ export class RenderService {
       let renderedContent = el.content || '';
       
       if (el.type === 'field' || (renderedContent && renderedContent.includes('{{'))) {
-        renderedContent = this.interpolate(renderedContent, row, rawData, section.datasetPath, isGlobal);
+        renderedContent = this.interpolate(renderedContent, row, rawData, section.datasetPath, isGlobal, {
+          aggregation: el.aggregation,
+          conditions: el.conditions
+        });
+      }
+
+      if (el.icon && el.type === 'field') {
+        renderedContent = `<i class="${el.icon}"></i> ` + renderedContent;
       }
 
       let imageUrl = (el as any).imageUrl;
@@ -158,16 +165,24 @@ export class RenderService {
     let imageUrl = cell.imageUrl;
 
     if (cell.fieldPath) {
-      const val = this.resolveValue(cell.fieldPath, row, rawData, datasetPath, isGlobal);
+      const val = this.resolveValue(cell.fieldPath, row, rawData, datasetPath, isGlobal, {
+        aggregation: cell.aggregation,
+        conditions: cell.conditions
+      });
       if (imageUrl && imageUrl.startsWith('{{')) {
          imageUrl = this.interpolate(imageUrl, row, rawData, datasetPath, isGlobal);
+      }
+
+      let content = val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val);
+      if (cell.icon) {
+        content = `<i class="${cell.icon}"></i> ` + content;
       }
 
       return {
         ...cell,
         imageUrl,
         isQRCode: cell.isQRCode,
-        content: val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val)
+        content
       };
     }
     
@@ -175,74 +190,198 @@ export class RenderService {
       ...cell, 
       imageUrl, 
       isQRCode: cell.isQRCode,
-      content: this.interpolate(cell.content || '', row, rawData, datasetPath, isGlobal) 
+      content: this.interpolate(cell.content || '', row, rawData, datasetPath, isGlobal, {
+        aggregation: cell.aggregation,
+        conditions: cell.conditions
+      }) 
     };
   }
 
-  private resolveValue(expression: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false): any {
+  private resolveValue(expression: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false, metadata?: { aggregation?: any, conditions?: any[] }): any {
     const trimmed = expression.trim();
-    let result: any = undefined;
+    const conditions = metadata?.conditions || [];
     
-    // 1. Dataset Path Prefix Stripping
+    // 1. Dataset Path Prefix Stripping for Local Context
+    // If we are in a section bound to 'results' and the expression is 'results.status', 
+    // we want to treat it as 'status' relative to the current row.
     let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
+    let pathToResolve = trimmed;
     if (cleanDatasetPath && trimmed.startsWith(cleanDatasetPath)) {
-      let relPath = trimmed.substring(cleanDatasetPath.length);
-      if (relPath.startsWith('.')) relPath = relPath.substring(1);
-      result = relPath ? this.getValueByPath(row, relPath) : row;
-      if (result !== undefined) return this.handleAggregation(result, isGlobal);
-    } 
-    
-    // 2. Local Context Resolution
-    result = this.getValueByPath(row, trimmed);
-    if (result === undefined) {
-      const parts = trimmed.split('.');
-      while (parts.length > 1 && result === undefined) {
-        parts.shift();
-        result = this.getValueByPath(row, parts.join('.'));
-      }
-    }
-    
-    // 3. Global Context Fallback
-    if (result === undefined && rawData) {
-      result = this.getValueByPath(rawData, trimmed);
+      pathToResolve = trimmed.substring(cleanDatasetPath.length);
+      if (pathToResolve.startsWith('.')) pathToResolve = pathToResolve.substring(1);
     }
 
-    // 4. Primitive Context
+    // 2. Smart Traversal with Filtering
+    // We try to resolve the path. If we hit an array, we apply filters to its items.
+    const parts = pathToResolve.split('.');
+    let current: any = row;
+    let currentPath = cleanDatasetPath;
+
+    for (let i = 0; i < parts.length; i++) {
+      const key = parts[i];
+      if (!key) continue;
+      
+      const val = current?.[key];
+      currentPath = currentPath ? `${currentPath}.${key}` : key;
+
+      if (Array.isArray(val)) {
+        let filtered = val;
+        if (conditions.length > 0) {
+          filtered = val.filter(item => this.applyFilters(item, conditions, currentPath));
+        }
+
+        if (i < parts.length - 1) {
+          const remainingPath = parts.slice(i + 1).join('.');
+          const plucked = filtered.map(item => this.getValueByPath(item, remainingPath)).filter(v => v !== undefined);
+          return this.handleAggregation(plucked, isGlobal, metadata);
+        } else {
+          return this.handleAggregation(filtered, isGlobal, metadata);
+        }
+      }
+      current = val;
+    }
+
+    // 3. Fallback to Standard Resolution (if no array intercepted or path was simple)
+    let result = current; // The result of the loop above
+
+    // 4. Global Context Fallback
+    if (result === undefined && rawData && !trimmed.startsWith('root')) {
+      // If we couldn't find it locally, try globally from the very root
+      return this.resolveValue(trimmed, rawData, undefined, undefined, true, metadata);
+    }
+  
+    // 5. Primitive Context
     if (result === undefined && (trimmed === '.' || trimmed === 'this' || trimmed === 'value')) {
       result = row;
     }
     
-    return this.handleAggregation(result, isGlobal);
+    return this.handleAggregation(result, isGlobal, metadata);
   }
 
-  private handleAggregation(value: any, isGlobal: boolean): any {
-    if (isGlobal && Array.isArray(value)) {
-      return this.aggregate(value);
+  private handleAggregation(value: any, isGlobal: boolean, metadata?: { aggregation?: any, conditions?: any[] }): any {
+    const aggType = metadata?.aggregation || 'none';
+
+    if (Array.isArray(value)) {
+      if (aggType !== 'none') {
+        return this.aggregate(value, aggType);
+      }
+      
+      // Default behavior: return first valid value
+      const valid = value.filter(v => v !== null && v !== undefined && v !== '');
+      return valid.length > 0 ? valid[0] : undefined;
     }
+    
     return value;
   }
 
-  private aggregate(values: any[]): any {
-    if (!values || values.length === 0) return undefined;
+  private applyFilters(item: any, conditions: any[], datasetPath?: string): boolean {
+    const cleanPrefix = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
+
+    for (const cond of conditions) {
+      if (!cond.field) continue;
+      
+      let fieldPath = cond.field;
+      if (cleanPrefix && fieldPath.startsWith(cleanPrefix)) {
+        fieldPath = fieldPath.substring(cleanPrefix.length);
+        if (fieldPath.startsWith('.')) fieldPath = fieldPath.substring(1);
+      }
+
+      const rawVal = this.getValueByPath(item, fieldPath);
+      const target = cond.value;
+      
+      // Safe string conversion for general use
+      const valStr = rawVal !== null && rawVal !== undefined ? String(rawVal).toLowerCase() : '';
+      const targetStr = target !== null && target !== undefined ? String(target).toLowerCase() : '';
+
+      // Numeric normalization for comparison operators
+      const nVal = parseFloat(String(rawVal).replace(/[^0-9.-]+/g, ''));
+      const nTarget = parseFloat(String(target).replace(/[^0-9.-]+/g, ''));
+
+      switch (cond.operator) {
+        case '==': 
+          if (rawVal != target && valStr !== targetStr) return false; 
+          break;
+        case '!=': 
+          if (rawVal == target || valStr === targetStr) return false; 
+          break;
+        case '>': if (isNaN(nVal) || isNaN(nTarget) || nVal <= nTarget) return false; break;
+        case '<': if (isNaN(nVal) || isNaN(nTarget) || nVal >= nTarget) return false; break;
+        case '>=': if (isNaN(nVal) || isNaN(nTarget) || nVal < nTarget) return false; break;
+        case '<=': if (isNaN(nVal) || isNaN(nTarget) || nVal > nTarget) return false; break;
+        case 'contains': 
+          if (!valStr.includes(targetStr)) return false; 
+          break;
+      }
+    }
+    return true;
+  }
+
+  private aggregate(values: any[], type: string = 'none'): any {
+    if (!values || !Array.isArray(values) || values.length === 0) {
+      return type === 'count' ? 0 : undefined;
+    }
     
-    // Filter out nulls/undefined
     const validValues = values.filter(v => v !== null && v !== undefined && v !== '');
-    if (validValues.length === 0) return undefined;
+    if (validValues.length === 0 && type !== 'count') return undefined;
 
-    // Numeric Aggregation (SUM)
-    const numericValues = validValues.map(v => Number(v)).filter(v => !isNaN(v) && typeof v !== 'boolean');
-    if (numericValues.length === validValues.length && numericValues.length > 0) {
-      return numericValues.reduce((a, b) => a + b, 0);
+    // Robust numeric extraction - but ignore ISO dates
+    const parseNum = (v: any) => {
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') {
+        // If it looks like a date (ISO format), don't treat it as a number
+        if (/^\d{4}-\d{2}-\d{2}/.test(v)) return null;
+        
+        const cleaned = v.replace(/[^0-9.-]+/g, '');
+        if (!cleaned || cleaned === '-' || cleaned === '.') return null;
+        const n = parseFloat(cleaned);
+        return isNaN(n) ? null : n;
+      }
+      return null;
+    };
+
+    const numericValues = validValues.map(parseNum).filter(v => v !== null) as number[];
+
+    switch (type) {
+      case 'count':
+        return values.length;
+      
+      case 'sum':
+        return numericValues.length > 0 ? numericValues.reduce((a, b) => a + b, 0) : 0;
+      
+      case 'avg':
+        return numericValues.length > 0 ? numericValues.reduce((a, b) => a + b, 0) / numericValues.length : 0;
+      
+      case 'min': {
+        const dateValues = validValues.map(v => new Date(v).getTime()).filter(t => !isNaN(t));
+        // If it looks like we have dates and few/no numbers, prioritize date min
+        if (dateValues.length > 0 && (numericValues.length === 0 || dateValues.length >= numericValues.length)) {
+          return new Date(Math.min(...dateValues));
+        }
+        return numericValues.length > 0 ? Math.min(...numericValues) : undefined;
+      }
+      
+      case 'max': {
+        const dateValues = validValues.map(v => new Date(v).getTime()).filter(t => !isNaN(t));
+        if (dateValues.length > 0 && (numericValues.length === 0 || dateValues.length >= numericValues.length)) {
+          return new Date(Math.max(...dateValues));
+        }
+        return numericValues.length > 0 ? Math.max(...numericValues) : undefined;
+      }
+
+      case 'join':
+        return validValues.join(', ');
+
+      default: {
+        const dateValues = validValues.map(v => new Date(v).getTime()).filter(t => !isNaN(t));
+        if (dateValues.length > 0 && dateValues.length === validValues.length) {
+          return new Date(Math.max(...dateValues));
+        }
+        if (numericValues.length > 0 && numericValues.length === validValues.length) {
+          return numericValues.reduce((a, b) => a + b, 0);
+        }
+        return validValues[0];
+      }
     }
-
-    // Date Aggregation (MAX)
-    const dateValues = validValues.map(v => new Date(v)).filter(d => !isNaN(d.getTime()));
-    if (dateValues.length === validValues.length && dateValues.length > 0) {
-      return new Date(Math.max(...dateValues.map(d => d.getTime())));
-    }
-
-    // Fallback: First value
-    return validValues[0];
   }
 
   private formatValue(value: any): string {
@@ -279,10 +418,10 @@ export class RenderService {
     return String(value);
   }
 
-  interpolate(content: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false): string {
+  interpolate(content: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false, metadata?: { aggregation?: any, conditions?: any[] }): string {
     return content.replace(/\{\{([^}]+)\}\}/g, (_match, expr) => {
       try {
-        const result = this.resolveValue(expr, row, rawData, datasetPath, isGlobal);
+        const result = this.resolveValue(expr, row, rawData, datasetPath, isGlobal, metadata);
         if (result !== undefined && result !== null) {
           return this.formatValue(result);
         }

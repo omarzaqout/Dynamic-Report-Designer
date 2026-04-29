@@ -140,6 +140,100 @@ export class RightPanelComponent {
     }
   }
 
+  onIconChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    const el = this.element();
+    if (el) this.templateService.updateElement(el.id, { icon: val || undefined });
+  }
+
+  onAggregationChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value as any;
+    const el = this.element();
+    if (el) this.templateService.updateElement(el.id, { aggregation: val || 'none' });
+  }
+
+  addCondition(): void {
+    const el = this.element();
+    if (!el) return;
+    const conditions = [...(el.conditions || [])];
+    conditions.push({ field: '', operator: '==', value: '' });
+    this.templateService.updateElement(el.id, { conditions });
+  }
+
+  removeCondition(index: number): void {
+    const el = this.element();
+    if (!el || !el.conditions) return;
+    const conditions = el.conditions.filter((_, i) => i !== index);
+    this.templateService.updateElement(el.id, { conditions: conditions.length > 0 ? conditions : undefined });
+  }
+
+  updateCondition(index: number, patch: any): void {
+    const el = this.element();
+    if (!el || !el.conditions) return;
+    const conditions = el.conditions.map((c, i) => i === index ? { ...c, ...patch } : c);
+    this.templateService.updateElement(el.id, { conditions });
+  }
+
+  onTableCellIconChange(event: Event): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    const val = (event.target as HTMLInputElement).value;
+    this.updateTable((table) => {
+      table.cells[focus.row][focus.col].icon = val || undefined;
+      return table;
+    });
+  }
+
+  onTableCellAggregationChange(event: Event): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    const val = (event.target as HTMLSelectElement).value as any;
+    this.updateTable((table) => {
+      table.cells[focus.row][focus.col].aggregation = val || 'none';
+      return table;
+    });
+  }
+
+  addTableCellCondition(): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    this.updateTable((table) => {
+      const cell = table.cells[focus.row][focus.col];
+      const conditions = [...(cell.conditions || [])];
+      conditions.push({ field: '', operator: '==', value: '' });
+      cell.conditions = conditions;
+      return table;
+    });
+  }
+
+  removeTableCellCondition(index: number): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    this.updateTable((table) => {
+      const cell = table.cells[focus.row][focus.col];
+      if (!cell.conditions) return table;
+      cell.conditions = cell.conditions.filter((_, i) => i !== index);
+      if (cell.conditions.length === 0) cell.conditions = undefined;
+      return table;
+    });
+  }
+
+  updateTableCellCondition(index: number, patch: any): void {
+    const focus = this.focusedCell();
+    const el = this.element();
+    if (!focus || !el || focus.elementId !== el.id) return;
+    this.updateTable((table) => {
+      const cell = table.cells[focus.row][focus.col];
+      if (!cell.conditions) return table;
+      cell.conditions = cell.conditions.map((c, i) => i === index ? { ...c, ...patch } : c);
+      return table;
+    });
+  }
+
   adjustSize(delta: number): void {
     const el = this.element();
     if (el) {
@@ -569,7 +663,11 @@ export class RightPanelComponent {
       if (field.children?.length) {
         leaves.push(...this.flattenLeafFields(field.children));
       } else {
-        leaves.push(field);
+        // Use fullLabel if available for clarity in dropdowns
+        leaves.push({
+          ...field,
+          label: field.fullLabel || field.label
+        });
       }
     }
     return leaves;

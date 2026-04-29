@@ -118,7 +118,7 @@
                       <img [src]="el.table.cells[rowIndex][colIndex].imageUrl" class="cell-image"
                         [style.padding.px]="el.table.cells[rowIndex][colIndex].style?.padding || 0">
                       } @else {
-                      <span style="width: 100%;">{{ el.table.cells[rowIndex][colIndex].content || ' ' }}</span>
+                      <span style="width: 100%;" [innerHTML]="el.table.cells[rowIndex][colIndex].content || ' '"></span>
                       }
                     </div>
                   </td>
@@ -135,7 +135,7 @@
             [style.maxHeight.px]="el.size ? null : 250" />
           }
           } @else {
-          {{ el.content }}
+          <div [innerHTML]="el.content"></div>
           }
         </div>
         }

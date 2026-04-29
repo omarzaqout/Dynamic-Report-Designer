@@ -191,6 +191,71 @@
         </select>
       </div>
 
+      <!-- TABLE CELL DATA LOGIC -->
+      <div class="prop-section-title"
+        style="color: #92400e; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">
+        Cell Logic & Transformation</div>
+      
+      <div class="prop-col" style="margin-bottom: 8px;">
+        <label style="color: #92400e; font-weight: 700; font-size: 11px;">Icon (CSS Class)</label>
+        <div style="display: flex; gap: 4px;">
+          <input type="text" class="prop-input" [value]="el.table.cells[focus.row][focus.col].icon || ''" 
+            (input)="onTableCellIconChange($event)" placeholder="e.g. fas fa-user" style="border-color: #fde68a; background: #fff;" />
+          <div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px;">
+            <i [class]="el.table.cells[focus.row][focus.col].icon || 'fas fa-question'" style="color: #92400e;"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="prop-col" style="margin-bottom: 8px;">
+        <label style="color: #92400e; font-weight: 700; font-size: 11px;">Aggregation</label>
+        <select class="prop-select" [value]="el.table.cells[focus.row][focus.col].aggregation || 'none'" 
+          (change)="onTableCellAggregationChange($event)" style="border-color: #fde68a; background: #fff;">
+          <option value="none">None</option>
+          <option value="sum">Sum</option>
+          <option value="avg">Average</option>
+          <option value="min">Min</option>
+          <option value="max">Max</option>
+          <option value="count">Count</option>
+          <option value="join">Join (Text List)</option>
+        </select>
+      </div>
+
+      <div class="prop-col" style="margin-bottom: 12px;">
+        <label style="color: #92400e; font-weight: 700; font-size: 11px; margin: 0;">Filter Conditions (AND)</label>
+        <div class="conditions-list">
+          @for (cond of el.table.cells[focus.row][focus.col].conditions || []; track $index) {
+            <div class="condition-item">
+              <button class="condition-remove" (click)="removeTableCellCondition($index)">&times;</button>
+              <select class="prop-select" style="height: 22px; font-size: 10px; margin-bottom: 6px; border-color: #fde68a;" 
+                [(ngModel)]="cond.field" (ngModelChange)="updateTableCellCondition($index, cond)">
+                <option value="">Select Field</option>
+                @for (f of filteredLeafFields(); track f.key) {
+                  <option [value]="f.key">{{ f.label }}</option>
+                }
+              </select>
+              <div style="display: flex; gap: 4px;">
+                <select class="prop-select" style="height: 22px; font-size: 10px; flex: 1; border-color: #fde68a;" 
+                  [(ngModel)]="cond.operator" (ngModelChange)="updateTableCellCondition($index, cond)">
+                  <option value="==">==</option>
+                  <option value="!=">!=</option>
+                  <option value=">">&gt;</option>
+                  <option value="<">&lt;</option>
+                  <option value=">=">&gt;=</option>
+                  <option value="<=">&lt;=</option>
+                  <option value="contains">contains</option>
+                </select>
+                <input type="text" class="prop-input" style="height: 22px; font-size: 10px; flex: 2; border-color: #fde68a;" 
+                  [(ngModel)]="cond.value" (ngModelChange)="updateTableCellCondition($index, cond)" placeholder="Val" />
+              </div>
+            </div>
+          } @empty {
+            <div class="hint-text" style="font-style: italic; text-align: center; padding: 4px; border: 1px dashed #fde68a; border-radius: 4px;">No conditions added.</div>
+          }
+          <button (click)="addTableCellCondition()" style="width: 100%; font-size: 9px; padding: 4px; background: #fff; color: #92400e; border: 1px dashed #92400e; border-radius: 4px; cursor: pointer; font-weight: 700;">+ Add New Condition</button>
+        </div>
+      </div>
+
       <div style="display: flex; gap: 4px; margin-top: 12px;">
         <button (click)="resetTableCellStyle()"
           style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #fde68a; background: #fff; color: #92400e; border-radius: 4px;">Reset
@@ -230,6 +295,69 @@
           <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
           }
         </select>
+      </div>
+
+      <!-- FIELD DATA LOGIC -->
+      <div class="prop-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+        <div class="prop-section-title">Data Logic & Transformation</div>
+        
+        <div class="prop-col" style="margin-bottom: 12px;">
+          <label class="prop-label">Icon (CSS Class)</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" class="prop-input" [value]="el.icon || ''" (input)="onIconChange($event)" placeholder="e.g. fas fa-user" />
+            <div class="icon-preview" [class.active]="el.icon">
+              <i [class]="el.icon || 'fas fa-question'"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-col" style="margin-bottom: 12px;">
+          <label class="prop-label">Aggregation</label>
+          <select class="prop-select" [value]="el.aggregation || 'none'" (change)="onAggregationChange($event)">
+            <option value="none">None (Individual)</option>
+            <option value="sum">Sum (Total)</option>
+            <option value="avg">Average</option>
+            <option value="min">Minimum</option>
+            <option value="max">Maximum</option>
+            <option value="count">Count Items</option>
+            <option value="join">Join (Text List)</option>
+          </select>
+        </div>
+
+        <div class="prop-col">
+          <label class="prop-label">Filter Conditions (AND)</label>
+          <div class="conditions-list">
+            @for (cond of el.conditions || []; track $index) {
+              <div class="condition-item">
+                <button class="condition-remove" (click)="removeCondition($index)">&times;</button>
+                <select class="prop-select" style="height: 22px; font-size: 10px; margin-bottom: 6px;" 
+                  [(ngModel)]="cond.field" (ngModelChange)="updateCondition($index, cond)">
+                  <option value="">Select Field</option>
+                  @for (f of filteredLeafFields(); track f.key) {
+                    <option [value]="f.key">{{ f.label }}</option>
+                  }
+                </select>
+                <div style="display: flex; gap: 4px;">
+                  <select class="prop-select" style="height: 22px; font-size: 10px; flex: 1;" 
+                    [(ngModel)]="cond.operator" (ngModelChange)="updateCondition($index, cond)">
+                    <option value="==">==</option>
+                    <option value="!=">!=</option>
+                    <option value=">">&gt;</option>
+                    <option value="<">&lt;</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="<=">&lt;=</option>
+                    <option value="contains">contains</option>
+                  </select>
+                  <input type="text" class="prop-input" style="height: 22px; font-size: 10px; flex: 2;" 
+                    [(ngModel)]="cond.value" (ngModelChange)="updateCondition($index, cond)" placeholder="Value" />
+                </div>
+              </div>
+            } @empty {
+              <div class="hint-text" style="font-style: italic; text-align: center; padding: 6px; border: 1px dashed #e2e8f0; border-radius: 6px;">No filters defined.</div>
+            }
+            <button (click)="addCondition()" style="width: 100%; font-size: 9px; padding: 6px; background: #fff; color: #3b82f6; border: 1px dashed #3b82f6; border-radius: 6px; cursor: pointer; font-weight: 700;">+ Add Filter Condition</button>
+          </div>
+        </div>
       </div>
       }
 
