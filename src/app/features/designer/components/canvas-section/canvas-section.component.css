@@ -93,18 +93,38 @@
       margin-left: auto;
     }
 
-    .resize-btn {
-      background: none;
-      border: none;
+    .section-resize-handle {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
       cursor: ns-resize;
-      color: #94a3b8;
-      font-size: 14px;
-      padding: 0 4px;
-      line-height: 1;
+      background: transparent;
+      z-index: 100;
+      transition: background 0.1s;
     }
 
-    .resize-btn:hover {
-      color: #475569;
+    .section-resize-handle:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .section-resize-handle::after {
+      content: "";
+      position: absolute;
+      bottom: 1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 2px;
+      background: #cbd5e1;
+      border-radius: 1px;
+      opacity: 0.6;
+    }
+
+    .section-resize-handle:hover::after {
+      background: #3b82f6;
+      opacity: 1;
     }
 
     .section-canvas {

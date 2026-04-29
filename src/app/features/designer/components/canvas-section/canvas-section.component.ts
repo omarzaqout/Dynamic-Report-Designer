@@ -40,18 +40,22 @@ export class CanvasSectionComponent {
   @Output() sectionRepeatChange = new EventEmitter<{ sectionId: string; repeatPerRow: boolean }>();
   @Output() sectionDelete = new EventEmitter<string>();
 
+  private getElementHeight(el: TemplateElement): number {
+    if (el.type === 'table' && el.table) {
+      const rowHeights = el.table.rowHeights?.length ? el.table.rowHeights : Array.from({ length: el.table.rows }, () => 36);
+      return rowHeights.reduce((a, b) => a + b, 0);
+    } else if (el.type === 'image' && el.size) {
+      return el.size.height;
+    } else if (el.style) {
+      return Math.max(30, el.style.fontSize * 1.5);
+    }
+    return 30;
+  }
+
   get computedHeight(): number {
     let maxContentY = 0;
     for (const el of this.section.elements) {
-      let elHeight = 30;
-      if (el.type === 'table' && el.table) {
-        const rowHeights = el.table.rowHeights?.length ? el.table.rowHeights : Array.from({length: el.table.rows}, () => 36);
-        elHeight = rowHeights.reduce((a, b) => a + b, 0);
-      } else if (el.type === 'image' && el.size) {
-        elHeight = el.size.height;
-      } else if (el.style) {
-        elHeight = Math.max(30, el.style.fontSize * 1.5);
-      }
+      const elHeight = this.getElementHeight(el);
       const bottomY = el.position.y + elHeight;
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
@@ -258,14 +262,83 @@ export class CanvasSectionComponent {
 
     this.resizeMoveHandler = (e: MouseEvent) => {
       const dy = e.clientY - this.resizeStartY;
-      this.sectionResize.emit({ sectionId: this.section.id, height: Math.max(30, this.resizeStartHeight + dy) });
+      let targetHeight = Math.max(30, this.resizeStartHeight + dy);
+
+      // Elements state for simulation
+      const els = this.section.elements.map(el => ({
+        id: el.id,
+        y: el.position.y,
+        height: this.getElementHeight(el),
+        x: el.position.x,
+        width: (el.type === 'table' && el.table) 
+          ? (el.table.columnSettings?.reduce((acc, c) => acc + (c.visible ? c.width : 0), 0) || 120) 
+          : (el.size?.width || 120)
+      }));
+
+      // Sort by original bottom Y descending to process from bottom up
+      els.sort((a, b) => (b.y + b.height) - (a.y + a.height));
+
+      let activeHeight = targetHeight;
+      
+      for (let i = 0; i < els.length; i++) {
+        const target = els[i];
+        
+        // 1. Push element up if it overflows current bottom
+        if (target.y + target.height > activeHeight) {
+          target.y = activeHeight - target.height;
+        }
+        
+        // 2. Immediate ceiling check
+        if (target.y < 0) {
+          const shift = -target.y;
+          for (let k = 0; k <= i; k++) els[k].y += shift;
+          activeHeight += shift;
+        }
+
+        // 3. Cascade collisions with elements "above" it in the sorted list
+        for (let j = i + 1; j < els.length; j++) {
+          const above = els[j];
+          const overlapX = target.x < (above.x + above.width) && (target.x + target.width) > above.x;
+          
+          if (overlapX && target.y < (above.y + above.height)) {
+            above.y = target.y - above.height;
+            // Ceiling check for the cascaded element
+            if (above.y < 0) {
+              const shift = -above.y;
+              for (let k = 0; k <= j; k++) els[k].y += shift;
+              activeHeight += shift;
+            }
+          }
+        }
+      }
+
+      // Apply moves
+      els.forEach(simEl => {
+        const original = this.section.elements.find(e => e.id === simEl.id);
+        if (original && Math.abs(original.position.y - simEl.y) > 0.1) {
+          this.elementMove.emit({ id: simEl.id, x: simEl.x, y: simEl.y });
+        }
+      });
+
+      this.sectionResize.emit({ sectionId: this.section.id, height: activeHeight });
     };
+
     this.resizeUpHandler = () => {
       document.removeEventListener('mousemove', this.resizeMoveHandler);
       document.removeEventListener('mouseup', this.resizeUpHandler);
     };
     document.addEventListener('mousemove', this.resizeMoveHandler);
     document.addEventListener('mouseup', this.resizeUpHandler);
+  }
+
+  fitToContent(): void {
+    let maxContentY = 0;
+    for (const el of this.section.elements) {
+      const elHeight = this.getElementHeight(el);
+      const bottomY = el.position.y + elHeight;
+      if (bottomY > maxContentY) maxContentY = bottomY;
+    }
+    this.sectionResize.emit({ sectionId: this.section.id, height: Math.max(30, maxContentY) });
   }
 
   private createTableData(rows: number, columns: number): TableData {
