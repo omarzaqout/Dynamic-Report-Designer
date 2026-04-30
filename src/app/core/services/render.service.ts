@@ -201,57 +201,82 @@ export class RenderService {
     const trimmed = expression.trim();
     const conditions = metadata?.conditions || [];
     
-    // 1. Dataset Path Prefix Stripping for Local Context
-    // If we are in a section bound to 'results' and the expression is 'results.status', 
-    // we want to treat it as 'status' relative to the current row.
+    // 1. Explicit Root Override
+    if (trimmed.startsWith('root.')) {
+      return this.handleAggregation(this.getValueByPath(rawData, trimmed.substring(5)), true, metadata);
+    }
+
+    // 2. Identify Context vs Global Dataset
+    // We check if the path starts with a known top-level dataset (array in root)
+    const firstPart = trimmed.split('.')[0];
+    const isKnownDataset = rawData && Array.isArray(rawData[firstPart]);
+    
+    // 3. Dataset Path Prefix Stripping (for local context resolution)
     let cleanDatasetPath = datasetPath ? datasetPath.replace(/\[\d+\]/g, '').replace(/(^|\.)0(\.|$)/g, '$1').replace(/^\.+|\.+$/g, '') : '';
     let pathToResolve = trimmed;
+
     if (cleanDatasetPath && trimmed.startsWith(cleanDatasetPath)) {
       pathToResolve = trimmed.substring(cleanDatasetPath.length);
       if (pathToResolve.startsWith('.')) pathToResolve = pathToResolve.substring(1);
     }
 
-    // 2. Smart Traversal with Filtering
-    // We try to resolve the path. If we hit an array, we apply filters to its items.
-    const parts = pathToResolve.split('.');
-    let current: any = row;
-    let currentPath = cleanDatasetPath;
+    // 4. Resolve from Context Row
+    let result: any = undefined;
+    
+    // If it's NOT a cross-dataset reference (e.g. we are in 'results' and user asked for 'components.id')
+    // then we try the local row first.
+    const isCrossDataset = isKnownDataset && firstPart !== cleanDatasetPath;
+    
+    if (!isCrossDataset) {
+        const parts = pathToResolve.split('.');
+        let current: any = row;
+        let currentPath = cleanDatasetPath;
+        let found = true;
 
-    for (let i = 0; i < parts.length; i++) {
-      const key = parts[i];
-      if (!key) continue;
-      
-      const val = current?.[key];
-      currentPath = currentPath ? `${currentPath}.${key}` : key;
+        for (let i = 0; i < parts.length; i++) {
+          const key = parts[i];
+          if (!key) continue;
+          
+          // Check if property exists in current context
+          if (current === undefined || current === null || (typeof current === 'object' && !current.hasOwnProperty(key))) {
+              found = false;
+              break;
+          }
 
-      if (Array.isArray(val)) {
-        let filtered = val;
-        if (conditions.length > 0) {
-          filtered = val.filter(item => this.applyFilters(item, conditions, currentPath));
+          const val = current[key];
+          currentPath = currentPath ? `${currentPath}.${key}` : key;
+
+          if (Array.isArray(val)) {
+            let filtered = val;
+            if (conditions.length > 0) {
+              filtered = val.filter(item => this.applyFilters(item, conditions, currentPath));
+            }
+
+            if (i < parts.length - 1) {
+              const remainingPath = parts.slice(i + 1).join('.');
+              const plucked = filtered.map(item => this.getValueByPath(item, remainingPath)).filter(v => v !== undefined);
+              return this.handleAggregation(plucked, isGlobal, metadata);
+            } else {
+              return this.handleAggregation(filtered, isGlobal, metadata);
+            }
+          }
+          current = val;
         }
-
-        if (i < parts.length - 1) {
-          const remainingPath = parts.slice(i + 1).join('.');
-          const plucked = filtered.map(item => this.getValueByPath(item, remainingPath)).filter(v => v !== undefined);
-          return this.handleAggregation(plucked, isGlobal, metadata);
-        } else {
-          return this.handleAggregation(filtered, isGlobal, metadata);
-        }
-      }
-      current = val;
+        if (found) result = current;
     }
 
-    // 3. Fallback to Standard Resolution (if no array intercepted or path was simple)
-    let result = current; // The result of the loop above
-
-    // 4. Global Context Fallback
-    if (result === undefined && rawData && !trimmed.startsWith('root')) {
-      // If we couldn't find it locally, try globally from the very root
-      return this.resolveValue(trimmed, rawData, undefined, undefined, true, metadata);
+    // 5. Global Context Fallback
+    if ((result === undefined || result === null) && rawData) {
+      // If we couldn't find it locally, or it was explicitly a cross-dataset reference, 
+      // try globally from the very root.
+      const rootResult = this.getValueByPath(rawData, trimmed);
+      if (rootResult !== undefined) {
+        return this.handleAggregation(rootResult, true, metadata);
+      }
     }
   
-    // 5. Primitive Context
-    if (result === undefined && (trimmed === '.' || trimmed === 'this' || trimmed === 'value')) {
+    // 6. Primitive Context ('.' or 'this')
+    if ((result === undefined || result === null) && (trimmed === '.' || trimmed === 'this' || trimmed === 'value')) {
       result = row;
     }
     
