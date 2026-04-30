@@ -139,7 +139,7 @@ export class RenderService {
       
       tableSource.forEach(row => {
         templateBlock.forEach((tRow, idx) => {
-          const processedRow = tRow.map(cell => this.processCell(cell, row, true, el.datasetPath, rawData, false));
+          const processedRow = tRow.map(cell => this.processCell(cell, row, true, el.datasetPath, rawData, false, el.style?.whiteSpace));
           newCells.push(processedRow);
           
           // Use template height as the base. 
@@ -157,7 +157,8 @@ export class RenderService {
     }
 
     const hasRowData = Object.keys(contextRow).length > 0;
-    const cells = table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData, el.datasetPath, rawData, isGlobal)));
+    const parentWS = el.style?.whiteSpace || 'nowrap';
+    const cells = table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData, el.datasetPath, rawData, isGlobal, parentWS)));
     
     return {
       ...table,
@@ -167,7 +168,7 @@ export class RenderService {
     };
   }
 
-  private processCell(cell: any, row: ReportData, hasData: boolean, datasetPath?: string, rawData?: any, isGlobal = false): any {
+  private processCell(cell: any, row: ReportData, hasData: boolean, datasetPath?: string, rawData?: any, isGlobal = false, parentWhiteSpace?: string): any {
     let imageUrl = cell.imageUrl;
     let content = '';
 
@@ -192,7 +193,8 @@ export class RenderService {
 
     // 2. Handle Text Wrapping / Newlines
     // If the cell is set to wrap (normal), we ensure newlines are preserved for HTML rendering
-    if (cell.style?.whiteSpace === 'normal' || cell.style?.whiteSpace === 'pre-wrap') {
+    const ws = cell.style?.whiteSpace || parentWhiteSpace || 'nowrap';
+    if (ws === 'normal' || ws === 'pre-wrap') {
       content = content.replace(/\n/g, '<br>');
     }
 

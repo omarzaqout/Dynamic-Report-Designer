@@ -33,6 +33,11 @@
     }
     .nav-btn:hover { background: rgba(255,255,255,0.05); color: #94a3b8; }
     .nav-btn.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .nav-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px; align-self: center; }
+    .toggle-btn { opacity: 0.8; }
+    .toggle-btn:hover { opacity: 1; color: #fff; }
+    .toggle-btn.panel-hidden { color: #475569; background: transparent; }
+    .toggle-btn.panel-hidden:hover { color: #94a3b8; }
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
     .status-indicator { display: flex; align-items: center; gap: 6px; }
     .status-dot { width: 7px; height: 7px; background: #10b981; border-radius: 50%; animation: blink 3s infinite; }
@@ -110,6 +115,50 @@
       display: flex;
       flex-direction: column;
       background: #f1f5f9;
+      position: relative; /* Required for floating tabs */
+    }
+
+    .panel-toggle-tab {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 48px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.2s;
+      padding: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      color: #64748b;
+    }
+
+    .panel-toggle-tab:hover {
+      background: #f8fafc;
+      color: #2563eb;
+      width: 24px;
+    }
+
+    .panel-toggle-tab svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.3s;
+    }
+
+    .panel-toggle-tab.left {
+      left: 0;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .panel-toggle-tab.right {
+      right: 0;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
     }
     .right-sidebar {
       width: 280px;

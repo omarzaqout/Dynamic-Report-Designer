@@ -53,21 +53,36 @@
 
       <div class="designer-body">
         @if (activeView() === 'design') {
-          <aside class="left-sidebar" [style.width.px]="leftWidth()">
-            <app-left-panel />
-          </aside>
-
-          <div class="resizer" (mousedown)="onMouseDownLeft($event)"></div>
+          @if (showLeftPanel()) {
+            <aside class="left-sidebar" [style.width.px]="leftWidth()">
+              <app-left-panel />
+            </aside>
+            <div class="resizer" (mousedown)="onMouseDownLeft($event)"></div>
+          }
 
           <main class="canvas-area">
+            <!-- Floating Sidebar Toggles -->
+            <button class="panel-toggle-tab left" (click)="toggleLeftPanel()" [title]="showLeftPanel() ? 'Hide Fields' : 'Show Fields'">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [style.transform]="showLeftPanel() ? 'rotate(0deg)' : 'rotate(180deg)'">
+                 <path d="M15 18l-6-6 6-6"></path>
+               </svg>
+            </button>
+
+            <button class="panel-toggle-tab right" (click)="toggleRightPanel()" [title]="showRightPanel() ? 'Hide Properties' : 'Show Properties'">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [style.transform]="showRightPanel() ? 'rotate(0deg)' : 'rotate(180deg)'">
+                 <path d="M9 18l6-6-6-6"></path>
+               </svg>
+            </button>
+
             <app-canvas />
           </main>
 
-          <div class="resizer" (mousedown)="onMouseDownRight($event)"></div>
-
-          <aside class="right-sidebar" [style.width.px]="rightWidth()">
-            <app-right-panel />
-          </aside>
+          @if (showRightPanel()) {
+            <div class="resizer" (mousedown)="onMouseDownRight($event)"></div>
+            <aside class="right-sidebar" [style.width.px]="rightWidth()">
+              <app-right-panel />
+            </aside>
+          }
         }
 
         @if (activeView() === 'preview') {

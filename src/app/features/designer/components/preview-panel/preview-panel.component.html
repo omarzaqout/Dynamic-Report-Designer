@@ -127,7 +127,7 @@
                       <img [src]="el.table.cells[rowIndex][colIndex].imageUrl" class="cell-image"
                         [style.padding.px]="el.table.cells[rowIndex][colIndex].style?.padding || 0">
                       } @else {
-                      <span style="width: 100%;" [innerHTML]="el.table.cells[rowIndex][colIndex].content || ' '"></span>
+                      <span style="width: 100%; display: block;" [innerHTML]="el.table.cells[rowIndex][colIndex].content || ' '"></span>
                       }
                     </div>
                   </td>

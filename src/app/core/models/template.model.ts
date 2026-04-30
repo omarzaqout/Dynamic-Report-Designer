@@ -86,6 +86,7 @@ export interface ReportTemplate {
   name: string;
   sections: TemplateSection[];
   margin?: { top: number; right: number; bottom: number; left: number };
+  dataSourceUrl?: string;
 }
 
 export const DEFAULT_STYLE: ElementStyle = {

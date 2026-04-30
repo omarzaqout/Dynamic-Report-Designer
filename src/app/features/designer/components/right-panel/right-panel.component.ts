@@ -534,13 +534,6 @@ export class RightPanelComponent {
     this.templateService.updateElement(el.id, { datasetPath: value || undefined });
   }
 
-  onMarginChange(side: 'top' | 'right' | 'bottom' | 'left', event: Event): void {
-    const value = parseInt((event.target as HTMLInputElement).value, 10) || 0;
-    const currentMargin = this.templateValue().margin || { top: 0, right: 0, bottom: 0, left: 0 };
-    const newMargin = { ...currentMargin, [side]: value };
-    this.templateService.updateTemplateMargin(newMargin);
-  }
-
   tableRowIndexes(table: TableData): number[] {
     return Array.from({ length: table.rows }, (_, i) => i);
   }
@@ -597,8 +590,19 @@ export class RightPanelComponent {
     this.templateService.duplicateSelectedElements();
   }
 
+  onMarginChange(side: 'top' | 'right' | 'bottom' | 'left', event: Event): void {
+    const val = parseInt((event.target as HTMLInputElement).value) || 0;
+    const current = this.templateValue().margin || { top: 0, right: 0, bottom: 0, left: 0 };
+    this.templateService.updateTemplateMargin({ ...current, [side]: val });
+  }
+
   deleteSelected(): void {
     this.templateService.deleteSelectedElements();
+  }
+
+  onDataSourceUrlChange(event: Event): void {
+    const url = (event.target as HTMLInputElement).value;
+    this.templateService.updateDataSourceUrl(url);
   }
 
   private updateStyle(patch: Partial<ElementStyle>): void {

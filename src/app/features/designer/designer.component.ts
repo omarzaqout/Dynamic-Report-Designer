@@ -20,9 +20,19 @@ export class DesignerComponent {
   private templateService = inject(TemplateService);
   readonly activeView = this.uiService.activeView;
 
-  // Sidebar widths
+  // Sidebar widths and visibility
   readonly leftWidth = signal(240);
   readonly rightWidth = signal(280);
+  readonly showLeftPanel = signal(true);
+  readonly showRightPanel = signal(true);
+
+  toggleLeftPanel(): void {
+    this.showLeftPanel.update(v => !v);
+  }
+
+  toggleRightPanel(): void {
+    this.showRightPanel.update(v => !v);
+  }
 
   private isResizingLeft = false;
   private isResizingRight = false;

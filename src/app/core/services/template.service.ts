@@ -467,4 +467,13 @@ export class TemplateService {
     });
     this.pushToHistory();
   }
+
+  updateDataSourceUrl(url: string): void {
+    this._template.update(t => {
+      const updated = { ...t, dataSourceUrl: url };
+      this.persistToLocalStorage(updated);
+      return updated;
+    });
+    this.pushToHistory();
+  }
 }
