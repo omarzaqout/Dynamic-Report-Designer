@@ -182,14 +182,13 @@
 }
 
 .cell-content-container {
-    position: absolute;
-    inset: 0;
+    position: relative;
     width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
+    box-sizing: border-box;
 }
 
 .cell-content-container.has-padding {
@@ -247,8 +246,7 @@
    =================================================== */
 @media print {
     @page {
-        /* Default fallback – real values injected as <style> by print() */
-        margin: 5mm;
+        margin: 0;
         size: auto;
     }
 

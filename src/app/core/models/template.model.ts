@@ -8,6 +8,7 @@ export interface ElementStyle {
   textDecoration: 'none' | 'underline';
   color: string;
   textAlign?: 'left' | 'center' | 'right';
+  verticalAlign?: 'top' | 'middle' | 'bottom';
   whiteSpace?: 'nowrap' | 'normal' | 'pre-wrap';
   border?: string;
   borderColor?: string;
@@ -84,6 +85,7 @@ export interface ReportTemplate {
   id: string;
   name: string;
   sections: TemplateSection[];
+  margin?: { top: number; right: number; bottom: number; left: number };
 }
 
 export const DEFAULT_STYLE: ElementStyle = {

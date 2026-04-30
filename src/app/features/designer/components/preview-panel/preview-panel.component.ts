@@ -19,6 +19,7 @@ export class PreviewPanelComponent {
   private renderService = inject(RenderService);
   private dataService = inject(DataService);
 
+  readonly template = this.templateService.template;
   readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] });
 
   readonly renderedReport = computed(() => {

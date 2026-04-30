@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { ReportTemplate, TemplateSection, TemplateElement, TableData, SectionType } from '../models/template.model';
+import { ReportTemplate, TemplateSection, TemplateElement, TableData, SectionType, ElementStyle } from '../models/template.model';
 import { ReportData } from '../models/report.model';
 
 @Injectable({
@@ -164,6 +164,31 @@ export class TemplateService {
       return updated;
     });
     this.pushToHistory();
+  }
+
+  updateStylesBulk(ids: string[], patch: Partial<ElementStyle>): void {
+    this._template.update((t: ReportTemplate) => {
+      const updated = {
+        ...t,
+        sections: t.sections.map((s: TemplateSection) => ({
+          ...s,
+          elements: s.elements.map((el: TemplateElement) =>
+            ids.includes(el.id) ? { ...el, style: { ...el.style, ...patch } } : el
+          ),
+        })),
+      };
+      this.persistToLocalStorage(updated);
+      return updated;
+    });
+    this.pushToHistory();
+  }
+
+  getElementById(id: string): TemplateElement | null {
+    for (const s of this._template().sections) {
+      const el = s.elements.find(e => e.id === id);
+      if (el) return el;
+    }
+    return null;
   }
 
   moveSelectedElements(dx: number, dy: number): void {
@@ -432,5 +457,14 @@ export class TemplateService {
         { id: 'ft-1', type: 'footer', label: 'Page Footer', height: 30, repeatPerRow: false, repeatOnEveryPage: true, elements: [] }
       ]
     });
+  }
+
+  updateTemplateMargin(margin: { top: number; right: number; bottom: number; left: number }): void {
+    this._template.update(t => {
+      const updated = { ...t, margin };
+      this.persistToLocalStorage(updated);
+      return updated;
+    });
+    this.pushToHistory();
   }
 }

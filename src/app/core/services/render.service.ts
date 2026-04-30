@@ -139,7 +139,11 @@ export class RenderService {
       
       tableSource.forEach(row => {
         templateBlock.forEach((tRow, idx) => {
-          newCells.push(tRow.map(cell => this.processCell(cell, row, true, el.datasetPath, rawData, false)));
+          const processedRow = tRow.map(cell => this.processCell(cell, row, true, el.datasetPath, rawData, false));
+          newCells.push(processedRow);
+          
+          // Use template height as the base. 
+          // The UI will use this as min-height to allow "Auto Height" if text wraps.
           newRowHeights.push(templateRowHeights[idx]);
         });
       });
@@ -153,47 +157,55 @@ export class RenderService {
     }
 
     const hasRowData = Object.keys(contextRow).length > 0;
+    const cells = table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData, el.datasetPath, rawData, isGlobal)));
+    
     return {
       ...table,
       rowHeights: table.rowHeights?.length === table.rows ? [...table.rowHeights] : Array.from({ length: table.rows }, () => 36),
       columnSettings: table.columnSettings?.length === table.columns ? table.columnSettings.map(col => ({ ...col })) : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true })),
-      cells: table.cells.map(cellsRow => cellsRow.map(cell => this.processCell(cell, contextRow, hasRowData, el.datasetPath, rawData, isGlobal))),
+      cells: cells,
     };
   }
 
   private processCell(cell: any, row: ReportData, hasData: boolean, datasetPath?: string, rawData?: any, isGlobal = false): any {
     let imageUrl = cell.imageUrl;
+    let content = '';
 
+    // 1. Resolve content based on fieldPath or static content
     if (cell.fieldPath) {
       const val = this.resolveValue(cell.fieldPath, row, rawData, datasetPath, isGlobal, {
         aggregation: cell.aggregation,
         conditions: cell.conditions
       });
+      
       if (imageUrl && imageUrl.startsWith('{{')) {
          imageUrl = this.interpolate(imageUrl, row, rawData, datasetPath, isGlobal);
       }
 
-      let content = val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val);
-      if (cell.icon) {
-        content = `<i class="${cell.icon}"></i> ` + content;
-      }
-
-      return {
-        ...cell,
-        imageUrl,
-        isQRCode: cell.isQRCode,
-        content
-      };
-    }
-    
-    return { 
-      ...cell, 
-      imageUrl, 
-      isQRCode: cell.isQRCode,
-      content: this.interpolate(cell.content || '', row, rawData, datasetPath, isGlobal, {
+      content = val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val);
+    } else {
+      content = this.interpolate(cell.content || '', row, rawData, datasetPath, isGlobal, {
         aggregation: cell.aggregation,
         conditions: cell.conditions
-      }) 
+      });
+    }
+
+    // 2. Handle Text Wrapping / Newlines
+    // If the cell is set to wrap (normal), we ensure newlines are preserved for HTML rendering
+    if (cell.style?.whiteSpace === 'normal' || cell.style?.whiteSpace === 'pre-wrap') {
+      content = content.replace(/\n/g, '<br>');
+    }
+
+    if (cell.icon) {
+      content = `<i class="${cell.icon}"></i> ` + content;
+    }
+
+    // 3. Return the processed cell with all properties preserved
+    return {
+      ...cell,
+      imageUrl,
+      isQRCode: cell.isQRCode,
+      content
     };
   }
 

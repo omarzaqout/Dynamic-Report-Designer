@@ -65,6 +65,12 @@
             (dragEnd)="onDragEnd()"
           />
         }
+        <!-- Margin Guides -->
+        @if (template().margin) {
+          <div class="margin-guide-v" [style.left.px]="template().margin?.left || 0"></div>
+          <div class="margin-guide-v" [style.left.px]="794 - (template().margin?.right || 0)"></div>
+        }
+
         @for (x of alignmentLines().x; track $index) {
           <div class="align-guide-v" [style.left.px]="x"></div>
         }

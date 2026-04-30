@@ -104,6 +104,16 @@ export class CanvasComponent {
       } else if (key === 'y') {
         event.preventDefault();
         this.templateService.redo();
+      } else if (key === 'a') {
+        event.preventDefault();
+        const section = this.templateService.selectedElementSection();
+        if (section) {
+          const ids = section.elements.map(el => el.id);
+          this.templateService.selectElements(ids);
+        } else {
+          const allIds = this.template().sections.flatMap(s => s.elements.map(el => el.id));
+          this.templateService.selectElements(allIds);
+        }
       }
     }
   }

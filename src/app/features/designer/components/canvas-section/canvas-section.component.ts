@@ -22,6 +22,7 @@ export class CanvasSectionComponent {
   @Input({ required: true }) section!: TemplateSection;
   @Input() selectedElementId: string | null = null;
   readonly selectedElementIds = this.templateService.selectedElementIds;
+  readonly template = this.templateService.template;
 
   readonly datasets = this.dataService.datasets;
   readonly arrayFields = computed(() => {

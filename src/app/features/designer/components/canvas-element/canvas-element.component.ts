@@ -69,9 +69,6 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   onClick(event: MouseEvent): void {
     event.stopPropagation();
     if (!this.isEditingInline) {
-      // Pass ctrlKey info to support multi-select toggle on click
-      this.templateService.selectElement(this.element.id, event.ctrlKey || event.metaKey);
-      
       // Clear focused cell on single click to allow manual deselection
       this.templateService.setFocusedTableCell('', -1, -1);
     }

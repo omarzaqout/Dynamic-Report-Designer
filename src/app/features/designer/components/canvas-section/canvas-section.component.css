@@ -212,3 +212,14 @@
       pointer-events: none;
       z-index: 999;
     }
+
+    .margin-guide-v {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      border-left: 1px dashed #cbd5e1;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0.8;
+    }

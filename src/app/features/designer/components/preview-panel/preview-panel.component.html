@@ -28,7 +28,9 @@
       @if (repeatingSections().length > 0) {
       <thead class="print-table-header">
         <tr>
-          <td>
+          <td [style.padding-top.mm]="template().margin?.top || 0"
+              [style.padding-left.mm]="template().margin?.left || 0"
+              [style.padding-right.mm]="template().margin?.right || 0">
             @for (section of repeatingSections(); track $index) {
             <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
             }
@@ -39,7 +41,8 @@
 
       <tbody class="print-table-body">
         <tr>
-          <td>
+          <td [style.padding-left.mm]="template().margin?.left || 0"
+              [style.padding-right.mm]="template().margin?.right || 0">
             @for (section of mainSections(); track $index) {
             <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
             }
@@ -50,7 +53,9 @@
       @if (repeatingFooters().length > 0) {
       <tfoot class="print-table-footer">
         <tr>
-          <td>
+          <td [style.padding-bottom.mm]="template().margin?.bottom || 0"
+              [style.padding-left.mm]="template().margin?.left || 0"
+              [style.padding-right.mm]="template().margin?.right || 0">
             @for (section of repeatingFooters(); track $index) {
             <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
             }
@@ -85,8 +90,9 @@
           [style.whiteSpace]="el.style.whiteSpace || 'nowrap'"
           [style.wordBreak]="el.style.whiteSpace === 'normal' ? 'break-word' : 'normal'" [style.overflow]="'hidden'"
           [style.maxWidth.px]="794 - el.x"
-          [style.border]="el.style.border || (el.type === 'table' ? '0.8px solid' : 'none')"
           [style.borderColor]="el.style.borderColor || '#cbd5e1'" [class.is-image]="el.type === 'image'"
+          [style.justify-content]="el.style.verticalAlign === 'top' ? 'flex-start' : el.style.verticalAlign === 'bottom' ? 'flex-end' : 'center'"
+          [style.overflow]="el.type === 'table' ? 'visible' : 'hidden'"
           [class.is-table]="el.type === 'table'">
           @if (el.type === 'table' && el.table) {
           <div class="preview-table-wrap" [style.width.px]="tableWidth(el.table)"
@@ -94,10 +100,11 @@
             <table class="preview-table">
               <tbody>
                 @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
-                <tr class="preview-table-row" [style.height.px]="rowHeight(el.table, rowIndex)">
+                <tr class="preview-table-row" [style.min-height.px]="rowHeight(el.table, rowIndex)">
                   @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
-                  <td [style.width.px]="columnWidth(el.table, colIndex)" [style.height.px]="rowHeight(el.table, rowIndex)"
+                  <td [style.width.px]="columnWidth(el.table, colIndex)" [style.min-height.px]="rowHeight(el.table, rowIndex)"
                     [style.textAlign]="el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign ?? 'left'"
+                    [style.verticalAlign]="el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign ?? 'middle'"
                     [style.color]="el.table.cells[rowIndex][colIndex].style?.color ?? el.style.color"
                     [style.fontSize.px]="el.table.cells[rowIndex][colIndex].style?.fontSize ?? el.style.fontSize"
                     [style.fontFamily]="el.table.cells[rowIndex][colIndex].style?.fontFamily ?? el.style.fontFamily"
@@ -109,6 +116,8 @@
                     [style.border]="el.table.cells[rowIndex][colIndex].style?.border ?? '1px solid'"
                     [style.borderColor]="el.table.cells[rowIndex][colIndex].style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'">
                     <div class="cell-content-container"
+                      [style.min-height.px]="rowHeight(el.table, rowIndex)"
+                      [style.align-items]="(el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'top' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
                       [class.has-padding]="!el.table.cells[rowIndex][colIndex].imageUrl && !el.table.cells[rowIndex][colIndex].isQRCode">
                       @if (el.table.cells[rowIndex][colIndex].isQRCode) {
                       <img

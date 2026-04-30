@@ -39,7 +39,15 @@ export class RightPanelComponent {
   
   // Use datasets from DataService instead of calculating here
   readonly datasets = this.dataService.datasets;
+  readonly templateValue = this.templateService.template;
   readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] as ReportData[] });
+  
+  readonly isMultiSelect = computed(() => this.selectedElementIds().length > 1);
+  readonly activeElement = computed(() => {
+    const ids = this.selectedElementIds();
+    if (ids.length === 0) return null;
+    return this.templateService.getElementById(ids[0]);
+  });
   
   // Cache fields and avoid frequent re-computation if possible
   readonly fields = computed(() => {
@@ -235,7 +243,7 @@ export class RightPanelComponent {
   }
 
   adjustSize(delta: number): void {
-    const el = this.element();
+    const el = this.activeElement();
     if (el) {
       const newSize = Math.max(8, Math.min(72, el.style.fontSize + delta));
       this.updateStyle({ fontSize: newSize });
@@ -251,22 +259,26 @@ export class RightPanelComponent {
   }
 
   toggleBold(): void {
-    const el = this.element();
+    const el = this.activeElement();
     if (el) this.updateStyle({ fontWeight: el.style.fontWeight === 'bold' ? 'normal' : 'bold' });
   }
 
   toggleItalic(): void {
-    const el = this.element();
+    const el = this.activeElement();
     if (el) this.updateStyle({ fontStyle: el.style.fontStyle === 'italic' ? 'normal' : 'italic' });
   }
 
   toggleUnderline(): void {
-    const el = this.element();
+    const el = this.activeElement();
     if (el) this.updateStyle({ textDecoration: el.style.textDecoration === 'underline' ? 'none' : 'underline' });
   }
 
   onTextAlignChange(align: 'left' | 'center' | 'right'): void {
     this.updateStyle({ textAlign: align });
+  }
+
+  onVerticalAlignChange(align: 'top' | 'middle' | 'bottom'): void {
+    this.updateStyle({ verticalAlign: align });
   }
 
   onWordWrapChange(event: Event): void {
@@ -522,6 +534,13 @@ export class RightPanelComponent {
     this.templateService.updateElement(el.id, { datasetPath: value || undefined });
   }
 
+  onMarginChange(side: 'top' | 'right' | 'bottom' | 'left', event: Event): void {
+    const value = parseInt((event.target as HTMLInputElement).value, 10) || 0;
+    const currentMargin = this.templateValue().margin || { top: 0, right: 0, bottom: 0, left: 0 };
+    const newMargin = { ...currentMargin, [side]: value };
+    this.templateService.updateTemplateMargin(newMargin);
+  }
+
   tableRowIndexes(table: TableData): number[] {
     return Array.from({ length: table.rows }, (_, i) => i);
   }
@@ -583,8 +602,13 @@ export class RightPanelComponent {
   }
 
   private updateStyle(patch: Partial<ElementStyle>): void {
-    const el = this.element();
-    if (el) this.templateService.updateElement(el.id, { style: { ...el.style, ...patch } });
+    const ids = this.selectedElementIds();
+    if (ids.length > 1) {
+      this.templateService.updateStylesBulk(ids, patch);
+    } else if (ids.length === 1) {
+      const el = this.activeElement();
+      if (el) this.templateService.updateElement(el.id, { style: { ...el.style, ...patch } });
+    }
   }
 
   private updateTable(mutator: (table: TableData) => TableData): void {

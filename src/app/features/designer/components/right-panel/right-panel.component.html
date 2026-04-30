@@ -4,28 +4,39 @@
     <span class="panel-title">Properties</span>
   </div>
 
-  @if (element(); as el) {
+  @if (activeElement(); as el) {
   <div class="props-content">
-    <div class="prop-section">
-      <div class="prop-section-title">Element Info</div>
-      <div class="prop-row">
-        <label>Type</label>
-        <span class="badge-text">{{ el.type }}</span>
+    @if (isMultiSelect()) {
+      <div class="multi-select-header" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">&#9745;</span>
+        <div>
+          <div style="font-weight: 700; color: #1e40af; font-size: 13px;">{{ selectedElementIds().length }} Elements</div>
+          <div style="font-size: 10px; color: #3b82f6;">Applying styles to all</div>
+        </div>
+        <button (click)="deleteSelected()" style="margin-left: auto; background: #fee2e2; border: 1px solid #fecaca; color: #ef4444; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer;">Delete All</button>
       </div>
-      @if (el.boundField) {
-      <div class="prop-row">
-        <label>Bound Field</label>
-        <span class="badge-field">{{ el.boundField }}</span>
+    } @else {
+      <div class="prop-section">
+        <div class="prop-section-title">Element Info</div>
+        <div class="prop-row">
+          <label>Type</label>
+          <span class="badge-text">{{ el.type }}</span>
+        </div>
+        @if (el.boundField) {
+        <div class="prop-row">
+          <label>Bound Field</label>
+          <span class="badge-field">{{ el.boundField }}</span>
+        </div>
+        }
+        <div class="prop-row">
+          <label>Section</label>
+          <span class="badge-section">{{ sectionLabel() }}</span>
+        </div>
       </div>
-      }
-      <div class="prop-row">
-        <label>Section</label>
-        <span class="badge-section">{{ sectionLabel() }}</span>
-      </div>
-    </div>
+    }
 
     <!-- GUARANTEED CELL STYLE SECTION -->
-    @if (el.type === 'table' && el.table) {
+    @if (!isMultiSelect() && el.type === 'table' && el.table) {
     <div class="prop-section cell-style-box"
       style="background: #fffbeb; border: 2px solid #fbbf24; margin: 12px; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
       <div class="prop-section-title"
@@ -80,7 +91,7 @@
       </div>
 
       <div class="prop-row">
-        <label style="color: #92400e; font-weight: 700;">Align</label>
+        <label style="color: #92400e; font-weight: 700;">Align X</label>
         <div class="toggle-group">
           <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'left'"
             (click)="onTableCellStyleChange({ textAlign: 'left' })">L</button>
@@ -88,6 +99,18 @@
             (click)="onTableCellStyleChange({ textAlign: 'center' })">C</button>
           <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'right'"
             (click)="onTableCellStyleChange({ textAlign: 'right' })">R</button>
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <label style="color: #92400e; font-weight: 700;">Align Y</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'top'"
+            (click)="onTableCellStyleChange({ verticalAlign: 'top' })" title="Top">T</button>
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'middle'"
+            (click)="onTableCellStyleChange({ verticalAlign: 'middle' })" title="Middle">M</button>
+          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'bottom'"
+            (click)="onTableCellStyleChange({ verticalAlign: 'bottom' })" title="Bottom">B</button>
         </div>
       </div>
 
@@ -186,7 +209,7 @@
           style="margin-top: 4px; border-color: #fde68a; background: #fff; height: 24px; font-size: 10px;">
           <option value="">— Static Text —</option>
           @for (f of filteredLeafFields(); track f.key) {
-          <option [value]="f.key">{{ f.label }}</option>
+          <option [value]="f.key">{{ f.label }} </option>
           }
         </select>
       </div>
@@ -274,6 +297,7 @@
     </div>
     }
 
+    @if (!isMultiSelect()) {
     <div class="prop-section">
       <div class="prop-section-title">Content</div>
 
@@ -439,8 +463,6 @@
           </div>
         </div>
         <div class="table-summary">{{ table.rows }} rows &times; {{ table.columns }} cols</div>
-        <div class="table-summary">Preview size: {{ tablePreviewWidth(table) }} &times; {{ tablePreviewHeight(table) }}
-          px</div>
       </div>
 
       <div class="prop-col">
@@ -508,13 +530,8 @@
                   (ngModelChange)="onTableCellFieldChange(rowIndex, colIndex, $event)"
                   [name]="'cell-' + rowIndex + '-' + colIndex">
                   <option [ngValue]="undefined">Static text</option>
-                  @if (table.cells[rowIndex][colIndex].fieldPath &&
-                  !isKeyInFields(table.cells[rowIndex][colIndex].fieldPath!)) {
-                  <option [value]="table.cells[rowIndex][colIndex].fieldPath" hidden>{{
-                    table.cells[rowIndex][colIndex].fieldPath }}</option>
-                  }
                   @for (f of filteredLeafFields(); track f.key) {
-                  <option [value]="f.key">{{ f.label }} ({{ f.key }})</option>
+                  <option [value]="f.key">{{ f.label }} </option>
                   }
                 </select>
               </td>
@@ -526,6 +543,7 @@
       </div>
       }
     </div>
+    }
 
     <div class="prop-section">
       <div class="prop-section-title">Typography</div>
@@ -570,7 +588,7 @@
         </div>
       </div>
       <div class="prop-row">
-        <label>Alignment</label>
+        <label>Align X</label>
         <div class="toggle-group">
           <button class="toggle-btn" [class.active]="el.style.textAlign === 'left' || !el.style.textAlign"
             (click)="onTextAlignChange('left')" title="Align Left">&#8612;</button>
@@ -578,6 +596,17 @@
             (click)="onTextAlignChange('center')" title="Align Center">&#8633;</button>
           <button class="toggle-btn" [class.active]="el.style.textAlign === 'right'"
             (click)="onTextAlignChange('right')" title="Align Right">&#8614;</button>
+        </div>
+      </div>
+      <div class="prop-row">
+        <label>Align Y</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="el.style.verticalAlign === 'top'"
+            (click)="onVerticalAlignChange('top')" title="Align Top">&#8613;</button>
+          <button class="toggle-btn" [class.active]="el.style.verticalAlign === 'middle' || !el.style.verticalAlign"
+            (click)="onVerticalAlignChange('middle')" title="Align Middle">&#8621;</button>
+          <button class="toggle-btn" [class.active]="el.style.verticalAlign === 'bottom'"
+            (click)="onVerticalAlignChange('bottom')" title="Align Bottom">&#8615;</button>
         </div>
       </div>
       <div class="prop-row">
@@ -601,6 +630,7 @@
       </div>
     </div>
 
+    @if (!isMultiSelect()) {
     <div class="prop-section">
       <div class="prop-section-title">Canvas Alignment</div>
       <div class="alignment-grid"
@@ -619,55 +649,62 @@
         </button>
       </div>
     </div>
+    }
 
-    <div class="prop-section">
-      <div class="prop-section-title">Position</div>
-      <div class="prop-row">
-        <label>X</label>
-        <input type="number" class="prop-number" [value]="el.position.x" (change)="onXChange($event)" min="0" />
+    @if (!isMultiSelect()) {
+      <div class="prop-section">
+        <div class="prop-section-title">Position</div>
+        <div class="prop-row">
+          <label>X</label>
+          <input type="number" class="prop-number" [value]="el.position.x" (change)="onXChange($event)" min="0" />
+        </div>
+        <div class="prop-row">
+          <label>Y</label>
+          <input type="number" class="prop-number" [value]="el.position.y" (change)="onYChange($event)" min="0" />
+        </div>
       </div>
-      <div class="prop-row">
-        <label>Y</label>
-        <input type="number" class="prop-number" [value]="el.position.y" (change)="onYChange($event)" min="0" />
+
+      <div class="danger-zone">
+        <button class="delete-btn" (click)="deleteElement()">
+          &#128465; Delete Element
+        </button>
       </div>
-    </div>
-
-    <div class="danger-zone">
-      <button class="delete-btn" (click)="deleteElement()">
-        &#128465; Delete Element
-      </button>
-    </div>
-  </div>
-  } @else if (selectedElementIds().length > 1) {
-  <div class="props-content"
-    style="padding: 24px 16px; text-align: center; display: flex; flex-direction: column; align-items: center;">
-    <div
-      style="font-size: 32px; color: #3b82f6; margin-bottom: 12px; background: #eff6ff; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #bfdbfe;">
-      &#9745;
-    </div>
-    <h3 style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #1e293b;">{{ selectedElementIds().length }}
-      Elements Selected</h3>
-    <p style="font-size: 11px; color: #64748b; margin-bottom: 24px; line-height: 1.5;">You can apply group actions to
-      the selected dynamic elements.</p>
-
-    <div style="display: flex; gap: 8px; width: 100%;">
-      <button
-        style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #bfdbfe; background: #eff6ff; color: #2563eb; font-weight: 600; cursor: pointer;"
-        (click)="duplicateSelected()">
-        &#10063; Duplicate
-      </button>
-      <button
-        style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #ef4444; font-weight: 600; cursor: pointer;"
-        (click)="deleteSelected()">
-        &#128465; Delete
-      </button>
-    </div>
+    }
   </div>
   } @else {
   <div class="empty-state">
-    <div class="empty-icon">&#9654;</div>
-    <div class="empty-title">No element selected</div>
-    <div class="empty-hint">Click an element on the canvas to edit its properties</div>
+    <div class="panel-header" style="background: #f1f5f9; border-radius: 8px 8px 0 0; margin: -16px -16px 16px -16px;">
+      <span class="panel-icon" style="color: #64748b;">&#128196;</span>
+      <span class="panel-title" style="color: #475569;">Report Settings</span>
+    </div>
+
+    <div class="prop-section">
+      <div class="prop-section-title">Page Margins (mm)</div>
+      <div class="alignment-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="prop-col">
+          <label class="prop-label">Top</label>
+          <input type="number" class="prop-number" [value]="templateValue().margin?.top || 0" (change)="onMarginChange('top', $event)" />
+        </div>
+        <div class="prop-col">
+          <label class="prop-label">Bottom</label>
+          <input type="number" class="prop-number" [value]="templateValue().margin?.bottom || 0" (change)="onMarginChange('bottom', $event)" />
+        </div>
+        <div class="prop-col">
+          <label class="prop-label">Left</label>
+          <input type="number" class="prop-number" [value]="templateValue().margin?.left || 0" (change)="onMarginChange('left', $event)" />
+        </div>
+        <div class="prop-col">
+          <label class="prop-label">Right</label>
+          <input type="number" class="prop-number" [value]="templateValue().margin?.right || 0" (change)="onMarginChange('right', $event)" />
+        </div>
+      </div>
+      <div class="hint-text" style="margin-top: 10px;">Set global margins for the entire report canvas.</div>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center; color: #94a3b8;">
+      <div style="font-size: 24px; margin-bottom: 8px;">&#9664;</div>
+      <div style="font-size: 11px;">Select an element on the canvas<br>to edit its specific properties</div>
+    </div>
   </div>
   }
 </div>
