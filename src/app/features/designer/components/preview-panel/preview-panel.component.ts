@@ -170,6 +170,33 @@ export class PreviewPanelComponent {
     window.print();
   }
 
+  /**
+   * For center/right aligned text/field elements, estimate a min-width based on the
+   * template placeholder (e.g. {{stageName}}) so the preview box is at least as
+   * wide as the designer's box — ensuring text-align works regardless of value length.
+   * The result is capped to the available page width to prevent overflowing into neighbors.
+   */
+  getTextElementMinWidth(el: any, section: RenderedSection): number | null {
+    // Only apply to text/field elements that have explicit center or right alignment
+    if (el.type === 'table' || el.type === 'image') return null;
+    if (!el.style?.textAlign || el.style.textAlign === 'left') return null;
+
+    // If the designer stored an explicit width, use it directly
+    if (el.size?.width) return Math.min(el.size.width, 794 - el.x);
+
+    // Find the original template element to read the placeholder content (e.g. {{stageName}})
+    const templateEl = section.templateSection?.elements?.find((e: any) => e.id === el.id);
+    const placeholder = templateEl?.content || '';
+    if (!placeholder) return null;
+
+    // Approximate character width: ~0.6 × fontSize per character (matches most fonts)
+    const fontSize = el.style.fontSize || 12;
+    const estimated = Math.max(60, placeholder.length * fontSize * 0.6);
+
+    // Cap to available space so we never overflow into adjacent elements
+    return Math.min(estimated, 794 - el.x);
+  }
+
   isLastDetail(index: number): boolean {
     const sections = this.renderedReport().sections;
     const remaining = sections.slice(index + 1);

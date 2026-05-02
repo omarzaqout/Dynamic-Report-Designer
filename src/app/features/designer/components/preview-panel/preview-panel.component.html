@@ -88,11 +88,12 @@
           [style.fontWeight]="el.style.fontWeight" [style.fontStyle]="el.style.fontStyle"
           [style.textDecoration]="el.style.textDecoration" [style.color]="el.style.color"
           [style.whiteSpace]="el.style.whiteSpace || 'nowrap'"
-          [style.wordBreak]="el.style.whiteSpace === 'normal' ? 'break-word' : 'normal'" [style.overflow]="'hidden'"
+          [style.wordBreak]="el.style.whiteSpace === 'normal' ? 'break-word' : 'normal'"
+          [style.min-width.px]="getTextElementMinWidth(el, section)"
           [style.maxWidth.px]="794 - el.x"
+          [style.overflow]="el.type === 'table' ? 'visible' : 'hidden'"
           [style.borderColor]="el.style.borderColor || '#cbd5e1'" [class.is-image]="el.type === 'image'"
           [style.justify-content]="el.style.verticalAlign === 'top' ? 'flex-start' : el.style.verticalAlign === 'bottom' ? 'flex-end' : 'center'"
-          [style.overflow]="el.type === 'table' ? 'visible' : 'hidden'"
           [class.is-table]="el.type === 'table'">
           @if (el.type === 'table' && el.table) {
           <div class="preview-table-wrap" [style.width.px]="tableWidth(el.table)"
@@ -144,7 +145,11 @@
             [style.maxHeight.px]="el.size ? null : 250" />
           }
           } @else {
-          <div [innerHTML]="el.content"></div>
+          <div
+            [style.min-width.px]="getTextElementMinWidth(el, section)"
+            [style.text-align]="el.style.textAlign || 'left'"
+            [innerHTML]="el.content">
+          </div>
           }
         </div>
         }
