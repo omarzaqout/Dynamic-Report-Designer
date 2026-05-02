@@ -330,6 +330,7 @@
         background: white !important;
         page-break-inside: auto !important;
         break-inside: auto !important;
+        height: auto !important;
     }
 
     /* Force header and footer sections to stay on one page (no splitting) */
@@ -348,6 +349,7 @@
         position: relative !important;
         overflow: visible !important;
         display: block !important;
+        height: auto !important;
     }
 
     .preview-band {

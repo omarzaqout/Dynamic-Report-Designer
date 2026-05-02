@@ -71,11 +71,11 @@
 
 <!-- ===================== SECTION TEMPLATE ===================== -->
 <ng-template #sectionTpl let-section let-index="index">
-  <div class="preview-section" [class]="'ps-' + section.sectionType" [style.height.px]="getSectionHeight(section)">
+  <div class="preview-section" [class]="'ps-' + section.sectionType" [style.min-height.px]="getSectionHeight(section)">
     @if (section.elements.length === 0) {
     <div class="empty-section">{{ section.label }} — no content</div>
     } @else {
-    <div class="section-body" [style.position]="'relative'" [style.height.px]="getSectionHeight(section)">
+    <div class="section-body" [style.position]="'relative'" [style.min-height.px]="getSectionHeight(section)">
 
       @for (band of getBands(section); track band.id) {
       <div class="preview-band" [style.marginTop.px]="band.marginTop" [style.height.px]="band.height" [style.--band-height.px]="band.height">

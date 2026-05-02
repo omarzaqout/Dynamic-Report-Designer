@@ -56,16 +56,17 @@ export class PreviewPanelComponent {
     for (const el of sorted) {
       const elTop = el.renderedY;
       const elHeight = this.getElementActualHeight(el);
-      const elBottom = elTop + elHeight;
 
       if (bands.length > 0) {
         const lastBand = bands[bands.length - 1];
         const bTop = lastBand.renderedY;
-        const bBottom = lastBand.renderedY + lastBand.height;
-        
-        if (elTop <= bBottom + 2) {
+
+        // Only group elements if they start at roughly the same vertical position (Side-by-Side)
+        // Sequential elements (one below the other) MUST be in separate bands so that 
+        // if the top one grows, it pushes the entire next band down in flow.
+        if (Math.abs(elTop - bTop) <= 4) {
           lastBand.elements.push(el);
-          lastBand.height = Math.max(bBottom, elBottom) - lastBand.renderedY;
+          lastBand.height = Math.max(lastBand.height, elHeight);
           continue;
         }
       }
@@ -278,7 +279,6 @@ export class PreviewPanelComponent {
           '1.3'
         );
         
-        // Add padding (4px top + 4px bottom = 8px)
         const totalCellHeight = measured + 8;
         if (totalCellHeight > maxHeight) {
           maxHeight = totalCellHeight;
