@@ -291,12 +291,27 @@
      * Let the native HTML table headers and footers handle repeating!
      * This is the exact reason spacing now matches the designer mathematically. 
      */
+    .preview-page-paper tr {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
     .print-table-header {
         display: table-header-group !important;
     }
 
+    .print-table-header tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
     .print-table-footer {
         display: table-footer-group !important;
+    }
+
+    .print-table-footer tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 
     .print-table-body {
@@ -315,6 +330,13 @@
         background: white !important;
         page-break-inside: auto !important;
         break-inside: auto !important;
+    }
+
+    /* Force header and footer sections to stay on one page (no splitting) */
+    .ps-pageHeader,
+    .ps-footer {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 
     /*

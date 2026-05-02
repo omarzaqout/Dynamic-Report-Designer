@@ -27,40 +27,40 @@
 
       @if (repeatingSections().length > 0) {
       <thead class="print-table-header">
+        @for (section of repeatingSections(); track $index) {
         <tr>
-          <td [style.padding-top.mm]="template().margin?.top || 0"
+          <td [style.padding-top.mm]="($index === 0 ? template().margin?.top : 0) || 0"
               [style.padding-left.mm]="template().margin?.left || 0"
               [style.padding-right.mm]="template().margin?.right || 0">
-            @for (section of repeatingSections(); track $index) {
             <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
-            }
           </td>
         </tr>
+        }
       </thead>
       }
 
       <tbody class="print-table-body">
+        @for (section of mainSections(); track $index) {
         <tr>
           <td [style.padding-left.mm]="template().margin?.left || 0"
               [style.padding-right.mm]="template().margin?.right || 0">
-            @for (section of mainSections(); track $index) {
             <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
-            }
           </td>
         </tr>
+        }
       </tbody>
 
       @if (repeatingFooters().length > 0) {
       <tfoot class="print-table-footer">
+        @for (section of repeatingFooters(); track $index) {
         <tr>
-          <td [style.padding-bottom.mm]="template().margin?.bottom || 0"
+          <td [style.padding-bottom.mm]="($index === repeatingFooters().length - 1 ? template().margin?.bottom : 0) || 0"
               [style.padding-left.mm]="template().margin?.left || 0"
               [style.padding-right.mm]="template().margin?.right || 0">
-            @for (section of repeatingFooters(); track $index) {
             <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
-            }
           </td>
         </tr>
+        }
       </tfoot>
       }
 
