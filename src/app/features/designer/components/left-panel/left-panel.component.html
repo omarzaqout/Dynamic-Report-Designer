@@ -69,60 +69,67 @@
         }
       </ng-template>
 
-      <div class="section-label">Data Fields</div>
-      <div class="fields-list">
-        @if (fields().length === 0 && !isLoading() && !errorMsg()) {
-          <div class="empty-state">No fields available</div>
-        }
-        @for (field of fields(); track field.key) {
-          <ng-container *ngTemplateOutlet="fieldNode; context: { $implicit: field, level: 0 }"></ng-container>
-        }
-      </div>
+      <div class="panel-body">
 
-      <div class="section-label">Static Elements</div>
-      <div class="fields-list" style="flex: 0 0 auto; max-height: 150px;">
-        <div
-          class="field-item"
-          draggable="true"
-          (dragstart)="onStaticDragStart($event, 'text')"
-          (dragend)="onDragEnd()"
-          [class.dragging]="draggingKey() === 'static-text'"
-        >
-          <span class="field-type-badge type-text">T</span>
-          <span class="field-name">Text Element</span>
-        </div>
-        <div
-          class="field-item"
-          draggable="true"
-          (dragstart)="onStaticDragStart($event, 'image')"
-          (dragend)="onDragEnd()"
-          [class.dragging]="draggingKey() === 'static-image'"
-        >
-          <span class="field-type-badge type-date">Img</span>
-          <span class="field-name">Image Element</span>
-        </div>
-        <div
-          class="field-item"
-          draggable="true"
-          (dragstart)="onStaticDragStart($event, 'table')"
-          (dragend)="onDragEnd()"
-          [class.dragging]="draggingKey() === 'static-table'"
-        >
-          <span class="field-type-badge type-table">Tbl</span>
-          <span class="field-name">Table Element</span>
-        </div>
-      </div>
-
-      <div class="section-label">Template Sections</div>
-      <div class="sections-list">
-        @for (section of sections(); track section.id) {
-          <div class="section-item" [class]="'section-' + section.type">
-            <span class="section-dot"></span>
-            <span class="section-name">{{ section.label }}</span>
-            <span class="section-count">{{ section.elements.length }}</span>
+      <div class="section-group">
+        <button class="section-label-btn" (click)="toggleSection('fields')">
+          <span class="section-label-text">Data Fields</span>
+          <span class="section-chevron" [class.collapsed]="isSectionCollapsed('fields')">&#9660;</span>
+        </button>
+        <div class="section-collapsible" [class.is-collapsed]="isSectionCollapsed('fields')">
+          <div class="fields-list">
+            @if (fields().length === 0 && !isLoading() && !errorMsg()) {
+              <div class="empty-state">No fields available</div>
+            }
+            @for (field of fields(); track field.key) {
+              <ng-container *ngTemplateOutlet="fieldNode; context: { $implicit: field, level: 0 }"></ng-container>
+            }
           </div>
-        }
+        </div>
       </div>
+
+      <div class="section-group">
+        <button class="section-label-btn" (click)="toggleSection('static')">
+          <span class="section-label-text">Static Elements</span>
+          <span class="section-chevron" [class.collapsed]="isSectionCollapsed('static')">&#9660;</span>
+        </button>
+        <div class="section-collapsible" [class.is-collapsed]="isSectionCollapsed('static')">
+          <div class="fields-list" style="flex: 0 0 auto; max-height: 150px;">
+            <div class="field-item" draggable="true" (dragstart)="onStaticDragStart($event, 'text')" (dragend)="onDragEnd()" [class.dragging]="draggingKey() === 'static-text'">
+              <span class="field-type-badge type-text">T</span>
+              <span class="field-name">Text Element</span>
+            </div>
+            <div class="field-item" draggable="true" (dragstart)="onStaticDragStart($event, 'image')" (dragend)="onDragEnd()" [class.dragging]="draggingKey() === 'static-image'">
+              <span class="field-type-badge type-date">Img</span>
+              <span class="field-name">Image Element</span>
+            </div>
+            <div class="field-item" draggable="true" (dragstart)="onStaticDragStart($event, 'table')" (dragend)="onDragEnd()" [class.dragging]="draggingKey() === 'static-table'">
+              <span class="field-type-badge type-table">Tbl</span>
+              <span class="field-name">Table Element</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-group">
+        <button class="section-label-btn" (click)="toggleSection('sections')">
+          <span class="section-label-text">Template Sections</span>
+          <span class="section-chevron" [class.collapsed]="isSectionCollapsed('sections')">&#9660;</span>
+        </button>
+        <div class="section-collapsible" [class.is-collapsed]="isSectionCollapsed('sections')">
+          <div class="sections-list">
+            @for (section of sections(); track section.id) {
+              <div class="section-item" [class]="'section-' + section.type">
+                <span class="section-dot"></span>
+                <span class="section-name">{{ section.label }}</span>
+                <span class="section-count">{{ section.elements.length }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /.panel-body -->
 
       <div class="panel-footer">
         <div class="stat-row">

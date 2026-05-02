@@ -30,6 +30,15 @@ export class LeftPanelComponent {
   });
 
   readonly draggingKey = signal<string | null>(null);
+  readonly collapsed = signal<Record<string, boolean>>({});
+
+  toggleSection(key: string): void {
+    this.collapsed.update(c => ({ ...c, [key]: !c[key] }));
+  }
+
+  isSectionCollapsed(key: string): boolean {
+    return this.collapsed()[key] ?? false;
+  }
 
   readonly sections = computed(() => this.templateService.template().sections);
 
