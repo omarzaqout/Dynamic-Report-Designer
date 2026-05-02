@@ -81,6 +81,17 @@ export class PreviewPanelComponent {
 
     let currentFlowBottom = 0;
     for (const band of bands) {
+      // Update band height based on ACTUAL heights of its elements
+      let maxBandActualHeight = band.height;
+      for (const el of band.elements) {
+        const elActualHeight = this.getElementActualHeight(el);
+        const elBottomRelativeToBand = (el.renderedY - band.renderedY) + elActualHeight;
+        if (elBottomRelativeToBand > maxBandActualHeight) {
+          maxBandActualHeight = elBottomRelativeToBand;
+        }
+      }
+      band.height = maxBandActualHeight;
+      
       band.marginTop = Math.max(0, band.renderedY - currentFlowBottom);
       currentFlowBottom = band.renderedY + band.height;
     }
@@ -126,27 +137,48 @@ export class PreviewPanelComponent {
     return result;
   }
 
-  private getElementActualHeight(el: any): number {
-    if (el.type === 'table' && el.table) {
-      // The actual height is the sum of all rows (could be many more than in designer)
-      return this.tableHeight(el.table);
-    }
-    if (el.size?.height) return el.size.height;
-    return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
+  private measureTextHeight(content: string, style: any, width: number, lineHeight: string = '1.4'): number {
+    if (!content) return 0;
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+    div.style.left = '-9999px';
+    div.style.top = '-9999px';
+    div.style.width = `${width}px`;
+    div.style.fontSize = `${style.fontSize || 12}px`;
+    div.style.fontFamily = style.fontFamily || 'inherit';
+    div.style.fontWeight = style.fontWeight || 'normal';
+    div.style.fontStyle = style.fontStyle || 'normal';
+    div.style.lineHeight = lineHeight;
+    div.style.whiteSpace = style.whiteSpace || 'normal';
+    div.style.wordBreak = style.whiteSpace === 'normal' ? 'break-word' : 'normal';
+    div.style.padding = '0';
+    div.style.margin = '0';
+    div.style.boxSizing = 'border-box';
+    div.innerHTML = content;
+    document.body.appendChild(div);
+    const height = div.offsetHeight;
+    document.body.removeChild(div);
+    return height > 0 ? height + 2 : 0;
   }
 
-  /** Height the element was given in the DESIGNER. */
+  private getElementActualHeight(el: any): number {
+    if (el.type === 'table' && el.table) {
+      return this.tableHeight(el.table, true);
+    }
+    if (el.type === 'image') return el.size?.height || 100;
+    const width = el.size?.width || 200;
+    const measuredHeight = this.measureTextHeight(el.content || '', el.style || {}, width, '1.4');
+    return Math.max(el.size?.height || 0, measuredHeight);
+  }
+
   private getElementOriginalHeight(el: any, section: RenderedSection): number {
     const originalEl = section.templateSection?.elements?.find((e: any) => e.id === el.id);
-
-    // 1. Fallback for tables: visually tables are dictated by their original rows in design
     if (el.type === 'table') {
-      if (originalEl?.table) return this.tableHeight(originalEl.table);
-      if (el.table) return this.tableHeight(el.table);
+      if (originalEl?.table) return this.tableHeight(originalEl.table, false);
+      if (el.table) return this.tableHeight(el.table, false);
     }
-    // 2. If it has a size set in the designer, that's our baseline for non-tables
     if (el.size?.height) return el.size.height;
-
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }
 
@@ -218,8 +250,43 @@ export class PreviewPanelComponent {
       .map(({ index }) => index);
   }
 
-  rowHeight(table: TableData, rowIndex: number): number {
-    return table.rowHeights?.[rowIndex] ?? 36;
+  rowHeight(table: TableData, rowIndex: number, dynamic: boolean = true): number {
+    const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
+    if (!dynamic) return baseHeight;
+
+    const rowCells = table.cells[rowIndex] || [];
+    let maxHeight = baseHeight;
+
+    for (let i = 0; i < rowCells.length; i++) {
+      const cell = rowCells[i];
+      // If content exists, we measure it. 
+      // We check if whiteSpace is 'normal' (wrapping enabled) or if it's explicitly requested.
+      const canWrap = cell.style?.whiteSpace === 'normal';
+      
+      if (cell.content) {
+        const width = this.columnWidth(table, i);
+        // Ensure we pass the same whiteSpace as in the HTML template
+        const cellStyle = { 
+          ...cell.style, 
+          whiteSpace: cell.style?.whiteSpace ?? 'normal' 
+        };
+        
+        const measured = this.measureTextHeight(
+          cell.content, 
+          cellStyle, 
+          width, 
+          '1.3'
+        );
+        
+        // Add padding (4px top + 4px bottom = 8px)
+        const totalCellHeight = measured + 8;
+        if (totalCellHeight > maxHeight) {
+          maxHeight = totalCellHeight;
+        }
+      }
+    }
+
+    return Math.round(maxHeight);
   }
 
   columnWidth(table: TableData, colIndex: number): number {
@@ -232,9 +299,9 @@ export class PreviewPanelComponent {
     return cols.reduce((sum, colIndex) => sum + this.columnWidth(table, colIndex), 0);
   }
 
-  tableHeight(table: TableData): number {
+  tableHeight(table: TableData, dynamic: boolean = true): number {
     if (table.rows === 0) return 36;
-    return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex), 0);
+    return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex, dynamic), 0);
   }
 
   protected encodeURIComponent(str: string): string {

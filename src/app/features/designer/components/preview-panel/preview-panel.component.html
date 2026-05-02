@@ -71,11 +71,11 @@
 
 <!-- ===================== SECTION TEMPLATE ===================== -->
 <ng-template #sectionTpl let-section let-index="index">
-  <div class="preview-section" [class]="'ps-' + section.sectionType" [style.min-height.px]="section.height">
+  <div class="preview-section" [class]="'ps-' + section.sectionType" [style.height.px]="getSectionHeight(section)">
     @if (section.elements.length === 0) {
     <div class="empty-section">{{ section.label }} — no content</div>
     } @else {
-    <div class="section-body" [style.position]="'relative'" [style.min-height.px]="getSectionHeight(section)">
+    <div class="section-body" [style.position]="'relative'" [style.height.px]="getSectionHeight(section)">
 
       @for (band of getBands(section); track band.id) {
       <div class="preview-band" [style.marginTop.px]="band.marginTop" [style.height.px]="band.height" [style.--band-height.px]="band.height">
@@ -101,9 +101,9 @@
             <table class="preview-table">
               <tbody>
                 @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
-                <tr class="preview-table-row" [style.min-height.px]="rowHeight(el.table, rowIndex)">
+                <tr class="preview-table-row" [style.height.px]="rowHeight(el.table, rowIndex)">
                   @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
-                  <td [style.width.px]="columnWidth(el.table, colIndex)" [style.min-height.px]="rowHeight(el.table, rowIndex)"
+                  <td [style.width.px]="columnWidth(el.table, colIndex)" [style.height.px]="rowHeight(el.table, rowIndex)"
                     [style.textAlign]="el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign ?? 'left'"
                     [style.verticalAlign]="el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign ?? 'middle'"
                     [style.color]="el.table.cells[rowIndex][colIndex].style?.color ?? el.style.color"
@@ -112,12 +112,12 @@
                     [style.fontWeight]="el.table.cells[rowIndex][colIndex].style?.fontWeight ?? el.style.fontWeight"
                     [style.fontStyle]="el.table.cells[rowIndex][colIndex].style?.fontStyle ?? el.style.fontStyle"
                     [style.textDecoration]="el.table.cells[rowIndex][colIndex].style?.textDecoration ?? el.style.textDecoration"
-                    [style.whiteSpace]="el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap'"
-                    [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace) === 'normal' ? 'break-word' : 'normal'"
+                    [style.whiteSpace]="el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'normal'"
+                    [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'normal') === 'normal' ? 'break-word' : 'normal'"
                     [style.border]="el.table.cells[rowIndex][colIndex].style?.border ?? '1px solid'"
                     [style.borderColor]="el.table.cells[rowIndex][colIndex].style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'">
                     <div class="cell-content-container"
-                      [style.min-height.px]="rowHeight(el.table, rowIndex)"
+                      [style.height.px]="rowHeight(el.table, rowIndex)"
                       [style.align-items]="(el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'top' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
                       [class.has-padding]="!el.table.cells[rowIndex][colIndex].imageUrl && !el.table.cells[rowIndex][colIndex].isQRCode">
                       @if (el.table.cells[rowIndex][colIndex].isQRCode) {
