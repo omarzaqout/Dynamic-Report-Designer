@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, signal, HostListener } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
 import { LeftPanelComponent } from './components/left-panel/left-panel.component';
 import { CanvasComponent } from './components/canvas/canvas.component';
 import { RightPanelComponent } from './components/right-panel/right-panel.component';
@@ -15,9 +16,12 @@ import { TemplateService } from '../../core/services/template.service';
   templateUrl: './designer.component.html',
   styleUrl: './designer.component.css',
 })
-export class DesignerComponent {
+export class DesignerComponent implements OnInit {
   private uiService = inject(UiService);
   private templateService = inject(TemplateService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  
   readonly activeView = this.uiService.activeView;
 
   // Sidebar widths and visibility
@@ -39,6 +43,32 @@ export class DesignerComponent {
 
   setView(view: 'design' | 'preview'): void {
     this.uiService.setView(view);
+  }
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.templateService.loadTemplateFromDb(id).catch(err => alert('Failed to load template'));
+    } else {
+      this.templateService.resetTemplate();
+    }
+  }
+
+  async saveToDb(): Promise<void> {
+    const name = prompt('Enter a name for this template:', this.templateService.templateValue.name || 'New Report');
+    if (!name) return;
+    
+    try {
+      await this.templateService.saveTemplateToDb(name);
+      alert('Template saved to database successfully!');
+      this.router.navigate(['/']);
+    } catch (error) {
+      alert('Failed to save template');
+    }
+  }
+
+  goToHome(): void {
+    this.router.navigate(['/']);
   }
 
   exportTemplate(): void {

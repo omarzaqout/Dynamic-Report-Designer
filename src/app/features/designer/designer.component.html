@@ -1,6 +1,9 @@
     <div class="designer-host">
       <header class="designer-header">
         <div class="header-brand">
+          <button class="action-btn icon-btn" (click)="goToHome()" title="Back to Templates" style="margin-right: 12px;">
+            <span>&#8592;</span>
+          </button>
           <div class="brand-logo">&#9638;</div>
           <div class="brand-text">
             <span class="brand-name">Dynamic Report Designer</span>
@@ -32,6 +35,9 @@
           </div>
 
           <div class="button-group">
+            <button class="action-btn icon-btn" (click)="saveToDb()" title="Save to Database" style="background-color: #10b981; color: white; border: none;">
+              <span>&#128190;</span> Save DB
+            </button>
             <button class="action-btn icon-btn" (click)="exportTemplate()" title="Export JSON Template">
               <span>&#10515;</span> Export
             </button>

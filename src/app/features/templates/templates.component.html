@@ -1,0 +1,47 @@
+<div class="templates-container">
+  <header class="templates-header">
+    <div class="header-brand">
+      <div class="brand-logo">&#9638;</div>
+      <div class="brand-text">
+        <span class="brand-name">AlfaGuide Reports</span>
+        <span class="brand-sub">Template Management</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="action-btn primary" (click)="createNewTemplate()">
+        <span>+</span> New Template
+      </button>
+    </div>
+  </header>
+
+  <main class="templates-main">
+    <div class="section-title">
+      <h2>Your Templates</h2>
+    </div>
+
+    <div class="templates-grid" *ngIf="templates$ | async as templates; else loading">
+      <div class="template-card" *ngFor="let template of templates" (click)="editTemplate(template.id)">
+        <div class="card-icon">&#128196;</div>
+        <div class="card-details">
+          <h3>{{ template.name }}</h3>
+          <p class="template-meta">
+            <span *ngIf="template.type">Type: {{ template.type }}</span>
+            <span *ngIf="!template.type">Custom</span>
+            &bull; {{ template.createdAt | date:'short' }}
+          </p>
+        </div>
+      </div>
+
+      <div *ngIf="templates.length === 0" class="empty-state">
+        <div class="empty-icon">&#128193;</div>
+        <p>No templates found. Create your first template!</p>
+      </div>
+    </div>
+
+    <ng-template #loading>
+      <div class="loading-state">
+        <p>Loading templates...</p>
+      </div>
+    </ng-template>
+  </main>
+</div>

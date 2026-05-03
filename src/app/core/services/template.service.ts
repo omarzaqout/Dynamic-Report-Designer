@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 import { ReportTemplate, TemplateSection, TemplateElement, TableData, SectionType, ElementStyle } from '../models/template.model';
 import { ReportData } from '../models/report.model';
 
@@ -51,6 +53,7 @@ export class TemplateService {
   private history: ReportTemplate[] = [];
   private historyIndex = -1;
   private clipboard: TemplateElement[] = [];
+  private http = inject(HttpClient);
 
   constructor() {
     this.loadFromLocalStorage();
@@ -475,5 +478,32 @@ export class TemplateService {
       return updated;
     });
     this.pushToHistory();
+  }
+
+  async saveTemplateToDb(name: string, type: string = 'CNC'): Promise<void> {
+    const payload = {
+      name,
+      type,
+      data: this._template()
+    };
+    
+    try {
+      await lastValueFrom(this.http.post('http://localhost:3000/reports', payload));
+    } catch (error) {
+      console.error('Failed to save template to DB', error);
+      throw error;
+    }
+  }
+
+  async loadTemplateFromDb(id: string): Promise<void> {
+    try {
+      const report: any = await lastValueFrom(this.http.get(`http://localhost:3000/reports/${id}`));
+      if (report && report.data) {
+        this.setTemplate(report.data);
+      }
+    } catch (error) {
+      console.error('Failed to load template from DB', error);
+      throw error;
+    }
   }
 }
