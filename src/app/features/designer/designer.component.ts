@@ -23,6 +23,7 @@ export class DesignerComponent implements OnInit {
   private route = inject(ActivatedRoute);
   
   readonly activeView = this.uiService.activeView;
+  readonly currentReportId = this.templateService.currentReportId;
 
   // Sidebar widths and visibility
   readonly leftWidth = signal(240);
@@ -64,6 +65,21 @@ export class DesignerComponent implements OnInit {
       this.router.navigate(['/']);
     } catch (error) {
       alert('Failed to save template');
+    }
+  }
+
+  async updateInDb(): Promise<void> {
+    const id = this.currentReportId();
+    if (!id) return;
+
+    const name = prompt('Confirm or change template name:', this.templateService.templateValue.name || 'Report');
+    if (!name) return;
+
+    try {
+      await this.templateService.updateTemplateInDb(id, name);
+      alert('Template updated in database successfully!');
+    } catch (error) {
+      alert('Failed to update template');
     }
   }
 

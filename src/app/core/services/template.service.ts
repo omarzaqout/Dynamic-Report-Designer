@@ -22,6 +22,7 @@ export class TemplateService {
   });
 
   readonly template = computed(() => this._template());
+  readonly currentReportId = signal<string | null>(null);
   readonly selectedElementIds = signal<string[]>([]);
   readonly focusedTableCell = signal<{ elementId: string; row: number; col: number } | null>(null);
 
@@ -450,6 +451,7 @@ export class TemplateService {
   }
 
   resetTemplate(): void {
+    this.currentReportId.set(null);
     this.setTemplate({
       id: 'template-' + Date.now(),
       name: 'New Report',
@@ -499,10 +501,26 @@ export class TemplateService {
     try {
       const report: any = await lastValueFrom(this.http.get(`http://localhost:3000/reports/${id}`));
       if (report && report.data) {
+        this.currentReportId.set(report.id);
         this.setTemplate(report.data);
       }
     } catch (error) {
       console.error('Failed to load template from DB', error);
+      throw error;
+    }
+  }
+
+  async updateTemplateInDb(id: string, name: string, type: string = 'CNC'): Promise<void> {
+    const payload = {
+      name,
+      type,
+      data: this._template()
+    };
+    
+    try {
+      await lastValueFrom(this.http.put(`http://localhost:3000/reports/${id}`, payload));
+    } catch (error) {
+      console.error('Failed to update template in DB', error);
       throw error;
     }
   }

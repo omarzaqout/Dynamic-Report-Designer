@@ -35,9 +35,16 @@
           </div>
 
           <div class="button-group">
-            <button class="action-btn icon-btn" (click)="saveToDb()" title="Save to Database" style="background-color: #10b981; color: white; border: none;">
-              <span>&#128190;</span> Save DB
-            </button>
+            @if (currentReportId()) {
+              <button class="action-btn icon-btn" (click)="updateInDb()" title="Update in Database" style="background-color: #3b82f6; color: white; border: none;">
+                <span>&#8635;</span> Update DB
+              </button>
+            } @else {
+              <button class="action-btn icon-btn" (click)="saveToDb()" title="Save to Database" style="background-color: #10b981; color: white; border: none;">
+                <span>&#128190;</span> Save DB
+              </button>
+            }
+            
             <button class="action-btn icon-btn" (click)="exportTemplate()" title="Export JSON Template">
               <span>&#10515;</span> Export
             </button>
