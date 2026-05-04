@@ -16,7 +16,7 @@ export class LeftPanelComponent {
   private dataService = inject(DataService);
   private templateService = inject(TemplateService);
 
-  readonly apiUrl = signal('https://jsonplaceholder.typicode.com/users');
+  readonly apiUrl = signal('');
   readonly isLoading = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
