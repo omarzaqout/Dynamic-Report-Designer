@@ -35,4 +35,11 @@ export class TemplatesComponent implements OnInit {
   editTemplate(id: string): void {
     this.router.navigate(['/designer', id]);
   }
+
+  testPrint(): void {
+    // Sample docentry and stageId
+    const docentry = '1478';
+    const stageId = '3';
+    window.open(`http://localhost:3000/reports/print/${docentry}/${stageId}`, '_blank');
+  }
 }

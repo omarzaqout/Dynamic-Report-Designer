@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { ReportTemplate, TemplateSection, TemplateElement, TableData, SectionType, ElementStyle } from '../models/template.model';
 import { ReportData } from '../models/report.model';
+import { API_CONFIG } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
@@ -490,7 +491,7 @@ export class TemplateService {
     };
     
     try {
-      await lastValueFrom(this.http.post('http://localhost:3000/reports', payload));
+      await lastValueFrom(this.http.post(`${API_CONFIG.reportApiBaseUrl}/reports`, payload));
     } catch (error) {
       console.error('Failed to save template to DB', error);
       throw error;
@@ -498,14 +499,16 @@ export class TemplateService {
   }
 
   async loadTemplateFromDb(id: string): Promise<void> {
+    const url = `${API_CONFIG.reportApiBaseUrl}/reports/${id}`;
+    console.log('TemplateService: Attempting to load template from:', url);
     try {
-      const report: any = await lastValueFrom(this.http.get(`http://localhost:3000/reports/${id}`));
+      const report: any = await lastValueFrom(this.http.get(url));
       if (report && report.data) {
         this.currentReportId.set(report.id);
         this.setTemplate(report.data);
       }
     } catch (error) {
-      console.error('Failed to load template from DB', error);
+      console.error('TemplateService: Failed to load template from DB', error);
       throw error;
     }
   }
@@ -518,7 +521,7 @@ export class TemplateService {
     };
     
     try {
-      await lastValueFrom(this.http.put(`http://localhost:3000/reports/${id}`, payload));
+      await lastValueFrom(this.http.put(`${API_CONFIG.reportApiBaseUrl}/reports/${id}`, payload));
     } catch (error) {
       console.error('Failed to update template in DB', error);
       throw error;

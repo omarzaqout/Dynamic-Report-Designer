@@ -20,6 +20,33 @@ export class DataService {
 
   data$: Observable<ReportData[]> = this.dataSubject.asObservable();
 
+  setData(data: any): Dataset[] {
+    this.rawData = data;
+    this.rawResponse.set(data);
+    
+    const datasets: Dataset[] = [];
+    const isRootArray = Array.isArray(data);
+    
+    datasets.push({
+      name: isRootArray ? 'Default (Full Context)' : 'Document Detail (Root)',
+      path: '',
+      sample: isRootArray ? data[0] : data,
+      count: isRootArray ? data.length : 1
+    });
+
+    this.findDatasets(data, '', datasets);
+    this.datasets.set(datasets);
+
+    // Only reset if current selection is invalid
+    const current = this.activeDataset();
+    const exists = datasets.find(d => d.path === current?.path);
+    if (!exists) {
+      this.selectDataset(datasets[0]);
+    }
+
+    return datasets;
+  }
+
   async getData(endpoint: string): Promise<Dataset[]> {
     const response = await fetch(endpoint);
     if (!response.ok) throw new Error(`HTTP error! status: status: ${response.status}`);

@@ -12,5 +12,9 @@ export const routes: Routes = [
   {
     path: 'designer/:id',
     loadComponent: () => import('./features/designer/designer.component').then(m => m.DesignerComponent),
+  },
+  {
+    path: 'print/:id/:docentry/:stageId',
+    loadComponent: () => import('./features/print/print.component').then(m => m.PrintComponent),
   }
 ];
