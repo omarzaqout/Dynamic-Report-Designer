@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_CONFIG } from '../../core/config/api.config';
 
 interface Report {
   id: string;
@@ -25,7 +26,7 @@ export class TemplatesComponent implements OnInit {
   templates$: Observable<Report[]> | undefined;
 
   ngOnInit(): void {
-    this.templates$ = this.http.get<Report[]>('http://localhost:3000/reports');
+    this.templates$ = this.http.get<Report[]>(`${API_CONFIG.reportApiBaseUrl}/reports`);
   }
 
   createNewTemplate(): void {
@@ -36,10 +37,9 @@ export class TemplatesComponent implements OnInit {
     this.router.navigate(['/designer', id]);
   }
 
-  testPrint(): void {
-    // Sample docentry and stageId
+  testPrint(id: string): void {
     const docentry = '1478';
     const stageId = '3';
-    window.open(`http://localhost:3000/reports/print/${docentry}/${stageId}`, '_blank');
+    window.open(`${API_CONFIG.reportApiBaseUrl}/reports/print/${id}/${docentry}/${stageId}`, '_blank');
   }
 }
