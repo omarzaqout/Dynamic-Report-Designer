@@ -322,7 +322,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     const visibleColumns = this.visibleColumnIndexes();
     const result: Array<{ colIndex: number; left: number }> = [];
     let offset = 0;
-    for (let i = 0; i < visibleColumns.length - 1; i += 1) {
+    for (let i = 0; i < visibleColumns.length; i += 1) { // Changed to include last column
       const colIndex = visibleColumns[i];
       offset += this.columnWidth(colIndex);
       result.push({ colIndex, left: offset });
@@ -334,7 +334,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     const rows = this.tableRowIndexes();
     const result: Array<{ rowIndex: number; top: number }> = [];
     let offset = 0;
-    for (let i = 0; i < rows.length - 1; i += 1) {
+    for (let i = 0; i < rows.length; i += 1) { // Changed to include last row
       const rowIndex = rows[i];
       offset += this.rowHeight(rowIndex);
       result.push({ rowIndex, top: offset });
