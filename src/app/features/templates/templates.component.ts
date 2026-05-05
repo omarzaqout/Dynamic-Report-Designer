@@ -1,8 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { API_CONFIG } from '../../core/config/api.config';
 
 interface Report {
@@ -23,14 +22,16 @@ export class TemplatesComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   
-  templates$: Observable<Report[]> | undefined;
+  templates = signal<Report[]>([]);
 
   ngOnInit(): void {
     this.loadTemplates();
   }
 
   loadTemplates(): void {
-    this.templates$ = this.http.get<Report[]>(`${API_CONFIG.reportApiBaseUrl}/reports`);
+    this.http.get<Report[]>(`${API_CONFIG.reportApiBaseUrl}/reports`).subscribe(data => {
+      this.templates.set(data);
+    });
   }
 
   createNewTemplate(): void {
@@ -49,13 +50,16 @@ export class TemplatesComponent implements OnInit {
 
   deleteTemplate(id: string): void {
     if (confirm('Are you sure you want to delete this template?')) {
+      // Optimistic update: remove from UI immediately
+      const currentTemplates = this.templates();
+      this.templates.set(currentTemplates.filter(t => t.id !== id));
+
       this.http.delete(`${API_CONFIG.reportApiBaseUrl}/reports/${id}`).subscribe({
-        next: () => {
-          this.loadTemplates();
-        },
         error: (err) => {
           alert('Failed to delete template');
           console.error(err);
+          // Revert if failed
+          this.loadTemplates();
         }
       });
     }
