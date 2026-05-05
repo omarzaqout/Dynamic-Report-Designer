@@ -108,21 +108,19 @@ export class PreviewPanelComponent {
     for (const el of sorted) {
       const originalHeight = this.getElementOriginalHeight(el, section);
       let currentElOffset = 0;
-      // SMART OFFSET (Push & Pull): 
-      // Maintains the design's "Visual Proximity" by expanding or shrinking gaps 
-      // based on the actual rendered content of elements above.
       for (const processed of result) {
         const actualH = this.getElementActualHeight(processed);
         const origH = processed.originalHeight;
 
-        // If this element was originally positioned below the processed element
         if (processed.y + origH <= el.y + 2) {
-          // Add the delta (positive if grew, negative if shrank)
-          currentElOffset += (actualH - origH);
+          let delta = actualH - origH;
+            if (processed.type !== 'table' && delta < 0) {
+            delta = 0;
+          }
+          currentElOffset += delta;
         }
       }
 
-      // Final Rendered Y = Original Y + Accumulated Smart Offset
       const renderedY = Math.round(el.y + currentElOffset);
       let printMarginTop = 0;
 
@@ -195,37 +193,21 @@ export class PreviewPanelComponent {
       const bottomY = el.renderedY + elHeight;
       if (bottomY > maxContentY) maxContentY = bottomY;
     }
-    return Math.max(section.height, maxContentY);
+    return Math.max(20, maxContentY);
   }
 
   print(): void {
     window.print();
   }
 
-  /**
-   * For center/right aligned text/field elements, estimate a min-width based on the
-   * template placeholder (e.g. {{stageName}}) so the preview box is at least as
-   * wide as the designer's box — ensuring text-align works regardless of value length.
-   * The result is capped to the available page width to prevent overflowing into neighbors.
-   */
   getTextElementMinWidth(el: any, section: RenderedSection): number | null {
-    // Only apply to text/field elements that have explicit center or right alignment
-    if (el.type === 'table' || el.type === 'image') return null;
-    if (!el.style?.textAlign || el.style.textAlign === 'left') return null;
-
-    // If the designer stored an explicit width, use it directly
     if (el.size?.width) return Math.min(el.size.width, 794 - el.x);
-
-    // Find the original template element to read the placeholder content (e.g. {{stageName}})
     const templateEl = section.templateSection?.elements?.find((e: any) => e.id === el.id);
     const placeholder = templateEl?.content || '';
     if (!placeholder) return null;
-
-    // Approximate character width: ~0.6 × fontSize per character (matches most fonts)
     const fontSize = el.style.fontSize || 12;
     const estimated = Math.max(60, placeholder.length * fontSize * 0.6);
 
-    // Cap to available space so we never overflow into adjacent elements
     return Math.min(estimated, 794 - el.x);
   }
 
@@ -259,13 +241,10 @@ export class PreviewPanelComponent {
 
     for (let i = 0; i < rowCells.length; i++) {
       const cell = rowCells[i];
-      // If content exists, we measure it. 
-      // We check if whiteSpace is 'normal' (wrapping enabled) or if it's explicitly requested.
       const canWrap = cell.style?.whiteSpace === 'normal';
       
       if (cell.content) {
         const width = this.columnWidth(table, i);
-        // Ensure we pass the same whiteSpace as in the HTML template
         const cellStyle = { 
           ...cell.style, 
           whiteSpace: cell.style?.whiteSpace ?? 'normal' 
