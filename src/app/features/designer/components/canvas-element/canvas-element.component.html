@@ -75,6 +75,8 @@
                       (dragover)="onCellDragOver($event, rowIndex, colIndex)"
                       (dragleave)="onCellDragLeave($event, rowIndex, colIndex)"
                       (drop)="onCellDrop($event, rowIndex, colIndex)"
+                      (mousedown)="onCellMouseDown($event, rowIndex, colIndex)"
+                      (click)="$event.stopPropagation()"
                       (dblclick)="onCellDblClick($event, rowIndex, colIndex)"
                       [class.cell-drag-over]="activeCellDrop()?.row === rowIndex && activeCellDrop()?.col === colIndex"
                       [class.cell-focused]="focusedCell()?.elementId === element.id && focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"

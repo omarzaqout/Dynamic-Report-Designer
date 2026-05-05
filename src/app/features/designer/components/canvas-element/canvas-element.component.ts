@@ -464,6 +464,14 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     }
   }
 
+  onCellMouseDown(event: MouseEvent, row: number, col: number): void {
+    event.stopPropagation();
+    // Select the table element first
+    this.templateService.selectElement(this.element.id);
+    // Then focus the specific cell
+    this.templateService.setFocusedTableCell(this.element.id, row, col);
+  }
+
   onCellDblClick(event: MouseEvent, row: number, col: number): void {
     event.stopPropagation();
     

@@ -7,50 +7,50 @@
   @if (activeElement(); as el) {
   <div class="props-content">
     @if (isMultiSelect()) {
-      <div class="multi-select-header" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 20px;">&#9745;</span>
-        <div>
-          <div style="font-weight: 700; color: #1e40af; font-size: 13px;">{{ selectedElementIds().length }} Elements</div>
-          <div style="font-size: 10px; color: #3b82f6;">Applying styles to all</div>
-        </div>
-        <button (click)="deleteSelected()" style="margin-left: auto; background: #fee2e2; border: 1px solid #fecaca; color: #ef4444; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer;">Delete All</button>
+    <div class="multi-select-header"
+      style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 20px;">&#9745;</span>
+      <div>
+        <div style="font-weight: 700; color: #1e40af; font-size: 13px;">{{ selectedElementIds().length }} Elements</div>
+        <div style="font-size: 10px; color: #3b82f6;">Applying styles to all</div>
       </div>
+      <button (click)="deleteSelected()"
+        style="margin-left: auto; background: #fee2e2; border: 1px solid #fecaca; color: #ef4444; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer;">Delete
+        All</button>
+    </div>
     } @else {
-      <div class="prop-section">
-        <div class="prop-section-title">Element Info</div>
-        <div class="prop-row">
-          <label>Type</label>
-          <span class="badge-text">{{ el.type }}</span>
-        </div>
-        @if (el.boundField) {
-        <div class="prop-row">
-          <label>Bound Field</label>
-          <span class="badge-field">{{ el.boundField }}</span>
-        </div>
-        }
-        <div class="prop-row">
-          <label>Section</label>
-          <span class="badge-section">{{ sectionLabel() }}</span>
-        </div>
+    <div class="prop-section">
+      <div class="prop-section-title">Element Info</div>
+      <div class="prop-row">
+        <label>Type</label>
+        <span class="badge-text">{{ el.type }}</span>
       </div>
+      @if (el.boundField) {
+      <div class="prop-row">
+        <label>Bound Field</label>
+        <span class="badge-field">{{ el.boundField }}</span>
+      </div>
+      }
+      <div class="prop-row">
+        <label>Section</label>
+        <span class="badge-section">{{ sectionLabel() }}</span>
+      </div>
+    </div>
     }
 
-    <!-- GUARANTEED CELL STYLE SECTION -->
-    @if (!isMultiSelect() && el.type === 'table' && el.table) {
+    @if (!isMultiSelect() && el.type === 'table' && el.table && focusedCell()) {
+    @let focus = focusedCell()!;
     <div class="prop-section cell-style-box"
-      style="background: #fffbeb; border: 2px solid #fbbf24; margin: 12px; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-      <div class="prop-section-title"
-        style="color: #92400e; margin-bottom: 12px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">Cell
-        Specific Styling</div>
-
-      @if (focusedCell(); as focus) {
+      style="border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 12px;">
+      <div class="prop-section-title">Cell Specific Styling</div>
+      
       <div
-        style="font-size: 10px; font-weight: 800; background: #92400e; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px;">
+        style="font-size: 10px; font-weight: 700; color: #3b82f6; margin-bottom: 10px;">
         Editing Cell R{{ focus.row + 1 }} : C{{ focus.col + 1 }}
       </div>
 
       <div class="prop-row">
-        <label style="color: #92400e; font-weight: 700;">Font Type</label>
+        <label>Font Type</label>
         <select class="prop-select"
           [value]="el.table.cells[focus.row][focus.col].style?.fontFamily || el.style.fontFamily"
           (change)="onTableCellStyleChange({ fontFamily: $any($event.target).value })">
@@ -61,7 +61,7 @@
       </div>
 
       <div class="prop-row">
-        <label style="color: #92400e; font-weight: 700;">Size & Color</label>
+        <label>Size & Color</label>
         <div style="display: flex; gap: 8px; align-items: center;">
           <div class="stepper">
             <button
@@ -78,7 +78,7 @@
       </div>
 
       <div class="prop-row">
-        <label style="color: #92400e; font-weight: 700;">Format</label>
+        <label>Format</label>
         <div class="toggle-group">
           <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold'"
             (click)="onTableCellStyleChange({ fontWeight: el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold' ? 'normal' : 'bold' })">B</button>
@@ -91,7 +91,7 @@
       </div>
 
       <div class="prop-row">
-        <label style="color: #92400e; font-weight: 700;">Align X</label>
+        <label>Align X</label>
         <div class="toggle-group">
           <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'left'"
             (click)="onTableCellStyleChange({ textAlign: 'left' })">L</button>
@@ -103,13 +103,16 @@
       </div>
 
       <div class="prop-row">
-        <label style="color: #92400e; font-weight: 700;">Align Y</label>
+        <label>Align Y</label>
         <div class="toggle-group">
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'top'"
+          <button class="toggle-btn"
+            [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'top'"
             (click)="onTableCellStyleChange({ verticalAlign: 'top' })" title="Top">T</button>
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'middle'"
+          <button class="toggle-btn"
+            [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'middle'"
             (click)="onTableCellStyleChange({ verticalAlign: 'middle' })" title="Middle">M</button>
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'bottom'"
+          <button class="toggle-btn"
+            [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'bottom'"
             (click)="onTableCellStyleChange({ verticalAlign: 'bottom' })" title="Bottom">B</button>
         </div>
       </div>
@@ -218,13 +221,15 @@
       <div class="prop-section-title"
         style="color: #92400e; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">
         Cell Logic & Transformation</div>
-      
+
       <div class="prop-col" style="margin-bottom: 8px;">
         <label style="color: #92400e; font-weight: 700; font-size: 11px;">Icon (CSS Class)</label>
         <div style="display: flex; gap: 4px;">
-          <input type="text" class="prop-input" [value]="el.table.cells[focus.row][focus.col].icon || ''" 
-            (input)="onTableCellIconChange($event)" placeholder="e.g. fas fa-user" style="border-color: #fde68a; background: #fff;" />
-          <div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px;">
+          <input type="text" class="prop-input" [value]="el.table.cells[focus.row][focus.col].icon || ''"
+            (input)="onTableCellIconChange($event)" placeholder="e.g. fas fa-user"
+            style="border-color: #fde68a; background: #fff;" />
+          <div
+            style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px;">
             <i [class]="el.table.cells[focus.row][focus.col].icon || 'fas fa-question'" style="color: #92400e;"></i>
           </div>
         </div>
@@ -232,7 +237,7 @@
 
       <div class="prop-col" style="margin-bottom: 8px;">
         <label style="color: #92400e; font-weight: 700; font-size: 11px;">Aggregation</label>
-        <select class="prop-select" [value]="el.table.cells[focus.row][focus.col].aggregation || 'none'" 
+        <select class="prop-select" [value]="el.table.cells[focus.row][focus.col].aggregation || 'none'"
           (change)="onTableCellAggregationChange($event)" style="border-color: #fde68a; background: #fff;">
           <option value="none">None</option>
           <option value="sum">Sum</option>
@@ -248,34 +253,40 @@
         <label style="color: #92400e; font-weight: 700; font-size: 11px; margin: 0;">Filter Conditions (AND)</label>
         <div class="conditions-list">
           @for (cond of el.table.cells[focus.row][focus.col].conditions || []; track $index) {
-            <div class="condition-item">
-              <button class="condition-remove" (click)="removeTableCellCondition($index)">&times;</button>
-              <select class="prop-select" style="height: 22px; font-size: 10px; margin-bottom: 6px; border-color: #fde68a;" 
-                [(ngModel)]="cond.field" (ngModelChange)="updateTableCellCondition($index, cond)">
-                <option value="">Select Field</option>
-                @for (f of filteredLeafFields(); track f.key) {
-                  <option [value]="f.key">{{ f.label }}</option>
-                }
+          <div class="condition-item">
+            <button class="condition-remove" (click)="removeTableCellCondition($index)">&times;</button>
+            <select class="prop-select"
+              style="height: 22px; font-size: 10px; margin-bottom: 6px; border-color: #fde68a;" [(ngModel)]="cond.field"
+              (ngModelChange)="updateTableCellCondition($index, cond)">
+              <option value="">Select Field</option>
+              @for (f of filteredLeafFields(); track f.key) {
+              <option [value]="f.key">{{ f.label }}</option>
+              }
+            </select>
+            <div style="display: flex; gap: 4px;">
+              <select class="prop-select" style="height: 22px; font-size: 10px; flex: 1; border-color: #fde68a;"
+                [(ngModel)]="cond.operator" (ngModelChange)="updateTableCellCondition($index, cond)">
+                <option value="==">==</option>
+                <option value="!=">!=</option>
+                <option value=">">&gt;</option>
+                <option value="<">&lt;</option>
+                <option value=">=">&gt;=</option>
+                <option value="<=">&lt;=</option>
+                <option value="contains">contains</option>
               </select>
-              <div style="display: flex; gap: 4px;">
-                <select class="prop-select" style="height: 22px; font-size: 10px; flex: 1; border-color: #fde68a;" 
-                  [(ngModel)]="cond.operator" (ngModelChange)="updateTableCellCondition($index, cond)">
-                  <option value="==">==</option>
-                  <option value="!=">!=</option>
-                  <option value=">">&gt;</option>
-                  <option value="<">&lt;</option>
-                  <option value=">=">&gt;=</option>
-                  <option value="<=">&lt;=</option>
-                  <option value="contains">contains</option>
-                </select>
-                <input type="text" class="prop-input" style="height: 22px; font-size: 10px; flex: 2; border-color: #fde68a;" 
-                  [(ngModel)]="cond.value" (ngModelChange)="updateTableCellCondition($index, cond)" placeholder="Val" />
-              </div>
+              <input type="text" class="prop-input"
+                style="height: 22px; font-size: 10px; flex: 2; border-color: #fde68a;" [(ngModel)]="cond.value"
+                (ngModelChange)="updateTableCellCondition($index, cond)" placeholder="Val" />
             </div>
+          </div>
           } @empty {
-            <div class="hint-text" style="font-style: italic; text-align: center; padding: 4px; border: 1px dashed #fde68a; border-radius: 4px;">No conditions added.</div>
+          <div class="hint-text"
+            style="font-style: italic; text-align: center; padding: 4px; border: 1px dashed #fde68a; border-radius: 4px;">
+            No conditions added.</div>
           }
-          <button (click)="addTableCellCondition()" style="width: 100%; font-size: 9px; padding: 4px; background: #fff; color: #92400e; border: 1px dashed #92400e; border-radius: 4px; cursor: pointer; font-weight: 700;">+ Add New Condition</button>
+          <button (click)="addTableCellCondition()"
+            style="width: 100%; font-size: 9px; padding: 4px; background: #fff; color: #92400e; border: 1px dashed #92400e; border-radius: 4px; cursor: pointer; font-weight: 700;">+
+            Add New Condition</button>
         </div>
       </div>
 
@@ -287,13 +298,7 @@
           style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #92400e; background: #92400e; color: #fff; border-radius: 4px;">Finish
           Editing</button>
       </div>
-      } @else {
-      <div style="padding: 20px; text-align: center; border: 1px dashed #fbbf24; border-radius: 8px; background: #fff;">
-        <div style="font-size: 18px; margin-bottom: 4px;">&#9732;</div>
-        <div style="font-size: 11px; color: #92400e; font-weight: 600;">Double-click a cell below</div>
-        <div style="font-size: 9px; color: #b45309;">to edit its individual style</div>
-      </div>
-      }
+
     </div>
     }
 
@@ -324,11 +329,12 @@
       <!-- FIELD DATA LOGIC -->
       <div class="prop-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
         <div class="prop-section-title">Data Logic & Transformation</div>
-        
+
         <div class="prop-col" style="margin-bottom: 12px;">
           <label class="prop-label">Icon (CSS Class)</label>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="text" class="prop-input" [value]="el.icon || ''" (input)="onIconChange($event)" placeholder="e.g. fas fa-user" />
+            <input type="text" class="prop-input" [value]="el.icon || ''" (input)="onIconChange($event)"
+              placeholder="e.g. fas fa-user" />
             <div class="icon-preview" [class.active]="el.icon">
               <i [class]="el.icon || 'fas fa-question'"></i>
             </div>
@@ -352,34 +358,38 @@
           <label class="prop-label">Filter Conditions (AND)</label>
           <div class="conditions-list">
             @for (cond of el.conditions || []; track $index) {
-              <div class="condition-item">
-                <button class="condition-remove" (click)="removeCondition($index)">&times;</button>
-                <select class="prop-select" style="height: 22px; font-size: 10px; margin-bottom: 6px;" 
-                  [(ngModel)]="cond.field" (ngModelChange)="updateCondition($index, cond)">
-                  <option value="">Select Field</option>
-                  @for (f of filteredLeafFields(); track f.key) {
-                    <option [value]="f.key">{{ f.label }}</option>
-                  }
+            <div class="condition-item">
+              <button class="condition-remove" (click)="removeCondition($index)">&times;</button>
+              <select class="prop-select" style="height: 22px; font-size: 10px; margin-bottom: 6px;"
+                [(ngModel)]="cond.field" (ngModelChange)="updateCondition($index, cond)">
+                <option value="">Select Field</option>
+                @for (f of filteredLeafFields(); track f.key) {
+                <option [value]="f.key">{{ f.label }}</option>
+                }
+              </select>
+              <div style="display: flex; gap: 4px;">
+                <select class="prop-select" style="height: 22px; font-size: 10px; flex: 1;" [(ngModel)]="cond.operator"
+                  (ngModelChange)="updateCondition($index, cond)">
+                  <option value="==">==</option>
+                  <option value="!=">!=</option>
+                  <option value=">">&gt;</option>
+                  <option value="<">&lt;</option>
+                  <option value=">=">&gt;=</option>
+                  <option value="<=">&lt;=</option>
+                  <option value="contains">contains</option>
                 </select>
-                <div style="display: flex; gap: 4px;">
-                  <select class="prop-select" style="height: 22px; font-size: 10px; flex: 1;" 
-                    [(ngModel)]="cond.operator" (ngModelChange)="updateCondition($index, cond)">
-                    <option value="==">==</option>
-                    <option value="!=">!=</option>
-                    <option value=">">&gt;</option>
-                    <option value="<">&lt;</option>
-                    <option value=">=">&gt;=</option>
-                    <option value="<=">&lt;=</option>
-                    <option value="contains">contains</option>
-                  </select>
-                  <input type="text" class="prop-input" style="height: 22px; font-size: 10px; flex: 2;" 
-                    [(ngModel)]="cond.value" (ngModelChange)="updateCondition($index, cond)" placeholder="Value" />
-                </div>
+                <input type="text" class="prop-input" style="height: 22px; font-size: 10px; flex: 2;"
+                  [(ngModel)]="cond.value" (ngModelChange)="updateCondition($index, cond)" placeholder="Value" />
               </div>
+            </div>
             } @empty {
-              <div class="hint-text" style="font-style: italic; text-align: center; padding: 6px; border: 1px dashed #e2e8f0; border-radius: 6px;">No filters defined.</div>
+            <div class="hint-text"
+              style="font-style: italic; text-align: center; padding: 6px; border: 1px dashed #e2e8f0; border-radius: 6px;">
+              No filters defined.</div>
             }
-            <button (click)="addCondition()" style="width: 100%; font-size: 9px; padding: 6px; background: #fff; color: #3b82f6; border: 1px dashed #3b82f6; border-radius: 6px; cursor: pointer; font-weight: 700;">+ Add Filter Condition</button>
+            <button (click)="addCondition()"
+              style="width: 100%; font-size: 9px; padding: 6px; background: #fff; color: #3b82f6; border: 1px dashed #3b82f6; border-radius: 6px; cursor: pointer; font-weight: 700;">+
+              Add Filter Condition</button>
           </div>
         </div>
       </div>
@@ -652,23 +662,23 @@
     }
 
     @if (!isMultiSelect()) {
-      <div class="prop-section">
-        <div class="prop-section-title">Position</div>
-        <div class="prop-row">
-          <label>X</label>
-          <input type="number" class="prop-number" [value]="el.position.x" (change)="onXChange($event)" min="0" />
-        </div>
-        <div class="prop-row">
-          <label>Y</label>
-          <input type="number" class="prop-number" [value]="el.position.y" (change)="onYChange($event)" min="0" />
-        </div>
+    <div class="prop-section">
+      <div class="prop-section-title">Position</div>
+      <div class="prop-row">
+        <label>X</label>
+        <input type="number" class="prop-number" [value]="el.position.x" (change)="onXChange($event)" min="0" />
       </div>
+      <div class="prop-row">
+        <label>Y</label>
+        <input type="number" class="prop-number" [value]="el.position.y" (change)="onYChange($event)" min="0" />
+      </div>
+    </div>
 
-      <div class="danger-zone">
-        <button class="delete-btn" (click)="deleteElement()">
-          &#128465; Delete Element
-        </button>
-      </div>
+    <div class="danger-zone">
+      <button class="delete-btn" (click)="deleteElement()">
+        &#128465; Delete Element
+      </button>
+    </div>
     }
   </div>
   } @else {
@@ -683,19 +693,23 @@
       <div class="alignment-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div class="prop-col">
           <label class="prop-label">Top</label>
-          <input type="number" class="prop-number" [value]="templateValue().margin?.top || 0" (change)="onMarginChange('top', $event)" />
+          <input type="number" class="prop-number" [value]="templateValue().margin?.top || 0"
+            (change)="onMarginChange('top', $event)" />
         </div>
         <div class="prop-col">
           <label class="prop-label">Bottom</label>
-          <input type="number" class="prop-number" [value]="templateValue().margin?.bottom || 0" (change)="onMarginChange('bottom', $event)" />
+          <input type="number" class="prop-number" [value]="templateValue().margin?.bottom || 0"
+            (change)="onMarginChange('bottom', $event)" />
         </div>
         <div class="prop-col">
           <label class="prop-label">Left</label>
-          <input type="number" class="prop-number" [value]="templateValue().margin?.left || 0" (change)="onMarginChange('left', $event)" />
+          <input type="number" class="prop-number" [value]="templateValue().margin?.left || 0"
+            (change)="onMarginChange('left', $event)" />
         </div>
         <div class="prop-col">
           <label class="prop-label">Right</label>
-          <input type="number" class="prop-number" [value]="templateValue().margin?.right || 0" (change)="onMarginChange('right', $event)" />
+          <input type="number" class="prop-number" [value]="templateValue().margin?.right || 0"
+            (change)="onMarginChange('right', $event)" />
         </div>
       </div>
       <div class="hint-text" style="margin-top: 10px;">Set global margins for the entire report canvas.</div>
@@ -705,9 +719,11 @@
       <div class="prop-section-title">Data Source Configuration</div>
       <div class="prop-col">
         <label class="prop-label">API Endpoint URL</label>
-        <textarea class="prop-textarea" [value]="templateValue().dataSourceUrl || ''" (input)="onDataSourceUrlChange($event)" rows="2" placeholder="http://api.example.com/data"></textarea>
+        <textarea class="prop-textarea" [value]="templateValue().dataSourceUrl || ''"
+          (input)="onDataSourceUrlChange($event)" rows="2" placeholder="http://api.example.com/data"></textarea>
       </div>
-      <div class="hint-text" style="margin-top: 6px; font-size: 9px; line-height: 1.3;">This URL will be saved with the template to help remember the data source.</div>
+      <div class="hint-text" style="margin-top: 6px; font-size: 9px; line-height: 1.3;">This URL will be saved with the
+        template to help remember the data source.</div>
     </div>
 
     <div style="margin-top: 40px; text-align: center; color: #94a3b8;">
