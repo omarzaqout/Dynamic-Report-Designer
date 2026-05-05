@@ -34,6 +34,9 @@
           <button class="test-print-btn" (click)="testPrint(template.id); $event.stopPropagation()">
             Print PDF
           </button>
+          <button class="delete-btn" (click)="deleteTemplate(template.id); $event.stopPropagation()" title="Delete Template">
+            <span>&#128465;</span>
+          </button>
         </div>
       </div>
 
