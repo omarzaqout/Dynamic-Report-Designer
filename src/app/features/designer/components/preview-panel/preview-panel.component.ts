@@ -60,13 +60,12 @@ export class PreviewPanelComponent {
       if (bands.length > 0) {
         const lastBand = bands[bands.length - 1];
         const bTop = lastBand.renderedY;
+        const bBottom = bTop + lastBand.height;
 
-        // Only group elements if they start at roughly the same vertical position (Side-by-Side)
-        // Sequential elements (one below the other) MUST be in separate bands so that 
-        // if the top one grows, it pushes the entire next band down in flow.
-        if (Math.abs(elTop - bTop) <= 4) {
+        if (elTop < bBottom) {
           lastBand.elements.push(el);
-          lastBand.height = Math.max(lastBand.height, elHeight);
+          const elBottomRel = (elTop - bTop) + elHeight;
+          lastBand.height = Math.max(lastBand.height, elBottomRel);
           continue;
         }
       }
