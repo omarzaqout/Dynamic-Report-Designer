@@ -8,7 +8,7 @@
     <div class="api-input-group">
       <label>API Endpoint</label>
       <div class="input-row">
-        <input type="text" [value]="apiUrl()" (input)="apiUrl.set($any($event.target).value)" placeholder="Enter URL..."
+        <input type="text" [value]="apiUrl()" (input)="onUrlInput($any($event.target).value)" placeholder="Enter URL..."
           class="api-input" />
         <button (click)="loadData()" [disabled]="isLoading()" class="load-btn">
           {{ isLoading() ? '...' : 'Load' }}

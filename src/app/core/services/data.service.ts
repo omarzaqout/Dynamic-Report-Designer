@@ -14,6 +14,7 @@ export interface Dataset {
 export class DataService {
   private rawData: any = null;
   readonly rawResponse = signal<any>(null);
+  readonly lastUrl = signal<string | null>(null);
   private dataSubject = new BehaviorSubject<ReportData[]>([]);
   readonly datasets = signal<Dataset[]>([]);
   readonly activeDataset = signal<Dataset | null>(null);
@@ -53,6 +54,7 @@ export class DataService {
     const res = await response.json();
     this.rawData = res;
     this.rawResponse.set(res);
+    this.lastUrl.set(endpoint);
     
     const datasets: Dataset[] = [];
     const isRootArray = Array.isArray(res);
@@ -92,12 +94,10 @@ export class DataService {
     console.groupEnd();
     // ============================================================
 
-    // Only reset if current selection is invalid
+    // Refresh the current selection or default to the first one
     const current = this.activeDataset();
-    const exists = datasets.find(d => d.path === current?.path);
-    if (!exists) {
-      this.selectDataset(datasets[0]);
-    }
+    const match = datasets.find(d => d.path === current?.path);
+    this.selectDataset(match || datasets[0]);
 
     return datasets;
   }

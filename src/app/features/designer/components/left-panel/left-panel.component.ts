@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../../../core/services/data.service';
 import { TemplateService } from '../../../../core/services/template.service';
@@ -12,11 +12,31 @@ import { TemplateSection } from '../../../../core/models/template.model';
   templateUrl: './left-panel.component.html',
   styleUrl: './left-panel.component.css',
 })
-export class LeftPanelComponent {
+export class LeftPanelComponent implements OnInit {
   private dataService = inject(DataService);
   private templateService = inject(TemplateService);
 
+  constructor() {
+    // Automatically sync with template's URL
+    effect(() => {
+      const url = this.templateService.template().dataSourceUrl;
+      // Only sync if the signal is empty (initial load) or the template URL changed externally
+      if (url && url !== this.apiUrl()) {
+        this.apiUrl.set(url);
+        this.loadData();
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  ngOnInit(): void {}
+
   readonly apiUrl = signal('');
+
+  onUrlInput(value: string) {
+    this.apiUrl.set(value);
+    // Sync to template state immediately so it's not lost on view switch
+    this.templateService.updateDataSourceUrl(value);
+  }
   readonly isLoading = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
@@ -47,12 +67,27 @@ export class LeftPanelComponent {
   );
 
   async loadData() {
-    if (!this.apiUrl()) return;
+    if (!this.apiUrl() || this.isLoading()) return;
+
+    // Avoid redundant fetching if URL hasn't changed and data is already there
+    if (this.apiUrl() === this.dataService.lastUrl() && this.dataService.datasets().length > 0) {
+      return;
+    }
+
     this.isLoading.set(true);
     this.errorMsg.set(null);
     try {
-      await this.dataService.getData(this.apiUrl());
-      if (this.datasets().length === 0 && !this.activeDataset()) {
+      const datasets = await this.dataService.getData(this.apiUrl());
+      
+      const detailsSection = this.templateService.template().sections.find(s => s.type === 'details');
+      if (detailsSection?.datasetPath) {
+        const ds = datasets.find(d => d.path === detailsSection.datasetPath);
+        if (ds) {
+          this.dataService.selectDataset(ds);
+        }
+      }
+
+      if (datasets.length === 0 && !this.activeDataset()) {
         this.errorMsg.set('No datasets found in response');
       }
     } catch (err) {
