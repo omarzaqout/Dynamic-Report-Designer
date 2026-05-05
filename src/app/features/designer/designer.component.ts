@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LeftPanelComponent } from './components/left-panel/left-panel.component';
 import { CanvasComponent } from './components/canvas/canvas.component';
@@ -11,7 +12,7 @@ import { TemplateService } from '../../core/services/template.service';
 @Component({
   selector: 'app-designer',
   standalone: true,
-  imports: [CommonModule, LeftPanelComponent, CanvasComponent, RightPanelComponent, PreviewPanelComponent],
+  imports: [CommonModule, FormsModule, LeftPanelComponent, CanvasComponent, RightPanelComponent, PreviewPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './designer.component.html',
   styleUrl: './designer.component.css',
@@ -55,12 +56,23 @@ export class DesignerComponent implements OnInit {
     }
   }
 
+  get templateName(): string {
+    return this.templateService.templateValue.name || 'New Report';
+  }
+
+  set templateName(name: string) {
+    const updated = { ...this.templateService.templateValue, name };
+    this.templateService.setTemplate(updated);
+  }
+
   async saveToDb(): Promise<void> {
-    const name = prompt('Enter a name for this template:', this.templateService.templateValue.name || 'New Report');
-    if (!name) return;
+    if (!this.templateName.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
     
     try {
-      await this.templateService.saveTemplateToDb(name);
+      await this.templateService.saveTemplateToDb(this.templateName);
       alert('Template saved to database successfully!');
       this.router.navigate(['/']);
     } catch (error) {
@@ -71,15 +83,29 @@ export class DesignerComponent implements OnInit {
   async updateInDb(): Promise<void> {
     const id = this.currentReportId();
     if (!id) return;
-
-    const name = prompt('Confirm or change template name:', this.templateService.templateValue.name || 'Report');
-    if (!name) return;
+    if (!this.templateName.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
 
     try {
-      await this.templateService.updateTemplateInDb(id, name);
+      await this.templateService.updateTemplateInDb(id, this.templateName);
       alert('Template updated in database successfully!');
     } catch (error) {
       alert('Failed to update template');
+    }
+  }
+
+  async saveAs(): Promise<void> {
+    const newName = prompt('Enter a new name to save as:', this.templateName + ' (Copy)');
+    if (!newName) return;
+    
+    try {
+      await this.templateService.saveTemplateToDb(newName);
+      alert('Template saved as a new copy successfully!');
+      this.router.navigate(['/']);
+    } catch (error) {
+      alert('Failed to save template copy');
     }
   }
 

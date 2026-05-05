@@ -1,108 +1,111 @@
-    <div class="designer-host">
-      <header class="designer-header">
-        <div class="header-brand">
-          <button class="action-btn icon-btn" (click)="goToHome()" title="Back to Templates" style="margin-right: 12px;">
-            <span>&#8592;</span>
-          </button>
-          <div class="brand-logo">&#9638;</div>
-          <div class="brand-text">
-            <span class="brand-name">Dynamic Report Designer</span>
-            <span class="brand-sub">Template Engine</span>
-          </div>
-        </div>
-
-        <nav class="header-nav">
-          <button
-            class="nav-btn"
-            [class.active]="activeView() === 'design'"
-            (click)="setView('design')"
-          >
-            <span>&#9998;</span> Design
-          </button>
-          <button
-            class="nav-btn"
-            [class.active]="activeView() === 'preview'"
-            (click)="setView('preview')"
-          >
-            <span>&#9654;</span> Preview
-          </button>
-        </nav>
-
-        <div class="header-actions">
-          <div class="status-indicator">
-            <span class="status-dot"></span>
-            <span class="status-text">Draft Saved</span>
-          </div>
-
-          <div class="button-group">
-            @if (currentReportId()) {
-              <button class="action-btn icon-btn" (click)="updateInDb()" title="Update in Database" style="background-color: #3b82f6; color: white; border: none;">
-                <span>&#8635;</span> Update DB
-              </button>
-            } @else {
-              <button class="action-btn icon-btn" (click)="saveToDb()" title="Save to Database" style="background-color: #10b981; color: white; border: none;">
-                <span>&#128190;</span> Save DB
-              </button>
-            }
-            
-            <button class="action-btn icon-btn" (click)="exportTemplate()" title="Export JSON Template">
-              <span>&#10515;</span> Export
-            </button>
-            <button class="action-btn icon-btn" (click)="fileInput.click()" title="Import JSON Template">
-              <span>&#10514;</span> Import
-            </button>
-            <input #fileInput type="file" (change)="importTemplate($event)" accept=".json" style="display: none">
-            
-            <button class="action-btn icon-btn danger" (click)="resetTemplate()" title="Reset Canvas">
-              <span>&#8635;</span> Reset
-            </button>
-          </div>
-
-          <button class="action-btn primary" (click)="setView(activeView() === 'design' ? 'preview' : 'design')">
-            {{ activeView() === 'design' ? 'Live Preview' : 'Back to Design' }}
-          </button>
-        </div>
-      </header>
-
-      <div class="designer-body">
-        @if (activeView() === 'design') {
-          @if (showLeftPanel()) {
-            <aside class="left-sidebar" [style.width.px]="leftWidth()">
-              <app-left-panel />
-            </aside>
-            <div class="resizer" (mousedown)="onMouseDownLeft($event)"></div>
-          }
-
-          <main class="canvas-area">
-            <!-- Floating Sidebar Toggles -->
-            <button class="panel-toggle-tab left" (click)="toggleLeftPanel()" [title]="showLeftPanel() ? 'Hide Fields' : 'Show Fields'">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [style.transform]="showLeftPanel() ? 'rotate(0deg)' : 'rotate(180deg)'">
-                 <path d="M15 18l-6-6 6-6"></path>
-               </svg>
-            </button>
-
-            <button class="panel-toggle-tab right" (click)="toggleRightPanel()" [title]="showRightPanel() ? 'Hide Properties' : 'Show Properties'">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [style.transform]="showRightPanel() ? 'rotate(0deg)' : 'rotate(180deg)'">
-                 <path d="M9 18l6-6-6-6"></path>
-               </svg>
-            </button>
-
-            <app-canvas />
-          </main>
-
-          @if (showRightPanel()) {
-            <div class="resizer" (mousedown)="onMouseDownRight($event)"></div>
-            <aside class="right-sidebar" [style.width.px]="rightWidth()">
-              <app-right-panel />
-            </aside>
-          }
-        }
-
-        @if (activeView() === 'preview') {
-          <div class="preview-full">
-            <app-preview-panel />
-          </div>
-        }
+<div class="designer-host">
+  <header class="designer-header">
+    <div class="header-brand">
+      <button class="action-btn icon-btn" (click)="goToHome()" title="Back to Templates" style="margin-right: 12px;">
+        <span>&#8592;</span>
+      </button>
+      <div class="brand-logo">&#9638;</div>
+      <div class="brand-text">
+        <span class="brand-name">Dynamic Report Designer</span>
+        <span class="brand-sub">Template Engine</span>
       </div>
     </div>
-  
+
+    <nav class="header-nav">
+      <button class="nav-btn" [class.active]="activeView() === 'design'" (click)="setView('design')">
+        <span>&#9998;</span> Design
+      </button>
+      <button class="nav-btn" [class.active]="activeView() === 'preview'" (click)="setView('preview')">
+        <span>&#9654;</span> Preview
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="status-indicator" style="display: flex; align-items: center; gap: 8px; margin-right: 12px;">
+        <input type="text" [(ngModel)]="templateName" placeholder="Template Name" style="padding: 4px 8px; background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        color: #e2e8f0; font-size: 13px; min-width: 150px; outline: none;">
+      </div>
+
+      <div class="button-group">
+        @if (currentReportId()) {
+        <button class="action-btn icon-btn" (click)="updateInDb()" title="Update in Database"
+          style="background-color: #3b82f6; color: white; border: none;">
+          <span>&#8635;</span> Update DB
+        </button>
+        <button class="action-btn icon-btn" (click)="saveAs()" title="Save As New Copy"
+          style="background-color: #10b981; color: white; border: none;">
+          <span>&#128190;</span> Save As
+        </button>
+        } @else {
+        <button class="action-btn icon-btn" (click)="saveToDb()" title="Save to Database"
+          style="background-color: #10b981; color: white; border: none;">
+          <span>&#128190;</span> Save DB
+        </button>
+        }
+
+        <button class="action-btn icon-btn" (click)="exportTemplate()" title="Export JSON Template">
+          <span>&#10515;</span> Export
+        </button>
+        <button class="action-btn icon-btn" (click)="fileInput.click()" title="Import JSON Template">
+          <span>&#10514;</span> Import
+        </button>
+        <input #fileInput type="file" (change)="importTemplate($event)" accept=".json" style="display: none">
+
+        <button class="action-btn icon-btn danger" (click)="resetTemplate()" title="Reset Canvas">
+          <span>&#8635;</span> Reset
+        </button>
+      </div>
+
+      <button class="action-btn primary" (click)="setView(activeView() === 'design' ? 'preview' : 'design')">
+        {{ activeView() === 'design' ? 'Live Preview' : 'Back to Design' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="designer-body">
+    @if (activeView() === 'design') {
+    @if (showLeftPanel()) {
+    <aside class="left-sidebar" [style.width.px]="leftWidth()">
+      <app-left-panel />
+    </aside>
+    <div class="resizer" (mousedown)="onMouseDownLeft($event)"></div>
+    }
+
+    <main class="canvas-area">
+      <!-- Floating Sidebar Toggles -->
+      <button class="panel-toggle-tab left" (click)="toggleLeftPanel()"
+        [title]="showLeftPanel() ? 'Hide Fields' : 'Show Fields'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" [style.transform]="showLeftPanel() ? 'rotate(0deg)' : 'rotate(180deg)'">
+          <path d="M15 18l-6-6 6-6"></path>
+        </svg>
+      </button>
+
+      <button class="panel-toggle-tab right" (click)="toggleRightPanel()"
+        [title]="showRightPanel() ? 'Hide Properties' : 'Show Properties'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" [style.transform]="showRightPanel() ? 'rotate(0deg)' : 'rotate(180deg)'">
+          <path d="M9 18l6-6-6-6"></path>
+        </svg>
+      </button>
+
+      <app-canvas />
+    </main>
+
+    @if (showRightPanel()) {
+    <div class="resizer" (mousedown)="onMouseDownRight($event)"></div>
+    <aside class="right-sidebar" [style.width.px]="rightWidth()">
+      <app-right-panel />
+    </aside>
+    }
+    }
+
+    @if (activeView() === 'preview') {
+    <div class="preview-full">
+      <app-preview-panel />
+    </div>
+    }
+  </div>
+</div>

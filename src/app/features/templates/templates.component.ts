@@ -26,6 +26,10 @@ export class TemplatesComponent implements OnInit {
   templates$: Observable<Report[]> | undefined;
 
   ngOnInit(): void {
+    this.loadTemplates();
+  }
+
+  loadTemplates(): void {
     this.templates$ = this.http.get<Report[]>(`${API_CONFIG.reportApiBaseUrl}/reports`);
   }
 
@@ -41,5 +45,19 @@ export class TemplatesComponent implements OnInit {
     const docentry = '1478';
     const stageId = '3';
     window.open(`${API_CONFIG.reportApiBaseUrl}/reports/print/${id}/${docentry}/${stageId}`, '_blank');
+  }
+
+  deleteTemplate(id: string): void {
+    if (confirm('Are you sure you want to delete this template?')) {
+      this.http.delete(`${API_CONFIG.reportApiBaseUrl}/reports/${id}`).subscribe({
+        next: () => {
+          this.loadTemplates();
+        },
+        error: (err) => {
+          alert('Failed to delete template');
+          console.error(err);
+        }
+      });
+    }
   }
 }
