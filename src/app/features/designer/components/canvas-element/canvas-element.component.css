@@ -27,6 +27,7 @@
     .el-text {
       pointer-events: none;
       display: block;
+      unicode-bidi: plaintext;
     }
 
     .resize-handles {
@@ -242,6 +243,7 @@
       vertical-align: top;
       transition: background 0.1s;
       position: relative;
+      unicode-bidi: plaintext;
     }
 
     .el-table td.cell-drag-over {
@@ -304,6 +306,7 @@
       resize: both;
       min-width: 100px;
       line-height: inherit;
+      unicode-bidi: plaintext;
     }
 
     .cell-edit-input {
@@ -320,6 +323,7 @@
       outline: none;
       box-sizing: border-box;
       z-index: 10;
+      unicode-bidi: plaintext;
     }
 
     .el-table td.cell-focused {
