@@ -239,28 +239,36 @@ export class PreviewPanelComponent {
     const rowCells = table.cells[rowIndex] || [];
     let maxHeight = baseHeight;
 
-    for (let i = 0; i < rowCells.length; i++) {
-      const cell = rowCells[i];
-      const canWrap = cell.style?.whiteSpace === 'normal';
-      
-      if (cell.content) {
-        const width = this.columnWidth(table, i);
-        const cellStyle = { 
-          ...cell.style, 
-          whiteSpace: cell.style?.whiteSpace ?? 'normal' 
-        };
-        
-        const measured = this.measureTextHeight(
-          cell.content, 
-          cellStyle, 
-          width, 
-          '1.3'
-        );
-        
-        const totalCellHeight = measured + 8;
-        if (totalCellHeight > maxHeight) {
-          maxHeight = totalCellHeight;
-        }
+    // Use visible columns to be precise, though measuring all is usually safe
+    const visibleCols = this.visibleColumnIndexes(table);
+
+    for (const colIndex of visibleCols) {
+      const cell = rowCells[colIndex];
+      if (!cell || !cell.content) continue;
+
+      const canWrap = (cell.style?.whiteSpace ?? 'normal') !== 'nowrap';
+      if (!canWrap) continue;
+
+      // Calculate available width for text (column width minus horizontal padding)
+      const hasPadding = !cell.imageUrl && !cell.isQRCode;
+      const horizontalPadding = hasPadding ? 12 : 0;
+      const availableWidth = Math.max(10, this.columnWidth(table, colIndex) - horizontalPadding);
+
+      const cellStyle = {
+        ...cell.style,
+        whiteSpace: cell.style?.whiteSpace ?? 'normal'
+      };
+
+      const measured = this.measureTextHeight(
+        cell.content,
+        cellStyle,
+        availableWidth,
+        '1.3'
+      );
+
+      const totalCellHeight = measured + (hasPadding ? 8 : 0);
+      if (totalCellHeight > maxHeight) {
+        maxHeight = totalCellHeight;
       }
     }
 
