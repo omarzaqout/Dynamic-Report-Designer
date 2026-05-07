@@ -150,12 +150,19 @@
           </div>
         }
         <div class="resize-handles">
-          <div class="handle tl"></div>
+          @if (element.type === 'table') {
+            <div class="handle tl move-handle" (mousedown)="onMoveHandleMouseDown($event)" title="Move Table"></div>
+          } @else {
+            <div class="handle tl"></div>
+          }
           <div class="handle tr"></div>
           <div class="handle bl"></div>
-          <div class="handle br resize-handle" (mousedown)="onResizeMouseDown($event)" title="Resize"></div>
+          @if (element.type === 'table') {
+            <div class="handle br table-resize-handle" (mousedown)="onResizeMouseDown($event)" title="Resize Table"></div>
+          } @else {
+            <div class="handle br resize-handle" (mousedown)="onResizeMouseDown($event)" title="Resize Element"></div>
+          }
         </div>
         <button class="delete-btn" (click)="onDelete($event)" title="Delete element">&#10005;</button>
       }
     </div>
-  

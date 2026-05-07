@@ -52,6 +52,8 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   private resizeRowIndex: number | null = null;
   private resizeStartColumnWidth = 0;
   private resizeStartRowHeight = 0;
+  private resizeStartColumnWidths: number[] = [];
+  private resizeStartRowHeights: number[] = [];
 
   private mouseMoveHandler!: (e: MouseEvent) => void;
   private mouseUpHandler!: (e: MouseEvent) => void;
@@ -124,6 +126,21 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     document.addEventListener('mouseup', this.mouseUpHandler);
   }
 
+  onMoveHandleMouseDown(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    this.templateService.selectElement(this.element.id);
+    
+    this.isDragging = true;
+    this.startMouseX = event.clientX;
+    this.startMouseY = event.clientY;
+    this.startElX = this.element.position.x;
+    this.startElY = this.element.position.y;
+    document.addEventListener('mousemove', this.mouseMoveHandler);
+    document.addEventListener('mouseup', this.mouseUpHandler);
+  }
+
   onResizeMouseDown(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -133,11 +150,10 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     this.startMouseY = event.clientY;
 
     if (this.element.type === 'table' && this.element.table) {
-      const visibleColumns = this.visibleColumnIndexes();
-      this.resizeColumnIndex = visibleColumns.length > 0 ? visibleColumns[visibleColumns.length - 1] : 0;
-      this.resizeRowIndex = Math.max(0, this.element.table.rows - 1);
-      this.resizeStartColumnWidth = this.columnWidth(this.resizeColumnIndex);
-      this.resizeStartRowHeight = this.rowHeight(this.resizeRowIndex);
+      this.resizeStartColumnWidths = this.element.table.columnSettings.map(c => c.width);
+      this.resizeStartRowHeights = this.element.table.rowHeights?.length === this.element.table.rows
+        ? [...this.element.table.rowHeights]
+        : Array.from({ length: this.element.table.rows }, () => 36);
       this.resizeMode = 'table-bounds';
     } else if (this.element.type === 'image') {
       const imgEl = this.elRef.nativeElement.querySelector('.el-image') as HTMLImageElement | null;
@@ -225,11 +241,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     if (this.resizeMode === 'table-bounds') {
       const dx = event.clientX - this.startMouseX;
       const dy = event.clientY - this.startMouseY;
-      
-      // Update start positions to be current after applying delta for frame-by-frame 
-      // or just use total delta and initial state. 
-      // Let's use movementX/Y for simplicity or total delta from start.
-      this.resizeTableUniformly(event.movementX, event.movementY);
+      this.resizeTableProportionally(dx, dy);
       return;
     }
 
@@ -366,29 +378,31 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     });
   }
 
-  private resizeTableUniformly(moveX: number, moveY: number): void {
+  private resizeTableProportionally(dx: number, dy: number): void {
+    if (!this.element.table) return;
     const CANVAS_WIDTH = 794;
-    this.updateTable((table) => {
-      // Scale columns uniformly
-      const visibleCols = this.visibleColumnIndexes();
-      if (visibleCols.length > 0) {
-        const currentTotal = visibleCols.reduce((sum, idx) => sum + table.columnSettings[idx].width, 0);
-        let effectiveMoveX = moveX;
-        
-        if (currentTotal + effectiveMoveX > CANVAS_WIDTH) {
-          effectiveMoveX = CANVAS_WIDTH - currentTotal;
-        }
 
-        const dxPerCol = effectiveMoveX / visibleCols.length;
-        visibleCols.forEach(idx => {
-          table.columnSettings[idx].width = Math.max(20, table.columnSettings[idx].width + dxPerCol);
-        });
-      }
-      // Scale rows uniformly
-      if (table.rows > 0) {
-        const dyPerRow = moveY / table.rows;
-        table.rowHeights = table.rowHeights.map(h => Math.max(16, h + dyPerRow));
-      }
+    this.updateTable((table) => {
+      // Scale columns
+      const visibleCols = this.visibleColumnIndexes();
+      const initialTotalWidth = visibleCols.reduce((sum, idx) => sum + this.resizeStartColumnWidths[idx], 0);
+      
+      // Don't overflow canvas
+      const maxPossibleWidth = CANVAS_WIDTH - this.element.position.x;
+      const newTotalWidth = Math.max(60, Math.min(maxPossibleWidth, initialTotalWidth + dx));
+      const widthScale = newTotalWidth / initialTotalWidth;
+
+      visibleCols.forEach(idx => {
+        table.columnSettings[idx].width = Math.max(20, Math.round(this.resizeStartColumnWidths[idx] * widthScale));
+      });
+
+      // Scale rows
+      const initialTotalHeight = this.resizeStartRowHeights.reduce((sum, h) => sum + h, 0);
+      const newTotalHeight = Math.max(30, initialTotalHeight + dy);
+      const heightScale = newTotalHeight / initialTotalHeight;
+
+      table.rowHeights = this.resizeStartRowHeights.map(h => Math.max(16, Math.round(h * heightScale)));
+      
       return table;
     });
   }
