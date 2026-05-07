@@ -118,7 +118,8 @@
                     [style.borderColor]="el.table.cells[rowIndex][colIndex].style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'">
                     <div class="cell-content-container"
                       [style.min-height.px]="rowHeight(el.table, rowIndex)"
-                      [style.align-items]="(el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'top' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
+                      [style.justify-content]="(el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'top' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
+                      [style.align-items]="(el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign) === 'left' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign) === 'right' ? 'flex-end' : 'center'"
                       [class.has-padding]="!el.table.cells[rowIndex][colIndex].imageUrl && !el.table.cells[rowIndex][colIndex].isQRCode">
                       @if (el.table.cells[rowIndex][colIndex].isQRCode) {
                       <img

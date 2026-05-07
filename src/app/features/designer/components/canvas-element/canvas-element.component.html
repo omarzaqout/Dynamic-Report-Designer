@@ -82,6 +82,8 @@
                       [class.cell-focused]="focusedCell()?.elementId === element.id && focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"
                     >
                       <div class="cell-content-container" 
+                           [style.justify-content]="(getTableRows()[rowIndex][colIndex].style?.verticalAlign ?? element.style.verticalAlign) === 'top' ? 'flex-start' : (getTableRows()[rowIndex][colIndex].style?.verticalAlign ?? element.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
+                           [style.align-items]="(getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign) === 'left' ? 'flex-start' : (getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign) === 'right' ? 'flex-end' : 'center'"
                            [class.has-padding]="!getTableRows()[rowIndex][colIndex].imageUrl && !getTableRows()[rowIndex][colIndex].isQRCode">
                         @if (editingCell?.row === rowIndex && editingCell?.col === colIndex && !getTableRows()[rowIndex][colIndex].imageUrl) {
                           <input
