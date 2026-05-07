@@ -76,7 +76,7 @@
     /* Table specific large BR handle */
     .handle.br.table-resize-handle {
       bottom: -7px;
-      right: -7px;
+      right: 0;
     }
 
     .move-handle {
@@ -110,7 +110,7 @@
 
     .handle.tl.move-handle {
       top: -22px;
-      left: -22px;
+      left: 0;
     }
 
     .resize-handle {

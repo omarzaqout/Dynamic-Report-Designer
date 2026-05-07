@@ -132,7 +132,7 @@
       background: #fff;
       border-left: 3px solid #e2e8f0;
       /* border-bottom: 1px solid #e2e8f0; */
-      overflow: hidden;
+      overflow: visible;
       transition: background 0.1s;
     }
 
