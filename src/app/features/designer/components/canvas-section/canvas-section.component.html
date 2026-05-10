@@ -39,6 +39,8 @@
           </div>
         }
         <div class="section-actions">
+          <button class="move-section-btn" (click)="onMoveSection('up', $event)" [disabled]="isFirstSection()" title="Move section up">&#9650;</button>
+          <button class="move-section-btn" (click)="onMoveSection('down', $event)" [disabled]="isLastSection()" title="Move section down">&#9660;</button>
           <button class="delete-section-btn" (click)="sectionDelete.emit(section.id); $event.stopPropagation()" title="Delete section">&#10005;</button>
         </div>
       </div>

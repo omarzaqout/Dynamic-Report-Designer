@@ -278,8 +278,28 @@ export class TemplateService {
       elements: [],
     };
     this._template.update((t) => {
-      const order: Record<string, number> = { reportHeader: 1, pageHeader: 2, details: 3, footer: 4 };
-      const newSections = [...t.sections, newSection].sort((a, b) => (order[a.type] || 99) - (order[b.type] || 99));
+      // Add to the end by default
+      const updated = { ...t, sections: [...t.sections, newSection] };
+      this.persistToLocalStorage(updated);
+      return updated;
+    });
+    this.pushToHistory();
+  }
+
+  moveSection(id: string, direction: 'up' | 'down'): void {
+    this._template.update((t) => {
+      const idx = t.sections.findIndex(s => s.id === id);
+      if (idx === -1) return t;
+      
+      const newSections = [...t.sections];
+      if (direction === 'up' && idx > 0) {
+        [newSections[idx], newSections[idx - 1]] = [newSections[idx - 1], newSections[idx]];
+      } else if (direction === 'down' && idx < newSections.length - 1) {
+        [newSections[idx], newSections[idx + 1]] = [newSections[idx + 1], newSections[idx]];
+      } else {
+        return t; // No movement possible
+      }
+      
       const updated = { ...t, sections: newSections };
       this.persistToLocalStorage(updated);
       return updated;

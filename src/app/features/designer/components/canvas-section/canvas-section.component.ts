@@ -221,6 +221,20 @@ export class CanvasSectionComponent {
     this.templateService.updateSectionDataset(this.section.id, value || '');
   }
 
+  isFirstSection(): boolean {
+    return this.template().sections[0]?.id === this.section.id;
+  }
+
+  isLastSection(): boolean {
+    const sections = this.template().sections;
+    return sections[sections.length - 1]?.id === this.section.id;
+  }
+
+  onMoveSection(direction: 'up' | 'down', event: Event): void {
+    event.stopPropagation();
+    this.templateService.moveSection(this.section.id, direction);
+  }
+
   onCanvasClick(event: MouseEvent): void {
     this.templateService.selectElement(null);
   }
