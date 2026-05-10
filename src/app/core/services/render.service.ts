@@ -307,7 +307,7 @@ export class RenderService {
       
       // Default behavior: return first valid value
       const valid = value.filter(v => v !== null && v !== undefined && v !== '');
-      return valid.length > 0 ? valid[0] : undefined;
+      return valid.length > 0 ? valid[0] : (value.length > 0 ? null : undefined);
     }
     
     return value;
@@ -461,7 +461,7 @@ export class RenderService {
     return content.replace(/\{\{([^}]+)\}\}/g, (_match, expr) => {
       try {
         const result = this.resolveValue(expr, row, rawData, datasetPath, isGlobal, metadata);
-        if (result !== undefined && result !== null) {
+        if (result !== undefined) {
           return this.formatValue(result);
         }
         

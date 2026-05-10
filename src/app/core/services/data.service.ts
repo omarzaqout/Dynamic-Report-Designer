@@ -110,19 +110,20 @@ export class DataService {
         datasets.push({
           name: this.cleanPathForLabel(path),
           path: path,
-          sample: obj[0],
+          sample: this.getRepresentativeSample(obj),
           count: obj.length
         });
       }
-      if (obj[0] && typeof obj[0] === 'object') {
-        // Continue searching inside items, but don't add the [0] index as a separate dataset option
-        this.findDatasets(obj[0], path ? `${path}[0]` : '0', datasets);
-      }
+
+      // Instead of just recursing into obj[0], find a "rich" item to explore for sub-datasets
+      const representative = this.getRepresentativeSample(obj);
+      this.findDatasets(representative, path, datasets);
       return;
     }
 
-    // Only push as a dataset if it's a structural object and NOT a specific index iteration (e.g. [0])
-    if (path && !path.endsWith(']')) {
+    // Only push as a dataset if it's a structural object and NOT an array (handled above)
+    // and prevent adding the same path multiple times
+    if (path && !datasets.find(d => d.path === path)) {
       datasets.push({
         name: this.cleanPathForLabel(path),
         path: path,
@@ -138,6 +139,52 @@ export class DataService {
         this.findDatasets(val, newPath, datasets);
       }
     }
+  }
+
+  private getRepresentativeSample(arr: any[]): any {
+    if (!arr || !Array.isArray(arr) || arr.length === 0) return {};
+    
+    // Find the item with the most keys to use as a base sample
+    let bestSample = arr[0] || {};
+    let maxKeys = Object.keys(bestSample).length;
+
+    // Look through the first 50 items to find a "richer" one
+    const limit = Math.min(arr.length, 50);
+    for (let i = 0; i < limit; i++) {
+      const item = arr[i];
+      if (item && typeof item === 'object') {
+        // If this item has a populated object that the best one doesn't, or more keys
+        const currentKeys = Object.keys(item).length;
+        
+        // Strategy: prefer items that have non-null objects for known sub-datasets
+        let score = currentKeys;
+        for (const key in item) {
+          if (item[key] !== null && typeof item[key] === 'object' && !Array.isArray(item[key])) {
+            score += 10; // Bonus for having nested objects (like otherInfo)
+          }
+        }
+
+        if (score > maxKeys) {
+          maxKeys = score;
+          bestSample = item;
+        }
+      }
+    }
+
+    // Merge strategy: if still missing some keys from the first few items, merge them
+    const result = { ...bestSample };
+    for (let i = 0; i < Math.min(arr.length, 10); i++) {
+      const item = arr[i];
+      if (item && typeof item === 'object') {
+        for (const key in item) {
+          if (result[key] === undefined || result[key] === null) {
+            result[key] = item[key];
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   private cleanPathForLabel(path: string): string {
@@ -190,7 +237,7 @@ export class DataService {
 
   getFieldsForPath(path: string): Field[] {
     const data = this.getValueByPath(this.rawData, path);
-    const sample = Array.isArray(data) ? data[0] : data;
+    const sample = Array.isArray(data) ? this.getRepresentativeSample(data) : data;
     if (!sample) return [];
     
     // Use the path as prefix, but clean it from array notation for user expressions

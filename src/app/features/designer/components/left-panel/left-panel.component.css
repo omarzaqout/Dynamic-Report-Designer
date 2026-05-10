@@ -5,7 +5,24 @@
       flex-direction: column;
       background: #1a2035;
       color: #e2e8f0;
-      overflow-y: scroll;
+      overflow-y: auto;
+    }
+
+    .left-panel::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .left-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .left-panel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .left-panel::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .panel-header {
@@ -186,9 +203,9 @@
     }
 
     .section-collapsible {
-      overflow-y: scroll;
-      max-height: 600px;
-      transition: max-height 0.25s ease, opacity 0.2s ease;
+      overflow: hidden;
+      max-height: 2000px;
+      transition: max-height 0.3s ease-in-out, opacity 0.2s ease;
       opacity: 1;
     }
 
