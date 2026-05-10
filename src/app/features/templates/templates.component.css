@@ -75,6 +75,24 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  overflow-y: auto;
+}
+
+.templates-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.templates-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.templates-main::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.templates-main::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .section-title h2 {
