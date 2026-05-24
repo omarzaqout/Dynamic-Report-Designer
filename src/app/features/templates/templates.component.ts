@@ -23,14 +23,27 @@ export class TemplatesComponent implements OnInit {
   private http = inject(HttpClient);
   
   templates = signal<Report[]>([]);
+  isLoading = signal(false);
+  error = signal<string | null>(null);
+  skeletonItems = signal<number[]>([1, 2, 3, 4, 5, 6]);
 
   ngOnInit(): void {
     this.loadTemplates();
   }
 
   loadTemplates(): void {
-    this.http.get<Report[]>(`${API_CONFIG.reportApiBaseUrl}/reports`).subscribe(data => {
-      this.templates.set(data);
+    this.isLoading.set(true);
+    this.error.set(null);
+    this.http.get<Report[]>(`${API_CONFIG.reportApiBaseUrl}/reports`).subscribe({
+      next: (data) => {
+        this.templates.set(data);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.error.set('Failed to load templates');
+        this.isLoading.set(false);
+        console.error(err);
+      }
     });
   }
 
