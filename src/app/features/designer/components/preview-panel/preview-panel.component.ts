@@ -162,7 +162,7 @@ export class PreviewPanelComponent {
 
   private getElementActualHeight(el: any): number {
     if (el.type === 'table' && el.table) {
-      return this.tableHeight(el.table, true);
+      return this.tableHeight(el.table, false);
     }
     if (el.type === 'image') return el.size?.height || 100;
     const width = el.size?.width || 200;
