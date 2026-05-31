@@ -260,7 +260,7 @@ export class PreviewPanelComponent {
     return formatMixedDirectionalHtml(this.cellDisplayContent(table, rowIndex, colIndex));
   }
 
-  rowHeight(table: TableData, rowIndex: number, dynamic: boolean = true): number {
+  rowHeight(table: TableData, rowIndex: number, dynamic: boolean = true, parentWhiteSpace: string = 'nowrap'): number {
     const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
     if (!dynamic) return baseHeight;
 
@@ -274,7 +274,8 @@ export class PreviewPanelComponent {
       const cell = rowCells[colIndex];
       if (!cell || !cell.content) continue;
 
-      const canWrap = this.cellWhiteSpace(table, rowIndex, colIndex, 'normal') !== 'nowrap';
+      const effectiveWhiteSpace = this.cellWhiteSpace(table, rowIndex, colIndex, parentWhiteSpace);
+      const canWrap = effectiveWhiteSpace !== 'nowrap';
       if (!canWrap) continue;
 
       // Calculate available width for text (column width minus horizontal padding)
@@ -284,7 +285,7 @@ export class PreviewPanelComponent {
 
       const cellStyle = {
         ...cell.style,
-        whiteSpace: this.cellWhiteSpace(table, rowIndex, colIndex, 'normal')
+        whiteSpace: effectiveWhiteSpace
       };
 
       const measured = this.measureTextHeight(
@@ -313,9 +314,9 @@ export class PreviewPanelComponent {
     return cols.reduce((sum, colIndex) => sum + this.columnWidth(table, colIndex), 0);
   }
 
-  tableHeight(table: TableData, dynamic: boolean = true): number {
+  tableHeight(table: TableData, dynamic: boolean = true, parentWhiteSpace: string = 'nowrap'): number {
     if (table.rows === 0) return 36;
-    return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex, dynamic), 0);
+    return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex, dynamic, parentWhiteSpace), 0);
   }
 
   protected encodeURIComponent(str: string): string {

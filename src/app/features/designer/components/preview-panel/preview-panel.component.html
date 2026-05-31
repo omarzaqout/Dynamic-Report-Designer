@@ -82,7 +82,7 @@
         @for (el of band.elements; track el.id) {
         <div class="preview-el" [style.left.px]="el.x" [style.top.px]="el.renderedY - band.renderedY"
           [style.width]="el.type === 'table' ? tableWidth(el.table) + 'px' : null"
-          [style.height.px]="el.type === 'table' ? tableHeight(el.table, true) : null"
+          [style.height.px]="el.type === 'table' ? tableHeight(el.table, true, el.style.whiteSpace ?? 'nowrap') : null"
           [style.--print-mt.px]="el.renderedY - band.renderedY" [style.--print-ml.px]="el.x"
           [style.fontSize.px]="el.style.fontSize" [style.fontFamily]="el.style.fontFamily"
           [style.fontWeight]="el.style.fontWeight" [style.fontStyle]="el.style.fontStyle"
@@ -97,14 +97,14 @@
           [class.is-table]="el.type === 'table'">
           @if (el.type === 'table' && el.table) {
           <div class="preview-table-wrap" [style.width.px]="tableWidth(el.table)"
-            [style.height.px]="tableHeight(el.table, true)">
+            [style.height.px]="tableHeight(el.table, true, el.style.whiteSpace ?? 'nowrap')">
             <table class="preview-table">
               <tbody>
                 @for (rowIndex of tableRowIndexes(el.table); track rowIndex) {
-                <tr class="preview-table-row" [style.height.px]="rowHeight(el.table, rowIndex, true)">
+                <tr class="preview-table-row" [style.height.px]="rowHeight(el.table, rowIndex, true, el.style.whiteSpace ?? 'nowrap')">
                   @for (colIndex of visibleColumnIndexes(el.table); track colIndex) {
                   <td [style.width.px]="columnWidth(el.table, colIndex)"
-                    [style.height.px]="rowHeight(el.table, rowIndex, true)"
+                    [style.height.px]="rowHeight(el.table, rowIndex, true, el.style.whiteSpace ?? 'nowrap')"
                     [style.textAlign]="el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign ?? 'left'"
                     [style.verticalAlign]="el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign ?? 'middle'"
                     [style.color]="el.table.cells[rowIndex][colIndex].style?.color ?? el.style.color"
