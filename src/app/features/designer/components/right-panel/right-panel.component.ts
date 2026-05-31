@@ -425,7 +425,7 @@ export class RightPanelComponent {
   onTableRowHeightChange(row: number, event: Event): void {
     const value = parseInt((event.target as HTMLInputElement).value, 10);
     this.updateTable((table) => {
-      table.rowHeights[row] = Number.isFinite(value) ? Math.max(24, value) : table.rowHeights[row];
+      table.rowHeights[row] = Number.isFinite(value) ? Math.max(16, value) : table.rowHeights[row];
       return table;
     });
   }

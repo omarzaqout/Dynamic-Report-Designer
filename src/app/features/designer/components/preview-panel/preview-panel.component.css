@@ -158,7 +158,7 @@
     height: 100%;
     background: #fff;
     min-width: 180px;
-    min-height: 56px;
+    min-height: 0;
     position: relative;
 }
 

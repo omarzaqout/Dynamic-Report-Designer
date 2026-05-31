@@ -476,7 +476,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   private resizeTableRow(rowIndex: number | null, nextHeight: number): void {
     if (rowIndex === null) return;
     this.updateTable((table) => {
-      table.rowHeights[rowIndex] = Math.max(24, Math.round(nextHeight));
+      table.rowHeights[rowIndex] = Math.max(16, Math.round(nextHeight));
       return table;
     });
   }
