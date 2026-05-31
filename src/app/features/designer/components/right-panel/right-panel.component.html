@@ -38,7 +38,7 @@
     </div>
     }
 
-    @if (!isMultiSelect() && el.type === 'table' && el.table && focusedCell()) {
+    @if (!isMultiSelect() && el.type === 'table' && el.table && tableCellSelectionCount() > 0) {
     @let focus = focusedCell()!;
     <div class="prop-section cell-style-box"
       style="border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 12px;">
@@ -46,7 +46,11 @@
       
       <div
         style="font-size: 10px; font-weight: 700; color: #3b82f6; margin-bottom: 10px;">
+        @if (hasSingleSelectedTableCell()) {
         Editing Cell R{{ focus.row + 1 }} : C{{ focus.col + 1 }}
+        } @else {
+        Applying style to {{ tableCellSelectionCount() }} selected cells
+        }
       </div>
 
       <div class="prop-row">
@@ -141,7 +145,7 @@
         </div>
       </div>
 
-      @if (el.table.cells[focus.row][focus.col].imageUrl) {
+      @if (hasSingleSelectedTableCell() && el.table.cells[focus.row][focus.col].imageUrl) {
       <div class="prop-row">
         <label style="color: #92400e; font-weight: 700;">Image Size (Padding)</label>
         <div class="stepper">
@@ -157,6 +161,7 @@
         padding to make the image smaller within the cell.</div>
       }
 
+      @if (hasSingleSelectedTableCell()) {
       <div class="prop-section-title"
         style="color: #92400e; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #fde68a; padding-bottom: 4px;">
         Cell Content</div>
@@ -298,6 +303,19 @@
           style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #92400e; background: #92400e; color: #fff; border-radius: 4px;">Finish
           Editing</button>
       </div>
+      } @else {
+      <div class="hint-text" style="margin-top: 12px; color: #64748b;">
+        Use Shift + click on another cell to expand the selection. Content, images, and cell logic stay single-cell only.
+      </div>
+      <div style="display: flex; gap: 4px; margin-top: 12px;">
+        <button (click)="resetTableCellStyle()"
+          style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #fde68a; background: #fff; color: #92400e; border-radius: 4px;">Reset
+          Style</button>
+        <button (click)="setFocusedCell(-1, -1)"
+          style="flex: 1; padding: 4px; font-size: 9px; cursor: pointer; border: 1px solid #92400e; background: #92400e; color: #fff; border-radius: 4px;">Clear
+          Selection</button>
+      </div>
+      }
 
     </div>
     }
@@ -523,7 +541,9 @@
             @for (rowIndex of tableRowIndexes(table); track rowIndex) {
             <tr>
               @for (colIndex of orderedColumnIndexes(table); track colIndex) {
-              <td (dblclick)="setFocusedCell(rowIndex, colIndex)"
+              <td (mousedown)="onTableEditorCellMouseDown($event, rowIndex, colIndex)"
+                (dblclick)="setFocusedCell(rowIndex, colIndex)"
+                [class.cell-selected]="isTableCellSelected(rowIndex, colIndex)"
                 [class.cell-focused]="focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex">
                 <div class="table-cell-content-wrap">
                   @if (table.cells[rowIndex][colIndex].imageUrl) {

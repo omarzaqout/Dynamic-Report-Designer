@@ -244,6 +244,7 @@
       transition: background 0.1s;
       position: relative;
       unicode-bidi: plaintext;
+      user-select: none;
     }
 
     .el-table td.cell-drag-over {
@@ -324,6 +325,7 @@
       box-sizing: border-box;
       z-index: 10;
       unicode-bidi: plaintext;
+      user-select: text;
     }
 
     .el-table td.cell-focused {
@@ -331,6 +333,10 @@
       box-shadow: inset 0 0 0 1.5px #3b82f6 !important;
       border-color: #3b82f6 !important;
       z-index: 10;
+    }
+
+    .el-table td.cell-selected {
+      background: rgba(59, 130, 246, 0.08);
     }
 
     .cell-content-container {

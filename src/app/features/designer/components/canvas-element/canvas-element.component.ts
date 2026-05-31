@@ -35,6 +35,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   public templateService = inject(TemplateService);
   readonly focusedCell = this.templateService.focusedTableCell;
+  readonly selectedTableCells = this.templateService.selectedTableCells;
 
   isEditingInline = false;
   editingCell: { row: number; col: number } | null = null;
@@ -479,10 +480,19 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   }
 
   onCellMouseDown(event: MouseEvent, row: number, col: number): void {
+    event.preventDefault();
     event.stopPropagation();
-    // Select the table element first
+    const focused = this.focusedCell();
     this.templateService.selectElement(this.element.id);
-    // Then focus the specific cell
+    if (event.shiftKey && focused?.elementId === this.element.id) {
+      this.templateService.setSelectedTableCellRange(
+        this.element.id,
+        { row: focused.row, col: focused.col },
+        { row, col }
+      );
+      return;
+    }
+
     this.templateService.setFocusedTableCell(this.element.id, row, col);
   }
 
@@ -524,5 +534,11 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     if (event.key === 'Enter') {
       (event.target as HTMLInputElement).blur();
     }
+  }
+
+  isCellSelected(row: number, col: number): boolean {
+    return this.selectedTableCells().some(
+      (cell) => cell.elementId === this.element.id && cell.row === row && cell.col === col
+    );
   }
 }

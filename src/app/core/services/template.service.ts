@@ -26,6 +26,7 @@ export class TemplateService {
   readonly currentReportId = signal<string | null>(null);
   readonly selectedElementIds = signal<string[]>([]);
   readonly focusedTableCell = signal<{ elementId: string; row: number; col: number } | null>(null);
+  readonly selectedTableCells = signal<Array<{ elementId: string; row: number; col: number }>>([]);
 
   // Aliases for compatibility
   readonly selectedElementId = computed(() => {
@@ -91,7 +92,7 @@ export class TemplateService {
   selectElement(id: string | null, isMulti = false): void {
     if (!id) {
       this.selectedElementIds.set([]);
-      this.focusedTableCell.set(null);
+      this.clearTableCellSelection();
       return;
     }
 
@@ -105,7 +106,7 @@ export class TemplateService {
     } else {
       this.selectedElementIds.set([id]);
     }
-    this.focusedTableCell.set(null);
+    this.clearTableCellSelection();
   }
 
   selectElements(ids: string[], isMulti = false): void {
@@ -390,10 +391,38 @@ export class TemplateService {
 
   setFocusedTableCell(elementId: string, row: number, col: number): void {
     if (elementId === '' || row === -1) {
-      this.focusedTableCell.set(null);
+      this.clearTableCellSelection();
     } else {
-      this.focusedTableCell.set({ elementId, row, col });
+      const nextCell = { elementId, row, col };
+      this.focusedTableCell.set(nextCell);
+      this.selectedTableCells.set([nextCell]);
     }
+  }
+
+  setSelectedTableCellRange(
+    elementId: string,
+    start: { row: number; col: number },
+    end: { row: number; col: number }
+  ): void {
+    const minRow = Math.min(start.row, end.row);
+    const maxRow = Math.max(start.row, end.row);
+    const minCol = Math.min(start.col, end.col);
+    const maxCol = Math.max(start.col, end.col);
+    const cells: Array<{ elementId: string; row: number; col: number }> = [];
+
+    for (let row = minRow; row <= maxRow; row += 1) {
+      for (let col = minCol; col <= maxCol; col += 1) {
+        cells.push({ elementId, row, col });
+      }
+    }
+
+    this.focusedTableCell.set({ elementId, row: end.row, col: end.col });
+    this.selectedTableCells.set(cells);
+  }
+
+  clearTableCellSelection(): void {
+    this.focusedTableCell.set(null);
+    this.selectedTableCells.set([]);
   }
 
   // --- TABLE HELPERS ---

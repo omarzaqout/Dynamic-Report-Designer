@@ -203,6 +203,7 @@
       background: #fff; 
       transition: all 0.2s;
       cursor: pointer;
+      user-select: none;
     }
     .table-editor td:hover {
       background: #f8fafc;
@@ -211,6 +212,9 @@
       background: #eff6ff;
       border: 1px solid #3b82f6;
       box-shadow: inset 0 0 0 1px #3b82f6;
+    }
+    .table-editor td.cell-selected {
+      background: #dbeafe;
     }
     .table-cell-input, .table-cell-select {
       width: 100%;
@@ -221,6 +225,7 @@
       font-size: 11px;
       color: #334155;
       background: #fff;
+      user-select: text;
     }
     .table-cell-input { margin-bottom: 4px; }
     .table-cell-input:focus, .table-cell-select:focus { border-color: #3b82f6; outline: none; }

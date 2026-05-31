@@ -710,33 +710,42 @@ export class RightPanelComponent {
   }
 
   readonly focusedCell = this.templateService.focusedTableCell;
+  readonly selectedTableCells = this.templateService.selectedTableCells;
 
   setFocusedCell(row: number, col: number): void {
     const el = this.element();
     if (el) {
+      if (row === -1 || col === -1) {
+        this.templateService.clearTableCellSelection();
+        return;
+      }
       this.templateService.setFocusedTableCell(el.id, row, col);
     }
   }
 
   onTableCellStyleChange(patch: Partial<ElementStyle>): void {
-    const focus = this.focusedCell();
     const el = this.element();
-    if (!focus || !el || focus.elementId !== el.id) return;
+    const selectedCells = this.getSelectedCellsForActiveElement();
+    if (!el || selectedCells.length === 0) return;
     
     this.updateTable((table) => {
-      const cell = table.cells[focus.row][focus.col];
-      cell.style = { ...(cell.style || {}), ...patch };
+      for (const selectedCell of selectedCells) {
+        const cell = table.cells[selectedCell.row][selectedCell.col];
+        cell.style = { ...(cell.style || {}), ...patch };
+      }
       return table;
     });
   }
 
   resetTableCellStyle(): void {
-    const focus = this.focusedCell();
     const el = this.element();
-    if (!focus || !el || focus.elementId !== el.id) return;
+    const selectedCells = this.getSelectedCellsForActiveElement();
+    if (!el || selectedCells.length === 0) return;
     
     this.updateTable((table) => {
-      table.cells[focus.row][focus.col].style = undefined;
+      for (const selectedCell of selectedCells) {
+        table.cells[selectedCell.row][selectedCell.col].style = undefined;
+      }
       return table;
     });
   }
@@ -771,5 +780,56 @@ export class RightPanelComponent {
     if (!focus || !el || el.type !== 'table') return;
     const checked = (event.target as HTMLInputElement).checked;
     this.templateService.updateTableCell(el.id, focus.row, focus.col, { isQRCode: checked });
+  }
+
+  tableCellSelectionCount(): number {
+    return this.getSelectedCellsForActiveElement().length;
+  }
+
+  hasSingleSelectedTableCell(): boolean {
+    return this.tableCellSelectionCount() === 1;
+  }
+
+  isTableCellSelected(row: number, col: number): boolean {
+    const el = this.element();
+    if (!el) return false;
+    return this.selectedTableCells().some(
+      (cell) => cell.elementId === el.id && cell.row === row && cell.col === col
+    );
+  }
+
+  onTableEditorCellMouseDown(event: MouseEvent, row: number, col: number): void {
+    const target = event.target as HTMLElement;
+    const isEditableTarget = ['INPUT', 'SELECT', 'TEXTAREA', 'OPTION'].includes(target.tagName);
+    if (!isEditableTarget) {
+      event.preventDefault();
+    }
+    event.stopPropagation();
+    const el = this.element();
+    if (!el) return;
+
+    if (event.shiftKey) {
+      const focused = this.focusedCell();
+      if (focused && focused.elementId === el.id) {
+        this.templateService.setSelectedTableCellRange(
+          el.id,
+          { row: focused.row, col: focused.col },
+          { row, col }
+        );
+        return;
+      }
+      this.templateService.setFocusedTableCell(el.id, row, col);
+      return;
+    }
+
+    this.templateService.setFocusedTableCell(el.id, row, col);
+  }
+
+  private getSelectedCellsForActiveElement(): Array<{ row: number; col: number }> {
+    const el = this.element();
+    if (!el) return [];
+    return this.selectedTableCells()
+      .filter((cell) => cell.elementId === el.id)
+      .map((cell) => ({ row: cell.row, col: cell.col }));
   }
 }
