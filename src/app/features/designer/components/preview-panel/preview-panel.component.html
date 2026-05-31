@@ -113,14 +113,14 @@
                     [style.fontWeight]="el.table.cells[rowIndex][colIndex].style?.fontWeight ?? el.style.fontWeight"
                     [style.fontStyle]="el.table.cells[rowIndex][colIndex].style?.fontStyle ?? el.style.fontStyle"
                     [style.textDecoration]="el.table.cells[rowIndex][colIndex].style?.textDecoration ?? el.style.textDecoration"
-                    [style.whiteSpace]="el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap'"
-                    [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
+                    [style.whiteSpace]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap')"
+                    [style.wordBreak]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap') === 'nowrap' ? 'normal' : 'break-word'"
                     [style.border]="el.table.cells[rowIndex][colIndex].style?.border ?? '1px solid'"
                     [style.borderColor]="el.table.cells[rowIndex][colIndex].style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'">
                     <div class="cell-content-container"
-                      [style.whiteSpace]="el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap'"
-                      [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
-                      [style.overflowWrap]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap') === 'normal' ? 'anywhere' : 'normal'"
+                      [style.whiteSpace]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap')"
+                      [style.wordBreak]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap') === 'nowrap' ? 'normal' : 'break-word'"
+                      [style.overflowWrap]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap') === 'nowrap' ? 'normal' : 'anywhere'"
                       [style.justify-content]="(el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'top' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.verticalAlign ?? el.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
                       [style.align-items]="(el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign) === 'left' ? 'flex-start' : (el.table.cells[rowIndex][colIndex].style?.textAlign ?? el.style.textAlign) === 'right' ? 'flex-end' : 'center'"
                       [class.has-padding]="!el.table.cells[rowIndex][colIndex].imageUrl && !el.table.cells[rowIndex][colIndex].isQRCode">
@@ -133,10 +133,12 @@
                         [style.padding.px]="el.table.cells[rowIndex][colIndex].style?.padding || 0">
                       } @else {
                       <span style="width: 100%; display: block;"
-                        [style.whiteSpace]="el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap'"
-                        [style.wordBreak]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
-                        [style.overflowWrap]="(el.table.cells[rowIndex][colIndex].style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap') === 'normal' ? 'anywhere' : 'normal'"
-                        [innerHTML]="el.table.cells[rowIndex][colIndex].content || ' '"></span>
+                        [style.whiteSpace]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap')"
+                        [style.wordBreak]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap') === 'nowrap' ? 'normal' : 'break-word'"
+                        [style.overflowWrap]="cellWhiteSpace(el.table, rowIndex, colIndex, el.style.whiteSpace ?? 'nowrap') === 'nowrap' ? 'normal' : 'anywhere'"
+                        [style.unicodeBidi]="'plaintext'"
+                        [attr.dir]="cellDirection(el.table, rowIndex, colIndex)"
+                        [innerHTML]="cellDisplayHtml(el.table, rowIndex, colIndex) || ' '"></span>
                       }
                     </div>
                   </td>

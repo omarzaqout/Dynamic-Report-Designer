@@ -388,7 +388,9 @@ export class RightPanelComponent {
   }
 
   onTableCellContentChange(row: number, col: number, event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+    const target = event.target as HTMLTextAreaElement;
+    const value = target.value;
+    this.autoResizeTextarea(target);
     this.updateTable((table) => {
       table.cells[row][col].content = value;
       // If content is cleared, also clear the field binding
@@ -735,6 +737,13 @@ export class RightPanelComponent {
       }
       return table;
     });
+  }
+
+  autoResizeTextarea(textarea: HTMLTextAreaElement | Event): void {
+    const el = textarea instanceof Event ? textarea.target as HTMLTextAreaElement : textarea;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
   }
 
   resetTableCellStyle(): void {

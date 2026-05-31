@@ -5,6 +5,7 @@ import { RenderService, RenderedSection } from '../../../../core/services/render
 import { TableData } from '../../../../core/models/template.model';
 import { DataService } from '../../../../core/services/data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { formatMixedDirectionalHtml, hasRtlCharacters, normalizeStoredText } from '../../../../core/utils/bidi-text.util';
 
 @Component({
   selector: 'app-preview-panel',
@@ -232,6 +233,33 @@ export class PreviewPanelComponent {
       .map(({ index }) => index);
   }
 
+  cellWhiteSpace(table: TableData, rowIndex: number, colIndex: number, fallback?: string): string {
+    const cell = table.cells[rowIndex]?.[colIndex];
+    const configured = cell?.style?.whiteSpace ?? fallback ?? 'nowrap';
+    const content = normalizeStoredText(cell?.content || '');
+    if (configured === 'nowrap' && content.includes('\n')) {
+      return 'pre-line';
+    }
+    return configured;
+  }
+
+  cellDirection(table: TableData, rowIndex: number, colIndex: number): 'rtl' | 'ltr' | 'auto' {
+    const cell = table.cells[rowIndex]?.[colIndex];
+    const content = this.cellDisplayContent(table, rowIndex, colIndex);
+    if (hasRtlCharacters(content)) return 'rtl';
+    if (/[A-Za-z]/.test(content)) return 'ltr';
+    return 'auto';
+  }
+
+  cellDisplayContent(table: TableData, rowIndex: number, colIndex: number): string {
+    const cell = table.cells[rowIndex]?.[colIndex];
+    return normalizeStoredText(cell?.content || '');
+  }
+
+  cellDisplayHtml(table: TableData, rowIndex: number, colIndex: number): string {
+    return formatMixedDirectionalHtml(this.cellDisplayContent(table, rowIndex, colIndex));
+  }
+
   rowHeight(table: TableData, rowIndex: number, dynamic: boolean = true): number {
     const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
     if (!dynamic) return baseHeight;
@@ -246,7 +274,7 @@ export class PreviewPanelComponent {
       const cell = rowCells[colIndex];
       if (!cell || !cell.content) continue;
 
-      const canWrap = (cell.style?.whiteSpace ?? 'normal') !== 'nowrap';
+      const canWrap = this.cellWhiteSpace(table, rowIndex, colIndex, 'normal') !== 'nowrap';
       if (!canWrap) continue;
 
       // Calculate available width for text (column width minus horizontal padding)
@@ -256,11 +284,11 @@ export class PreviewPanelComponent {
 
       const cellStyle = {
         ...cell.style,
-        whiteSpace: cell.style?.whiteSpace ?? 'normal'
+        whiteSpace: this.cellWhiteSpace(table, rowIndex, colIndex, 'normal')
       };
 
       const measured = this.measureTextHeight(
-        cell.content,
+        this.cellDisplayContent(table, rowIndex, colIndex),
         cellStyle,
         availableWidth,
         '1.3'

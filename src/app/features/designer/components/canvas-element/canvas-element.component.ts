@@ -4,6 +4,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { TableCell, TableData, TemplateElement } from '../../../../core/models/template.model';
 import { TemplateService } from '../../../../core/services/template.service';
+import { formatMixedDirectionalHtml, hasRtlCharacters, normalizeStoredText } from '../../../../core/utils/bidi-text.util';
 
 type ResizeMode = 'none' | 'element' | 'table-col' | 'table-row' | 'table-bounds';
 
@@ -55,6 +56,8 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   private resizeStartRowHeight = 0;
   private resizeStartColumnWidths: number[] = [];
   private resizeStartRowHeights: number[] = [];
+  private visibleColumnsCache = new WeakMap<TableData, number[]>();
+  private dynamicRowHeightCache = new WeakMap<TableData, Map<number, number>>();
 
   private mouseMoveHandler!: (e: MouseEvent) => void;
   private mouseUpHandler!: (e: MouseEvent) => void;
@@ -289,8 +292,59 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   displayCell(cell: TableCell): string {
     if (cell.imageUrl) return 'IMAGE';
-    if (cell.fieldPath) return `{{${cell.fieldPath}}}`;
-    return cell.content || '';
+    if (cell.fieldPath) return normalizeStoredText(`{{${cell.fieldPath}}}`);
+    return normalizeStoredText(cell.content || '');
+  }
+
+  displayCellHtml(cell: TableCell): string {
+    return formatMixedDirectionalHtml(this.displayCell(cell));
+  }
+
+  cellWhiteSpace(cell: TableCell): string {
+    const configured = cell.style?.whiteSpace ?? this.element.style.whiteSpace ?? 'nowrap';
+    const content = this.displayCell(cell);
+    if (configured === 'nowrap' && content.includes('\n')) {
+      return 'pre-line';
+    }
+    return configured;
+  }
+
+  cellDirection(cell: TableCell): 'rtl' | 'ltr' | 'auto' {
+    const content = this.displayCell(cell);
+    if (hasRtlCharacters(content)) return 'rtl';
+    if (/[A-Za-z]/.test(content)) return 'ltr';
+    return 'auto';
+  }
+
+  private measureTextHeight(content: string, style: any, width: number, lineHeight: string = '1.3'): number {
+    if (!content) return 0;
+
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+    div.style.left = '-9999px';
+    div.style.top = '-9999px';
+    div.style.width = `${width}px`;
+    div.style.fontSize = `${style.fontSize || 12}px`;
+    div.style.fontFamily = style.fontFamily || 'inherit';
+    div.style.fontWeight = style.fontWeight || 'normal';
+    div.style.fontStyle = style.fontStyle || 'normal';
+    div.style.lineHeight = lineHeight;
+    div.style.whiteSpace = style.whiteSpace || 'normal';
+    div.style.direction = style.direction || 'auto';
+    div.style.unicodeBidi = 'plaintext';
+    const allowsWrap = style.whiteSpace === 'normal' || style.whiteSpace === 'pre-wrap' || style.whiteSpace === 'pre-line';
+    div.style.wordBreak = allowsWrap ? 'break-word' : 'normal';
+    div.style.overflowWrap = allowsWrap ? 'anywhere' : 'normal';
+    div.style.padding = '0';
+    div.style.margin = '0';
+    div.style.boxSizing = 'border-box';
+    div.textContent = content;
+    document.body.appendChild(div);
+    const height = div.offsetHeight;
+    document.body.removeChild(div);
+
+    return height > 0 ? height + 2 : 0;
   }
 
   tableRowIndexes(): number[] {
@@ -301,18 +355,66 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   visibleColumnIndexes(): number[] {
     const table = this.element.table;
     if (!table) return [];
+    const cached = this.visibleColumnsCache.get(table);
+    if (cached) return cached;
     const settings = table.columnSettings?.length === table.columns
       ? table.columnSettings
       : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true }));
-    return settings
+    const result = settings
       .map((setting, index) => ({ index, setting }))
       .filter(({ setting }) => setting.visible)
       .sort((a, b) => a.setting.order - b.setting.order || a.index - b.index)
       .map(({ index }) => index);
+    this.visibleColumnsCache.set(table, result);
+    return result;
   }
 
-  rowHeight(rowIndex: number): number {
-    return this.element.table?.rowHeights?.[rowIndex] ?? 36;
+  rowHeight(rowIndex: number, dynamic: boolean = true): number {
+    const table = this.element.table;
+    if (!table) return 36;
+
+    const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
+    if (!dynamic) return baseHeight;
+
+    let tableCache = this.dynamicRowHeightCache.get(table);
+    if (!tableCache) {
+      tableCache = new Map<number, number>();
+      this.dynamicRowHeightCache.set(table, tableCache);
+    }
+    const cachedHeight = tableCache.get(rowIndex);
+    if (cachedHeight !== undefined) return cachedHeight;
+
+    const rowCells = table.cells[rowIndex] || [];
+    let maxHeight = baseHeight;
+
+    for (const colIndex of this.visibleColumnIndexes()) {
+      const cell = rowCells[colIndex];
+      if (!cell || !cell.content || cell.imageUrl || cell.isQRCode) continue;
+
+      const whiteSpace = cell.style?.whiteSpace ?? this.element.style.whiteSpace ?? 'nowrap';
+      if (whiteSpace === 'nowrap' && !this.displayCell(cell).includes('\n')) continue;
+
+      const availableWidth = Math.max(10, this.columnWidth(colIndex) - 12);
+      const measured = this.measureTextHeight(
+        this.displayCell(cell),
+        {
+          ...this.element.style,
+          ...cell.style,
+          whiteSpace
+        },
+        availableWidth,
+        '1.3'
+      );
+
+      const totalCellHeight = measured + 8;
+      if (totalCellHeight > maxHeight) {
+        maxHeight = totalCellHeight;
+      }
+    }
+
+    const finalHeight = Math.round(maxHeight);
+    tableCache.set(rowIndex, finalHeight);
+    return finalHeight;
   }
 
   columnWidth(colIndex: number): number {
@@ -328,7 +430,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   tableHeight(): number {
     const rows = this.tableRowIndexes();
     if (rows.length === 0) return 36;
-    return rows.reduce((sum, rowIndex) => sum + this.rowHeight(rowIndex), 0);
+    return rows.reduce((sum, rowIndex) => sum + this.rowHeight(rowIndex, true), 0);
   }
 
   columnBoundaryOffsets(): Array<{ colIndex: number; left: number }> {
@@ -349,7 +451,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     let offset = 0;
     for (let i = 0; i < rows.length; i += 1) { // Changed to include last row
       const rowIndex = rows[i];
-      offset += this.rowHeight(rowIndex);
+      offset += this.rowHeight(rowIndex, true);
       result.push({ rowIndex, top: offset });
     }
     return result;
@@ -505,8 +607,9 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     
     this.editingCell = { row, col };
     setTimeout(() => {
-      const input = this.elRef.nativeElement.querySelector('.cell-edit-input') as HTMLInputElement;
+      const input = this.elRef.nativeElement.querySelector('.cell-edit-input') as HTMLTextAreaElement;
       if (input) {
+        this.autoResizeCellEditor(input);
         input.focus();
         input.select();
       }
@@ -515,7 +618,7 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
 
   onCellEditBlur(event: Event, row: number, col: number): void {
     this.editingCell = null;
-    const value = (event.target as HTMLInputElement).value;
+    const value = (event.target as HTMLTextAreaElement).value;
     
     // Check if the user manually typed or kept a field expression
     let fieldPath = '';
@@ -531,9 +634,20 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
   }
 
   onCellEditKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      (event.target as HTMLInputElement).blur();
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      (event.target as HTMLTextAreaElement).blur();
     }
+  }
+
+  onCellEditInput(event: Event): void {
+    this.autoResizeCellEditor(event.target as HTMLTextAreaElement);
+  }
+
+  private autoResizeCellEditor(textarea: HTMLTextAreaElement): void {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
   }
 
   isCellSelected(row: number, col: number): boolean {

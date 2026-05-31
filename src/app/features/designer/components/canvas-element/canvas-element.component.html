@@ -68,8 +68,8 @@
                       [style.fontWeight]="getTableRows()[rowIndex][colIndex].style?.fontWeight ?? element.style.fontWeight"
                       [style.fontStyle]="getTableRows()[rowIndex][colIndex].style?.fontStyle ?? element.style.fontStyle"
                       [style.textDecoration]="getTableRows()[rowIndex][colIndex].style?.textDecoration ?? element.style.textDecoration"
-                      [style.whiteSpace]="getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap'"
-                      [style.wordBreak]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace) === 'normal' ? 'break-word' : 'normal'"
+                      [style.whiteSpace]="cellWhiteSpace(getTableRows()[rowIndex][colIndex])"
+                      [style.wordBreak]="cellWhiteSpace(getTableRows()[rowIndex][colIndex]) === 'nowrap' ? 'normal' : 'break-word'"
                       [style.border]="getTableRows()[rowIndex][colIndex].style?.border ?? '1px solid'"
                       [style.borderColor]="getTableRows()[rowIndex][colIndex].style?.borderColor ?? element.style.borderColor ?? '#cbd5e1'"
                       (dragover)="onCellDragOver($event, rowIndex, colIndex)"
@@ -83,19 +83,20 @@
                       [class.cell-focused]="focusedCell()?.elementId === element.id && focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"
                     >
                       <div class="cell-content-container" 
-                           [style.whiteSpace]="getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap'"
-                           [style.wordBreak]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
-                           [style.overflowWrap]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'anywhere' : 'normal'"
+                           [style.whiteSpace]="cellWhiteSpace(getTableRows()[rowIndex][colIndex])"
+                           [style.wordBreak]="cellWhiteSpace(getTableRows()[rowIndex][colIndex]) === 'nowrap' ? 'normal' : 'break-word'"
+                           [style.overflowWrap]="cellWhiteSpace(getTableRows()[rowIndex][colIndex]) === 'nowrap' ? 'normal' : 'anywhere'"
                            [style.justify-content]="(getTableRows()[rowIndex][colIndex].style?.verticalAlign ?? element.style.verticalAlign) === 'top' ? 'flex-start' : (getTableRows()[rowIndex][colIndex].style?.verticalAlign ?? element.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
                            [style.align-items]="(getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign) === 'left' ? 'flex-start' : (getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign) === 'right' ? 'flex-end' : 'center'"
                            [class.has-padding]="!getTableRows()[rowIndex][colIndex].imageUrl && !getTableRows()[rowIndex][colIndex].isQRCode">
                         @if (editingCell?.row === rowIndex && editingCell?.col === colIndex && !getTableRows()[rowIndex][colIndex].imageUrl) {
-                          <input
+                          <textarea
                             class="cell-edit-input"
                             [value]="getTableRows()[rowIndex][colIndex].content || ''"
+                            (input)="onCellEditInput($event)"
                             (blur)="onCellEditBlur($event, rowIndex, colIndex)"
                             (keydown)="onCellEditKeyDown($event)"
-                          />
+                            [attr.dir]="cellDirection(getTableRows()[rowIndex][colIndex])"></textarea>
                         } @else {
                           @if (getTableRows()[rowIndex][colIndex].isQRCode) {
                             <div class="cell-qr-placeholder" style="width: 100%; height: 100%; background: #f8fafc; border: 1px dashed #3b82f6; color: #3b82f6; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 8px;">
@@ -111,9 +112,12 @@
                             <i [class]="getTableRows()[rowIndex][colIndex].icon" style="margin-right: 4px;"></i>
                           }
                           <span style="width: 100%;"
-                            [style.whiteSpace]="getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap'"
-                            [style.wordBreak]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
-                            [style.overflowWrap]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'anywhere' : 'normal'">{{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}</span>
+                            [style.whiteSpace]="cellWhiteSpace(getTableRows()[rowIndex][colIndex])"
+                            [style.wordBreak]="cellWhiteSpace(getTableRows()[rowIndex][colIndex]) === 'nowrap' ? 'normal' : 'break-word'"
+                            [style.overflowWrap]="cellWhiteSpace(getTableRows()[rowIndex][colIndex]) === 'nowrap' ? 'normal' : 'anywhere'"
+                            [style.unicodeBidi]="'plaintext'"
+                            [attr.dir]="cellDirection(getTableRows()[rowIndex][colIndex])"
+                            [innerHTML]="displayCellHtml(getTableRows()[rowIndex][colIndex]) || ' '"></span>
                           }
                         }
                       </div>

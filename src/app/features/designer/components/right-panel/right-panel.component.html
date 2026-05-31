@@ -209,9 +209,9 @@
 
       <div class="prop-col" style="margin-top: 8px;">
         <label style="color: #92400e; font-weight: 700;">Text / Data</label>
-        <input type="text" class="prop-input" [value]="el.table.cells[focus.row][focus.col].content || ''"
+        <textarea class="prop-textarea" [value]="el.table.cells[focus.row][focus.col].content || ''"
           (input)="onTableCellContentChange(focus.row, focus.col, $event)" placeholder="Cell text or {{'{{field}}'}}"
-          style="border-color: #fde68a; background: #fff;" />
+          style="border-color: #fde68a; background: #fff; min-height: 64px;" dir="auto"></textarea>
         <select class="prop-select" [value]="el.table.cells[focus.row][focus.col].fieldPath || ''"
           (change)="onTableCellFieldChange(focus.row, focus.col, $any($event.target).value)"
           style="margin-top: 4px; border-color: #fde68a; background: #fff; height: 24px; font-size: 10px;">
@@ -552,8 +552,9 @@
                     <span class="img-badge">IMG</span>
                   </div>
                   } @else {
-                  <input class="table-cell-input" [value]="table.cells[rowIndex][colIndex].content"
-                    (input)="onTableCellContentChange(rowIndex, colIndex, $event)" placeholder="Cell text" />
+                  <textarea class="table-cell-input" [value]="table.cells[rowIndex][colIndex].content"
+                    (input)="onTableCellContentChange(rowIndex, colIndex, $event)" placeholder="Cell text"
+                    rows="2" dir="auto"></textarea>
                   }
                 </div>
                 <select class="table-cell-select" [(ngModel)]="table.cells[rowIndex][colIndex].fieldPath"

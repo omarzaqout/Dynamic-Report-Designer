@@ -326,6 +326,10 @@
       z-index: 10;
       unicode-bidi: plaintext;
       user-select: text;
+      resize: none;
+      white-space: pre-wrap;
+      overflow: hidden;
+      min-height: 100%;
     }
 
     .el-table td.cell-focused {

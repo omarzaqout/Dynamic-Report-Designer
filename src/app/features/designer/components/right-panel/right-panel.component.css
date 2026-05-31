@@ -60,9 +60,9 @@
     .prop-textarea {
       width: 100%; box-sizing: border-box; padding: 8px 10px;
       border: 1px solid #e2e8f0; border-radius: 6px; font-size: 11px;
-      font-family: 'Outfit', sans-serif; resize: vertical; color: #1e293b;
+      font-family: 'Outfit', sans-serif; resize: none; color: #1e293b;
       background: #f8fafc; line-height: 1.5; outline: none;
-      transition: all 0.2s;
+      transition: all 0.2s; overflow: hidden;
     }
     .prop-textarea:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
     .hint-text { font-size: 10px; color: #94a3b8; margin-top: 4px; line-height: 1.5; }
@@ -227,7 +227,7 @@
       background: #fff;
       user-select: text;
     }
-    .table-cell-input { margin-bottom: 4px; }
+    .table-cell-input { margin-bottom: 4px; resize: none; overflow: hidden; line-height: 1.4; }
     .table-cell-input:focus, .table-cell-select:focus { border-color: #3b82f6; outline: none; }
     .danger-zone { padding: 12px 14px; }
     .empty-title { font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }

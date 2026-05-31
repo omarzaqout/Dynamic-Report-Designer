@@ -6,6 +6,7 @@ import { TemplateService } from '../../../../core/services/template.service';
 import { DataService } from '../../../../core/services/data.service';
 import { computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { normalizeStoredText } from '../../../../core/utils/bidi-text.util';
 
 @Component({
   selector: 'app-canvas-section',
@@ -18,6 +19,8 @@ import { FormsModule } from '@angular/forms';
 export class CanvasSectionComponent {
   private templateService = inject(TemplateService);
   private dataService = inject(DataService);
+  private visibleColumnsCache = new WeakMap<TableData, number[]>();
+  private dynamicRowHeightCache = new WeakMap<TableData, Map<number, number>>();
   
   @Input({ required: true }) section!: TemplateSection;
   @Input() selectedElementId: string | null = null;
@@ -41,10 +44,95 @@ export class CanvasSectionComponent {
   @Output() sectionRepeatChange = new EventEmitter<{ sectionId: string; repeatPerRow: boolean }>();
   @Output() sectionDelete = new EventEmitter<string>();
 
+  private measureTextHeight(content: string, style: any, width: number, lineHeight: string = '1.3'): number {
+    if (!content) return 0;
+
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+    div.style.left = '-9999px';
+    div.style.top = '-9999px';
+    div.style.width = `${width}px`;
+    div.style.fontSize = `${style.fontSize || 12}px`;
+    div.style.fontFamily = style.fontFamily || 'inherit';
+    div.style.fontWeight = style.fontWeight || 'normal';
+    div.style.fontStyle = style.fontStyle || 'normal';
+    div.style.lineHeight = lineHeight;
+    div.style.whiteSpace = style.whiteSpace || 'normal';
+    const allowsWrap = style.whiteSpace === 'normal' || style.whiteSpace === 'pre-wrap' || style.whiteSpace === 'pre-line';
+    div.style.wordBreak = allowsWrap ? 'break-word' : 'normal';
+    div.style.overflowWrap = allowsWrap ? 'anywhere' : 'normal';
+    div.style.padding = '0';
+    div.style.margin = '0';
+    div.style.boxSizing = 'border-box';
+    div.textContent = normalizeStoredText(content);
+    document.body.appendChild(div);
+    const height = div.offsetHeight;
+    document.body.removeChild(div);
+
+    return height > 0 ? height + 2 : 0;
+  }
+
+  private getTableRowHeight(el: TemplateElement, rowIndex: number): number {
+    const table = el.table;
+    if (!table) return 36;
+
+    const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
+    let tableCache = this.dynamicRowHeightCache.get(table);
+    if (!tableCache) {
+      tableCache = new Map<number, number>();
+      this.dynamicRowHeightCache.set(table, tableCache);
+    }
+    const cachedHeight = tableCache.get(rowIndex);
+    if (cachedHeight !== undefined) return cachedHeight;
+
+    const rowCells = table.cells[rowIndex] || [];
+    let maxHeight = baseHeight;
+
+    let visibleColumns = this.visibleColumnsCache.get(table);
+    if (!visibleColumns) {
+      visibleColumns = (table.columnSettings?.length === table.columns
+        ? table.columnSettings
+        : Array.from({ length: table.columns }, (_v, index) => ({ width: 120, order: index, visible: true })))
+        .map((setting, index) => ({ index, setting }))
+        .filter(({ setting }) => setting.visible)
+        .sort((a, b) => a.setting.order - b.setting.order || a.index - b.index)
+        .map(({ index }) => index);
+      this.visibleColumnsCache.set(table, visibleColumns);
+    }
+
+    for (const colIndex of visibleColumns) {
+      const cell = rowCells[colIndex];
+      if (!cell || !cell.content || cell.imageUrl || cell.isQRCode) continue;
+
+      const whiteSpace = cell.style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap';
+      const content = normalizeStoredText(cell.fieldPath ? `{{${cell.fieldPath}}}` : (cell.content || ''));
+      if (whiteSpace === 'nowrap' && !content.includes('\n')) continue;
+
+      const availableWidth = Math.max(10, (table.columnSettings?.[colIndex]?.width ?? 120) - 12);
+      const measured = this.measureTextHeight(
+        content,
+        {
+          ...el.style,
+          ...cell.style,
+          whiteSpace
+        },
+        availableWidth,
+        '1.3'
+      );
+
+      maxHeight = Math.max(maxHeight, measured + 8);
+    }
+
+    const finalHeight = Math.round(maxHeight);
+    tableCache.set(rowIndex, finalHeight);
+    return finalHeight;
+  }
+
   private getElementHeight(el: TemplateElement): number {
     if (el.type === 'table' && el.table) {
-      const rowHeights = el.table.rowHeights?.length ? el.table.rowHeights : Array.from({ length: el.table.rows }, () => 36);
-      return rowHeights.reduce((a, b) => a + b, 0);
+      return Array.from({ length: el.table.rows }, (_v, rowIndex) => this.getTableRowHeight(el, rowIndex))
+        .reduce((a, b) => a + b, 0);
     } else if (el.type === 'image' && el.size) {
       return el.size.height;
     } else if (el.style) {
@@ -181,7 +269,7 @@ export class CanvasSectionComponent {
           : (el.size?.width || 120);
           
         let eh = (el.type === 'table' && el.table) 
-          ? (el.table.rowHeights?.reduce((acc, h) => acc + h, 0) || 36) 
+          ? this.getElementHeight(el)
           : (el.size?.height || (el.style ? Math.max(24, el.style.fontSize * 1.5) : 36));
 
         const elL = el.position.x;
