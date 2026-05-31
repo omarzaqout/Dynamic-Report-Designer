@@ -83,6 +83,9 @@
                       [class.cell-focused]="focusedCell()?.elementId === element.id && focusedCell()?.row === rowIndex && focusedCell()?.col === colIndex"
                     >
                       <div class="cell-content-container" 
+                           [style.whiteSpace]="getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap'"
+                           [style.wordBreak]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
+                           [style.overflowWrap]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'anywhere' : 'normal'"
                            [style.justify-content]="(getTableRows()[rowIndex][colIndex].style?.verticalAlign ?? element.style.verticalAlign) === 'top' ? 'flex-start' : (getTableRows()[rowIndex][colIndex].style?.verticalAlign ?? element.style.verticalAlign) === 'bottom' ? 'flex-end' : 'center'"
                            [style.align-items]="(getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign) === 'left' ? 'flex-start' : (getTableRows()[rowIndex][colIndex].style?.textAlign ?? element.style.textAlign) === 'right' ? 'flex-end' : 'center'"
                            [class.has-padding]="!getTableRows()[rowIndex][colIndex].imageUrl && !getTableRows()[rowIndex][colIndex].isQRCode">
@@ -107,7 +110,10 @@
                           @if (getTableRows()[rowIndex][colIndex].icon) {
                             <i [class]="getTableRows()[rowIndex][colIndex].icon" style="margin-right: 4px;"></i>
                           }
-                          <span style="width: 100%;">{{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}</span>
+                          <span style="width: 100%;"
+                            [style.whiteSpace]="getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap'"
+                            [style.wordBreak]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'break-word' : 'normal'"
+                            [style.overflowWrap]="(getTableRows()[rowIndex][colIndex].style?.whiteSpace ?? element.style.whiteSpace ?? 'nowrap') === 'normal' ? 'anywhere' : 'normal'">{{ displayCell(getTableRows()[rowIndex][colIndex]) || ' ' }}</span>
                           }
                         }
                       </div>

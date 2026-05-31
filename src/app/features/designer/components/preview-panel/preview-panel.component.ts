@@ -162,7 +162,7 @@ export class PreviewPanelComponent {
 
   private getElementActualHeight(el: any): number {
     if (el.type === 'table' && el.table) {
-      return this.tableHeight(el.table, false);
+      return this.tableHeight(el.table, true);
     }
     if (el.type === 'image') return el.size?.height || 100;
     const width = el.size?.width || 200;
@@ -173,8 +173,8 @@ export class PreviewPanelComponent {
   private getElementOriginalHeight(el: any, section: RenderedSection): number {
     const originalEl = section.templateSection?.elements?.find((e: any) => e.id === el.id);
     if (el.type === 'table') {
-      if (originalEl?.table) return this.tableHeight(originalEl.table, false);
-      if (el.table) return this.tableHeight(el.table, false);
+      if (originalEl?.table) return this.tableHeight(originalEl.table, true);
+      if (el.table) return this.tableHeight(el.table, true);
     }
     if (el.size?.height) return el.size.height;
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
