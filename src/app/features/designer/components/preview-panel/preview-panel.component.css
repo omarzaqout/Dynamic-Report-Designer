@@ -306,7 +306,7 @@
 @media print {
     @page {
         margin: 0;
-        size: auto;
+        size: A4;
     }
 
     /* ---- Make host / scroll wrapper printable ---- */
@@ -334,12 +334,41 @@
         display: none !important;
     }
 
-    .preview-pages {
+    .print-preview-structure {
         display: none !important;
     }
 
-    .print-preview-structure {
+    .preview-pages {
         display: block !important;
+    }
+
+    .preview-sheet {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        height: 297mm !important;
+        margin: 0 auto !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: white !important;
+        break-after: page;
+        page-break-after: always;
+        overflow: hidden !important;
+    }
+
+    .preview-sheet:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .preview-sheet-inner {
+        height: 297mm !important;
+        min-height: 297mm !important;
+    }
+
+    .preview-page-body {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
     }
 
     /* ---- Page paper: flat, full-width block ---- */
