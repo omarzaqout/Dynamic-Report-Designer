@@ -30,6 +30,7 @@
       @for (page of previewPages(); track page.index) {
       <div class="preview-sheet"
         [style.width.px]="pageWidthPx"
+        [style.height.px]="pageHeightPx"
         [style.min-height.px]="pageHeightPx">
         <div class="preview-sheet-inner"
           [style.padding-top.mm]="template().margin?.top || 0"
@@ -37,9 +38,11 @@
           [style.padding-bottom.mm]="template().margin?.bottom || 0"
           [style.padding-left.mm]="template().margin?.left || 0">
 
-          @for (section of repeatingSections(); track section.label + '-' + $index) {
-          <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
-          }
+          <div class="preview-page-header">
+            @for (section of repeatingSections(); track section.label + '-' + $index) {
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+            }
+          </div>
 
           <div class="preview-page-body">
             @for (item of page.sections; track item.section.label + '-' + item.index) {
@@ -47,9 +50,14 @@
             }
           </div>
 
-          @for (section of repeatingFooters(); track section.label + '-' + $index) {
-          <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: page.sections.length + $index }"></ng-container>
-          }
+          <div class="preview-page-footer">
+            @for (item of page.footerSections; track item.section.label + '-' + item.index) {
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: item.section, index: item.index }"></ng-container>
+            }
+            @for (section of repeatingFooters(); track section.label + '-' + $index) {
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: page.sections.length + $index }"></ng-container>
+            }
+          </div>
         </div>
       </div>
       }

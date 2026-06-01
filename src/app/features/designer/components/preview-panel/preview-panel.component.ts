@@ -53,39 +53,73 @@ export class PreviewPanelComponent {
 
   readonly previewPages = computed(() => {
     const template = this.template();
-    const flowSections = this.mainSections().map((section, index) => ({ section, index }));
+    const orderedSections = this.mainSections().map((section, index) => ({ section, index }));
     const repeatingHeaders = this.repeatingSections();
     const repeatingFooters = this.repeatingFooters();
     const topPadding = this.mmToPx(template.margin?.top || 0);
     const bottomPadding = this.mmToPx(template.margin?.bottom || 0);
-    const availableHeight =
+    const repeatingHeaderHeight = this.sumSectionHeights(repeatingHeaders);
+    const repeatingFooterHeight = this.sumSectionHeights(repeatingFooters);
+    const pageBaseCapacity =
       this.pageHeightPx -
       topPadding -
       bottomPadding -
-      this.sumSectionHeights(repeatingHeaders) -
-      this.sumSectionHeights(repeatingFooters);
+      repeatingHeaderHeight -
+      repeatingFooterHeight;
 
-    const bodyCapacity = Math.max(120, Math.floor(availableHeight));
-    const pages: Array<{ index: number; sections: Array<{ section: RenderedSection; index: number }> }> = [];
+    const pages: Array<{
+      index: number;
+      sections: Array<{ section: RenderedSection; index: number }>;
+      footerSections: Array<{ section: RenderedSection; index: number }>;
+    }> = [];
     let currentSections: Array<{ section: RenderedSection; index: number }> = [];
+    let currentFooterSections: Array<{ section: RenderedSection; index: number }> = [];
     let usedHeight = 0;
 
-    for (const item of flowSections) {
+    const currentFooterHeight = () =>
+      currentFooterSections.reduce((sum, item) => sum + this.getSectionHeight(item.section), 0);
+
+    const pushPage = () => {
+      pages.push({
+        index: pages.length,
+        sections: currentSections,
+        footerSections: currentFooterSections
+      });
+      currentSections = [];
+      currentFooterSections = [];
+      usedHeight = 0;
+    };
+
+    for (const item of orderedSections) {
+      const isBottomFooter =
+        item.section.sectionType === 'footer' || item.section.sectionType === 'reportFooter';
       const sectionHeight = this.getSectionHeight(item.section);
-      const wouldOverflow = currentSections.length > 0 && usedHeight + sectionHeight > bodyCapacity;
+      const availableBodyHeight = Math.max(120, Math.floor(pageBaseCapacity - currentFooterHeight()));
+
+      if (isBottomFooter) {
+        const nextFooterHeight = currentFooterHeight() + sectionHeight;
+        const footerFitsCurrentPage = usedHeight <= Math.max(120, Math.floor(pageBaseCapacity - nextFooterHeight));
+
+        if (!footerFitsCurrentPage && (currentSections.length > 0 || currentFooterSections.length > 0)) {
+          pushPage();
+        }
+
+        currentFooterSections.push(item);
+        continue;
+      }
+
+      const wouldOverflow = currentSections.length > 0 && usedHeight + sectionHeight > availableBodyHeight;
 
       if (wouldOverflow) {
-        pages.push({ index: pages.length, sections: currentSections });
-        currentSections = [];
-        usedHeight = 0;
+        pushPage();
       }
 
       currentSections.push(item);
       usedHeight += sectionHeight;
     }
 
-    if (currentSections.length > 0 || pages.length === 0) {
-      pages.push({ index: pages.length, sections: currentSections });
+    if (currentSections.length > 0 || currentFooterSections.length > 0 || pages.length === 0) {
+      pushPage();
     }
 
     return pages;
