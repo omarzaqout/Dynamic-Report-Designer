@@ -670,6 +670,12 @@ export class RightPanelComponent {
   copyTableStyle(): void {
     const el = this.element();
     if (!el || el.type !== 'table' || !el.table) return;
+    const detectedRows = Math.max(el.table.rows || 0, el.table.cells.length || 0);
+    const detectedColumns = Math.max(
+      el.table.columns || 0,
+      ...el.table.cells.map((row) => row.length || 0),
+      0
+    );
 
     this.templateService.copyTableStyleToClipboard({
       elementStyle: JSON.parse(JSON.stringify(el.style)),
@@ -681,8 +687,9 @@ export class RightPanelComponent {
           style: cell.style ? JSON.parse(JSON.stringify(cell.style)) : undefined,
         }))
       ),
-      rows: el.table.rows,
-      columns: el.table.columns,
+      rows: detectedRows,
+      columns: detectedColumns,
+      dynamicRows: el.table.dynamicRows,
     });
   }
 
@@ -697,23 +704,33 @@ export class RightPanelComponent {
     this.updateTable((table) => {
       table.fullWidth = copied.fullWidth;
 
-      for (let row = 0; row < Math.min(targetRows, copied.rowHeights.length); row += 1) {
-        table.rowHeights[row] = copied.rowHeights[row];
+      for (let row = 0; row < targetRows; row += 1) {
+        const sourceHeight = copied.rowHeights[row % Math.max(copied.rowHeights.length, 1)];
+        if (sourceHeight !== undefined) {
+          table.rowHeights[row] = sourceHeight;
+        }
       }
 
-      for (let col = 0; col < Math.min(targetCols, copied.columnSettings.length); col += 1) {
-        const currentOrder = table.columnSettings[col]?.order ?? col;
+      for (let col = 0; col < targetCols; col += 1) {
+        const sourceColumn = copied.columnSettings[col % Math.max(copied.columnSettings.length, 1)];
+        if (!sourceColumn) continue;
         table.columnSettings[col] = {
           ...table.columnSettings[col],
-          ...copied.columnSettings[col],
-          order: currentOrder,
+          ...sourceColumn,
         };
       }
 
-      for (let row = 0; row < Math.min(targetRows, copied.cells.length); row += 1) {
-        for (let col = 0; col < Math.min(targetCols, copied.cells[row].length); col += 1) {
-          table.cells[row][col].style = copied.cells[row][col].style
-            ? JSON.parse(JSON.stringify(copied.cells[row][col].style))
+      const sourceRows = copied.cells.length;
+      for (let row = 0; row < targetRows; row += 1) {
+        if (sourceRows === 0) break;
+        const sourceRow = copied.cells[row % sourceRows];
+        const sourceCols = sourceRow.length;
+        if (sourceCols === 0) continue;
+
+        for (let col = 0; col < targetCols; col += 1) {
+          const sourceCell = sourceRow[col % sourceCols];
+          table.cells[row][col].style = sourceCell?.style
+            ? JSON.parse(JSON.stringify(sourceCell.style))
             : undefined;
         }
       }
@@ -728,6 +745,15 @@ export class RightPanelComponent {
 
   hasCopiedTableStyle(): boolean {
     return !!this.copiedTableStyle();
+  }
+
+  copiedTableStyleSummary(): string {
+    const copied = this.copiedTableStyle();
+    if (!copied) return '';
+    if (copied.dynamicRows) {
+      return `${copied.rows}x${copied.columns} repeating style block`;
+    }
+    return `${copied.rows}x${copied.columns} table`;
   }
 
   duplicateSelected(): void {

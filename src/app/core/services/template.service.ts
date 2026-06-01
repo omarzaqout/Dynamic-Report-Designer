@@ -124,6 +124,7 @@ export class TemplateService {
     cells: Array<Array<{ style?: any }>>;
     rows: number;
     columns: number;
+    dynamicRows?: boolean;
   } | null>(null);
   readonly focusedTableCell = signal<{ elementId: string; row: number; col: number } | null>(null);
   readonly selectedTableCells = signal<Array<{ elementId: string; row: number; col: number }>>([]);
@@ -198,6 +199,7 @@ export class TemplateService {
     cells: Array<Array<{ style?: any }>>;
     rows: number;
     columns: number;
+    dynamicRows?: boolean;
   }): void {
     this.copiedTableStyle.set(style);
     localStorage.setItem(this.TABLE_STYLE_CLIPBOARD_KEY, JSON.stringify(style));

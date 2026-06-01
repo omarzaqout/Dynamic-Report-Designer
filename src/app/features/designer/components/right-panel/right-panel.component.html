@@ -505,7 +505,7 @@
         </div>
         @if (copiedTableStyle(); as copiedStyle) {
         <div class="hint-text" style="margin-top: 6px;">
-          Copied style ready: {{ copiedStyle.rows }}x{{ copiedStyle.columns }} table. You can paste it into this template or another open template.
+          Copied style ready: {{ copiedTableStyleSummary() }}. You can paste it into this template or another open template.
         </div>
         }
         <label class="repeat-toggle"
