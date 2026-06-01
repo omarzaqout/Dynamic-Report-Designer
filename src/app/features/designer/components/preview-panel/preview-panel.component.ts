@@ -16,6 +16,9 @@ import { formatMixedDirectionalHtml, hasRtlCharacters, normalizeStoredText } fro
   styleUrl: './preview-panel.component.css',
 })
 export class PreviewPanelComponent {
+  private readonly pxPerMm = 96 / 25.4;
+  readonly pageWidthPx = Math.round(210 * this.pxPerMm);
+  readonly pageHeightPx = Math.round(297 * this.pxPerMm);
   private templateService = inject(TemplateService);
   private renderService = inject(RenderService);
   private dataService = inject(DataService);
@@ -48,8 +51,56 @@ export class PreviewPanelComponent {
     });
   });
 
+  readonly previewPages = computed(() => {
+    const template = this.template();
+    const flowSections = this.mainSections().map((section, index) => ({ section, index }));
+    const repeatingHeaders = this.repeatingSections();
+    const repeatingFooters = this.repeatingFooters();
+    const topPadding = this.mmToPx(template.margin?.top || 0);
+    const bottomPadding = this.mmToPx(template.margin?.bottom || 0);
+    const availableHeight =
+      this.pageHeightPx -
+      topPadding -
+      bottomPadding -
+      this.sumSectionHeights(repeatingHeaders) -
+      this.sumSectionHeights(repeatingFooters);
+
+    const bodyCapacity = Math.max(120, Math.floor(availableHeight));
+    const pages: Array<{ index: number; sections: Array<{ section: RenderedSection; index: number }> }> = [];
+    let currentSections: Array<{ section: RenderedSection; index: number }> = [];
+    let usedHeight = 0;
+
+    for (const item of flowSections) {
+      const sectionHeight = this.getSectionHeight(item.section);
+      const wouldOverflow = currentSections.length > 0 && usedHeight + sectionHeight > bodyCapacity;
+
+      if (wouldOverflow) {
+        pages.push({ index: pages.length, sections: currentSections });
+        currentSections = [];
+        usedHeight = 0;
+      }
+
+      currentSections.push(item);
+      usedHeight += sectionHeight;
+    }
+
+    if (currentSections.length > 0 || pages.length === 0) {
+      pages.push({ index: pages.length, sections: currentSections });
+    }
+
+    return pages;
+  });
+
   toggleRowDebug(): void {
     this.debugRowHeights.update((value) => !value);
+  }
+
+  private mmToPx(mm: number): number {
+    return mm * this.pxPerMm;
+  }
+
+  private sumSectionHeights(sections: RenderedSection[]): number {
+    return sections.reduce((sum, section) => sum + this.getSectionHeight(section), 0);
   }
 
   getBands(section: RenderedSection): any[] {

@@ -26,7 +26,36 @@
   </div>
 
   <div class="preview-scroll">
+    <div class="preview-pages">
+      @for (page of previewPages(); track page.index) {
+      <div class="preview-sheet"
+        [style.width.px]="pageWidthPx"
+        [style.min-height.px]="pageHeightPx">
+        <div class="preview-sheet-inner"
+          [style.padding-top.mm]="template().margin?.top || 0"
+          [style.padding-right.mm]="template().margin?.right || 0"
+          [style.padding-bottom.mm]="template().margin?.bottom || 0"
+          [style.padding-left.mm]="template().margin?.left || 0">
 
+          @for (section of repeatingSections(); track section.label + '-' + $index) {
+          <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: $index }"></ng-container>
+          }
+
+          <div class="preview-page-body">
+            @for (item of page.sections; track item.section.label + '-' + item.index) {
+            <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: item.section, index: item.index }"></ng-container>
+            }
+          </div>
+
+          @for (section of repeatingFooters(); track section.label + '-' + $index) {
+          <ng-container *ngTemplateOutlet="sectionTpl; context: { $implicit: section, index: page.sections.length + $index }"></ng-container>
+          }
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="print-preview-structure">
     <!-- 
       By using a native HTML table for the main layout, browsers automatically
       repeat the <thead> and <tfoot> on every printed page.
@@ -74,6 +103,7 @@
       }
 
     </table><!-- /.preview-page-paper -->
+    </div>
 
   </div><!-- /.preview-scroll -->
 </div>

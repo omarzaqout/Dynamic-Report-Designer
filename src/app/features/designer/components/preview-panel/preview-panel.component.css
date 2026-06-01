@@ -75,6 +75,9 @@
     flex: 1;
     overflow: auto;
     padding: 20px;
+    background:
+        linear-gradient(180deg, #eef2ff 0%, #f8fafc 180px),
+        #f8fafc;
 }
 
 .preview-scroll::-webkit-scrollbar {
@@ -84,6 +87,37 @@
 .preview-scroll::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
+}
+
+.preview-pages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.preview-sheet {
+    background: #fff;
+    box-shadow: 0 10px 32px rgba(15, 23, 42, 0.14);
+    border: 1px solid #dbe4f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.preview-sheet-inner {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.preview-page-body {
+    flex: 1;
+}
+
+.print-preview-structure {
+    display: none;
 }
 
 .preview-page-paper {
@@ -287,6 +321,14 @@
     .footer-preview-wrap,
     .fixed-footer-container {
         display: none !important;
+    }
+
+    .preview-pages {
+        display: none !important;
+    }
+
+    .print-preview-structure {
+        display: block !important;
     }
 
     /* ---- Page paper: flat, full-width block ---- */
