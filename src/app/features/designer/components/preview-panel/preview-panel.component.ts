@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateService } from '../../../../core/services/template.service';
 import { RenderService, RenderedSection } from '../../../../core/services/render.service';
@@ -19,6 +19,7 @@ export class PreviewPanelComponent {
   private templateService = inject(TemplateService);
   private renderService = inject(RenderService);
   private dataService = inject(DataService);
+  readonly debugRowHeights = signal(false);
 
   readonly template = this.templateService.template;
   readonly dataRows = toSignal(this.dataService.data$, { initialValue: [] });
@@ -46,6 +47,10 @@ export class PreviewPanelComponent {
       return !isRepeatingHeader && !isRepeatingFooter;
     });
   });
+
+  toggleRowDebug(): void {
+    this.debugRowHeights.update((value) => !value);
+  }
 
   getBands(section: RenderedSection): any[] {
     const offsetElements = this.getElementsWithOffsets(section);
@@ -163,7 +168,7 @@ export class PreviewPanelComponent {
 
   private getElementActualHeight(el: any): number {
     if (el.type === 'table' && el.table) {
-      return this.tableHeight(el.table, true);
+      return this.tableHeight(el.table, true, el.style?.whiteSpace ?? 'nowrap', el.style || {});
     }
     if (el.type === 'image') return el.size?.height || 100;
     if (el.type === 'line') return el.size?.height || 2;
@@ -175,8 +180,8 @@ export class PreviewPanelComponent {
   private getElementOriginalHeight(el: any, section: RenderedSection): number {
     const originalEl = section.templateSection?.elements?.find((e: any) => e.id === el.id);
     if (el.type === 'table') {
-      if (originalEl?.table) return this.tableHeight(originalEl.table, true);
-      if (el.table) return this.tableHeight(el.table, true);
+      if (originalEl?.table) return this.tableHeight(originalEl.table, true, originalEl.style?.whiteSpace ?? 'nowrap', originalEl.style || {});
+      if (el.table) return this.tableHeight(el.table, true, el.style?.whiteSpace ?? 'nowrap', el.style || {});
     }
     if (el.type === 'line') return el.size?.height || 2;
     if (el.size?.height) return el.size.height;
@@ -262,7 +267,7 @@ export class PreviewPanelComponent {
     return formatMixedDirectionalHtml(this.cellDisplayContent(table, rowIndex, colIndex));
   }
 
-  rowHeight(table: TableData, rowIndex: number, dynamic: boolean = true, parentWhiteSpace: string = 'nowrap'): number {
+  rowHeight(table: TableData, rowIndex: number, dynamic: boolean = true, parentWhiteSpace: string = 'nowrap', parentStyle: any = {}): number {
     const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
     if (!dynamic) return baseHeight;
 
@@ -286,6 +291,7 @@ export class PreviewPanelComponent {
       const availableWidth = Math.max(10, this.columnWidth(table, colIndex) - horizontalPadding);
 
       const cellStyle = {
+        ...parentStyle,
         ...cell.style,
         whiteSpace: effectiveWhiteSpace
       };
@@ -306,6 +312,53 @@ export class PreviewPanelComponent {
     return Math.round(maxHeight);
   }
 
+  rowDebugInfo(table: TableData, rowIndex: number, parentWhiteSpace: string = 'nowrap', parentStyle: any = {}): string {
+    const baseHeight = table.rowHeights?.[rowIndex] ?? 36;
+    const visibleCols = this.visibleColumnIndexes(table);
+    const parts: string[] = [
+      `Row ${rowIndex + 1}`,
+      `Base height: ${baseHeight}px`
+    ];
+    let foundReason = false;
+
+    for (const colIndex of visibleCols) {
+      const cell = table.cells[rowIndex]?.[colIndex];
+      if (!cell) continue;
+
+      const content = this.cellDisplayContent(table, rowIndex, colIndex);
+      const effectiveWhiteSpace = this.cellWhiteSpace(table, rowIndex, colIndex, parentWhiteSpace);
+      const hasExplicitBreak = /\n|<br\s*\/?>/i.test(cell.content || '');
+      const hasPadding = !cell.imageUrl && !cell.isQRCode;
+      const horizontalPadding = hasPadding ? 12 : 0;
+      const availableWidth = Math.max(10, this.columnWidth(table, colIndex) - horizontalPadding);
+      const cellStyle = {
+        ...parentStyle,
+        ...cell.style,
+        whiteSpace: effectiveWhiteSpace
+      };
+      const measured = this.measureTextHeight(content, cellStyle, availableWidth, '1.3');
+      const totalHeight = measured + (hasPadding ? 8 : 0);
+
+      if (totalHeight > baseHeight || hasExplicitBreak || effectiveWhiteSpace !== 'nowrap') {
+        foundReason = true;
+        const preview = content.replace(/\s+/g, ' ').trim().slice(0, 40) || '(empty)';
+        parts.push(
+          `Cell ${colIndex + 1}: "${preview}"`,
+          `Wrap mode: ${effectiveWhiteSpace}`,
+          `Explicit line break: ${hasExplicitBreak ? 'Yes' : 'No'}`,
+          `Available width: ${availableWidth}px`,
+          `Measured height: ${Math.round(totalHeight)}px`
+        );
+      }
+    }
+
+    if (!foundReason) {
+      parts.push('No cell exceeds the base row height.');
+    }
+
+    return parts.join('\n');
+  }
+
   columnWidth(table: TableData, colIndex: number): number {
     return table.columnSettings?.[colIndex]?.width ?? 120;
   }
@@ -316,9 +369,9 @@ export class PreviewPanelComponent {
     return cols.reduce((sum, colIndex) => sum + this.columnWidth(table, colIndex), 0);
   }
 
-  tableHeight(table: TableData, dynamic: boolean = true, parentWhiteSpace: string = 'nowrap'): number {
+  tableHeight(table: TableData, dynamic: boolean = true, parentWhiteSpace: string = 'nowrap', parentStyle: any = {}): number {
     if (table.rows === 0) return 36;
-    return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex, dynamic, parentWhiteSpace), 0);
+    return this.tableRowIndexes(table).reduce((sum, rowIndex) => sum + this.rowHeight(table, rowIndex, dynamic, parentWhiteSpace, parentStyle), 0);
   }
 
   protected encodeURIComponent(str: string): string {
