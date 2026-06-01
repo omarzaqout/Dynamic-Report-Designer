@@ -33,6 +33,22 @@ export class RightPanelComponent {
     { label: 'Georgia', value: 'Georgia, serif' },
     { label: 'Courier New', value: '"Courier New", monospace' },
   ] as const;
+  readonly dateFormats = [
+    { label: 'Default (dd/MM/yy)', value: 'dd/MM/yy' },
+    { label: 'dd/MM/yyyy', value: 'dd/MM/yyyy' },
+    { label: 'MM/dd/yyyy', value: 'MM/dd/yyyy' },
+    { label: 'yyyy-MM-dd', value: 'yyyy-MM-dd' },
+    { label: 'dd-MM-yyyy', value: 'dd-MM-yyyy' },
+    { label: 'dd MMM yyyy', value: 'dd MMM yyyy' },
+    { label: 'MMM dd, yyyy', value: 'MMM dd, yyyy' },
+    { label: 'MMMM dd, yyyy', value: 'MMMM dd, yyyy' },
+    { label: 'dd/MM/yyyy HH:mm', value: 'dd/MM/yyyy HH:mm' },
+    { label: 'dd MMM yyyy HH:mm', value: 'dd MMM yyyy HH:mm' },
+    { label: 'yyyy-MM-dd HH:mm:ss', value: 'yyyy-MM-dd HH:mm:ss' },
+    { label: 'hh:mm a', value: 'hh:mm a' },
+    { label: 'dd/MM/yyyy hh:mm a', value: 'dd/MM/yyyy hh:mm a' },
+    { label: 'Full', value: 'full' },
+  ] as const;
 
   readonly element = this.templateService.selectedElement;
   readonly selectedElementIds = this.templateService.selectedElementIds;
@@ -78,6 +94,13 @@ export class RightPanelComponent {
   });
   
   readonly filteredLeafFields = computed(() => this.leafFields());
+  readonly isBoundDateField = computed(() => this.isDateFieldPath(this.element()?.boundField || this.element()?.fieldPath));
+  readonly isFocusedTableCellDateField = computed(() => {
+    const el = this.element();
+    const focus = this.focusedCell();
+    if (!el || el.type !== 'table' || !el.table || !focus || focus.elementId !== el.id) return false;
+    return this.isDateFieldPath(el.table.cells[focus.row][focus.col].fieldPath);
+  });
 
   readonly sectionLabel = computed(() => {
     const s = this.templateService.selectedElementSection();
@@ -108,7 +131,13 @@ export class RightPanelComponent {
     }
 
     if (val) {
-      this.templateService.updateElement(el.id, { content: `{{${val}}}`, boundField: val, fieldPath: val, type: 'field' });
+      this.templateService.updateElement(el.id, {
+        content: `{{${val}}}`,
+        boundField: val,
+        fieldPath: val,
+        type: 'field',
+        dateFormat: this.isDateFieldPath(val) ? el.dateFormat : undefined
+      });
       
       // AUTO-BIND SECTION: If this is a details section and has no dataset path, 
       // try to infer it from the field being bound.
@@ -120,8 +149,13 @@ export class RightPanelComponent {
         }
       }
     } else {
-      this.templateService.updateElement(el.id, { boundField: undefined, fieldPath: undefined, type: 'text' });
+      this.templateService.updateElement(el.id, { boundField: undefined, fieldPath: undefined, type: 'text', dateFormat: undefined });
     }
+  }
+
+  onDateFormatChange(value: string): void {
+    const el = this.element();
+    if (el) this.templateService.updateElement(el.id, { dateFormat: value || undefined });
   }
 
   onQRCodeToggle(event: Event): void {
@@ -418,6 +452,19 @@ export class RightPanelComponent {
       if (value) {
         table.cells[row][col].content = `{{${value}}}`;
       }
+      table.cells[row][col].dateFormat = value && this.isDateFieldPath(value) ? table.cells[row][col].dateFormat : undefined;
+      return table;
+    });
+  }
+
+  onTableCellDateFormatChange(value: string): void {
+    const selectedCells = this.getSelectedCellsForActiveElement();
+    if (selectedCells.length === 0) return;
+
+    this.updateTable((table) => {
+      for (const selectedCell of selectedCells) {
+        table.cells[selectedCell.row][selectedCell.col].dateFormat = value || undefined;
+      }
       return table;
     });
   }
@@ -709,6 +756,11 @@ export class RightPanelComponent {
 
   isKeyInFields(key: string): boolean {
     return this.filteredLeafFields().some(f => f.key === key);
+  }
+
+  private isDateFieldPath(path?: string): boolean {
+    if (!path) return false;
+    return this.filteredLeafFields().some((field) => field.key === path && field.type === 'date');
   }
 
   readonly focusedCell = this.templateService.focusedTableCell;

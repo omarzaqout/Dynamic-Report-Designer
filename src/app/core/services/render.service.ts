@@ -32,6 +32,23 @@ export interface RenderedReport {
 
 @Injectable({ providedIn: 'root' })
 export class RenderService {
+  private readonly dateFormatters: Record<string, (date: Date) => string> = {
+    'dd/MM/yy': (date) => `${this.pad(date.getDate())}/${this.pad(date.getMonth() + 1)}/${String(date.getFullYear()).slice(-2)}`,
+    'dd/MM/yyyy': (date) => `${this.pad(date.getDate())}/${this.pad(date.getMonth() + 1)}/${date.getFullYear()}`,
+    'MM/dd/yyyy': (date) => `${this.pad(date.getMonth() + 1)}/${this.pad(date.getDate())}/${date.getFullYear()}`,
+    'yyyy-MM-dd': (date) => `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`,
+    'dd-MM-yyyy': (date) => `${this.pad(date.getDate())}-${this.pad(date.getMonth() + 1)}-${date.getFullYear()}`,
+    'dd MMM yyyy': (date) => `${this.pad(date.getDate())} ${this.monthShort(date)} ${date.getFullYear()}`,
+    'MMM dd, yyyy': (date) => `${this.monthShort(date)} ${this.pad(date.getDate())}, ${date.getFullYear()}`,
+    'MMMM dd, yyyy': (date) => `${this.monthLong(date)} ${this.pad(date.getDate())}, ${date.getFullYear()}`,
+    'dd/MM/yyyy HH:mm': (date) => `${this.pad(date.getDate())}/${this.pad(date.getMonth() + 1)}/${date.getFullYear()} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`,
+    'dd MMM yyyy HH:mm': (date) => `${this.pad(date.getDate())} ${this.monthShort(date)} ${date.getFullYear()} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`,
+    'yyyy-MM-dd HH:mm:ss': (date) => `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}:${this.pad(date.getSeconds())}`,
+    'hh:mm a': (date) => `${this.pad(((date.getHours() + 11) % 12) + 1)}:${this.pad(date.getMinutes())} ${date.getHours() >= 12 ? 'PM' : 'AM'}`,
+    'dd/MM/yyyy hh:mm a': (date) => `${this.pad(date.getDate())}/${this.pad(date.getMonth() + 1)}/${date.getFullYear()} ${this.pad(((date.getHours() + 11) % 12) + 1)}:${this.pad(date.getMinutes())} ${date.getHours() >= 12 ? 'PM' : 'AM'}`,
+    'full': (date) => `${this.monthLong(date)} ${this.pad(date.getDate())}, ${date.getFullYear()} ${this.pad(((date.getHours() + 11) % 12) + 1)}:${this.pad(date.getMinutes())}:${this.pad(date.getSeconds())} ${date.getHours() >= 12 ? 'PM' : 'AM'}`,
+  };
+
   renderReport(data: ReportData[], template: ReportTemplate, rawData?: any): RenderedReport {
     const renderedSections: RenderedSection[] = [];
     const mainData = data && data.length > 0 ? data : [{}];
@@ -70,7 +87,8 @@ export class RenderService {
       if (el.type === 'field' || (renderedContent && renderedContent.includes('{{'))) {
         renderedContent = this.interpolate(renderedContent, row, rawData, section.datasetPath, isGlobal, {
           aggregation: el.aggregation,
-          conditions: el.conditions
+          conditions: el.conditions,
+          dateFormat: el.dateFormat
         });
       }
 
@@ -176,18 +194,20 @@ export class RenderService {
     if (cell.fieldPath) {
       const val = this.resolveValue(cell.fieldPath, row, rawData, datasetPath, isGlobal, {
         aggregation: cell.aggregation,
-        conditions: cell.conditions
+        conditions: cell.conditions,
+        dateFormat: cell.dateFormat
       });
       
       if (imageUrl && imageUrl.startsWith('{{')) {
          imageUrl = this.interpolate(imageUrl, row, rawData, datasetPath, isGlobal);
       }
 
-      content = val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val);
+      content = val === undefined ? (hasData ? '' : `{{${cell.fieldPath}}}`) : this.formatValue(val, cell.dateFormat);
     } else {
       content = this.interpolate(cell.content || '', row, rawData, datasetPath, isGlobal, {
         aggregation: cell.aggregation,
-        conditions: cell.conditions
+        conditions: cell.conditions,
+        dateFormat: cell.dateFormat
       });
     }
 
@@ -211,7 +231,7 @@ export class RenderService {
     };
   }
 
-  private resolveValue(expression: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false, metadata?: { aggregation?: any, conditions?: any[] }): any {
+  private resolveValue(expression: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false, metadata?: { aggregation?: any, conditions?: any[], dateFormat?: string }): any {
     const trimmed = expression.trim();
     const conditions = metadata?.conditions || [];
     
@@ -297,7 +317,7 @@ export class RenderService {
     return this.handleAggregation(result, isGlobal, metadata);
   }
 
-  private handleAggregation(value: any, isGlobal: boolean, metadata?: { aggregation?: any, conditions?: any[] }): any {
+  private handleAggregation(value: any, isGlobal: boolean, metadata?: { aggregation?: any, conditions?: any[], dateFormat?: string }): any {
     const aggType = metadata?.aggregation || 'none';
 
     if (Array.isArray(value)) {
@@ -423,53 +443,47 @@ export class RenderService {
     }
   }
 
-  private formatValue(value: any): string {
+  private formatValue(value: any, dateFormat?: string): string {
     if (value === undefined || value === null) return '';
     
     // Data Safety Rule: Prevent raw arrays from leaking to UI
     if (Array.isArray(value)) {
       if (value.length === 0) return '';
       // If we somehow got an array here, fallback to first value to avoid [object Object] or JSON strings
-      return this.formatValue(value[0]);
+      return this.formatValue(value[0], dateFormat);
     }
 
     if (typeof value === 'object') {
       if (value instanceof Date) {
-        const day = String(value.getDate()).padStart(2, '0');
-        const month = String(value.getMonth() + 1).padStart(2, '0');
-        const year = String(value.getFullYear()).slice(-2);
-        return `${day}/${month}/${year}`;
+        return this.formatDateValue(value, dateFormat);
       }
       return JSON.stringify(value);
     }
     
     // Auto-format ISO dates
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-      const d = new Date(value);
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = String(d.getFullYear()).slice(-2);
-        return `${day}/${month}/${year}`;
+      const d = this.parseDateValue(value);
+      if (d) {
+        return this.formatDateValue(d, dateFormat);
       }
     }
     
     return String(value);
   }
 
-  interpolate(content: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false, metadata?: { aggregation?: any, conditions?: any[] }): string {
+  interpolate(content: string, row: ReportData, rawData?: any, datasetPath?: string, isGlobal = false, metadata?: { aggregation?: any, conditions?: any[], dateFormat?: string }): string {
     return content.replace(/\{\{([^}]+)\}\}/g, (_match, expr) => {
       try {
         const result = this.resolveValue(expr, row, rawData, datasetPath, isGlobal, metadata);
         if (result !== undefined) {
-          return this.formatValue(result);
+          return this.formatValue(result, metadata?.dateFormat);
         }
         
         try {
           const keys = Object.keys(row);
           const values = Object.values(row);
           const fn = new Function(...keys, `return ${expr.trim()}`);
-          return this.formatValue(fn(...values));
+          return this.formatValue(fn(...values), metadata?.dateFormat);
         } catch {
           return `{{${expr}}}`;
         }
@@ -477,6 +491,29 @@ export class RenderService {
         return `{{${expr}}}`;
       }
     });
+  }
+
+  private parseDateValue(value: string): Date | null {
+    const normalized = value.replace(/\.(\d{3})\d+/, '.$1');
+    const parsed = new Date(normalized);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private formatDateValue(date: Date, dateFormat?: string): string {
+    const formatter = this.dateFormatters[dateFormat || 'dd/MM/yy'] || this.dateFormatters['dd/MM/yy'];
+    return formatter(date);
+  }
+
+  private pad(value: number): string {
+    return String(value).padStart(2, '0');
+  }
+
+  private monthShort(date: Date): string {
+    return date.toLocaleString('en-US', { month: 'short' });
+  }
+
+  private monthLong(date: Date): string {
+    return date.toLocaleString('en-US', { month: 'long' });
   }
 
   getValueByPath(obj: any, path: string): any {

@@ -221,6 +221,15 @@
           <option [value]="f.key">{{ f.label }} </option>
           }
         </select>
+        @if (isFocusedTableCellDateField()) {
+        <select class="prop-select" [value]="el.table.cells[focus.row][focus.col].dateFormat || 'dd/MM/yy'"
+          (change)="onTableCellDateFormatChange($any($event.target).value)"
+          style="margin-top: 4px; border-color: #fde68a; background: #fff; height: 24px; font-size: 10px;">
+          @for (format of dateFormats; track format.value) {
+          <option [value]="format.value">{{ format.label }}</option>
+          }
+        </select>
+        }
       </div>
 
       <!-- TABLE CELL DATA LOGIC -->
@@ -344,6 +353,16 @@
           }
         </select>
       </div>
+      @if (isBoundDateField()) {
+      <div class="prop-col">
+        <label class="prop-label">Date Format</label>
+        <select class="prop-select" [value]="el.dateFormat || 'dd/MM/yy'" (change)="onDateFormatChange($any($event.target).value)">
+          @for (format of dateFormats; track format.value) {
+          <option [value]="format.value">{{ format.label }}</option>
+          }
+        </select>
+      </div>
+      }
 
       <!-- FIELD DATA LOGIC -->
       <div class="prop-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">

@@ -26,6 +26,7 @@ export interface FieldCondition {
 export interface TableCell {
   content: string;
   fieldPath?: string;
+  dateFormat?: string;
   style?: Partial<ElementStyle>;
   imageUrl?: string;
   isQRCode?: boolean;
@@ -56,6 +57,7 @@ export interface TemplateElement {
   type: 'text' | 'field' | 'image' | 'table';
   content?: string;
   fieldPath?: string;
+  dateFormat?: string;
   imageUrl?: string;
   table?: TableData;
   size?: { width: number; height: number };
