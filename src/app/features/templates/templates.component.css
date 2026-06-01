@@ -173,6 +173,92 @@
   font-size: 16px;
 }
 
+.skeleton-grid {
+  align-items: stretch;
+}
+
+.skeleton-card {
+  cursor: default;
+  pointer-events: none;
+}
+
+.skeleton-card:hover {
+  transform: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border-color: #e2e8f0;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  border-radius: 10px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-100%);
+  animation: skeleton-sweep 1.2s ease-in-out infinite;
+}
+
+.skeleton-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+.skeleton-details {
+  flex: 1;
+}
+
+.skeleton-title {
+  width: 72%;
+  height: 18px;
+  margin-bottom: 10px;
+}
+
+.skeleton-meta {
+  width: 92%;
+  height: 12px;
+}
+
+.skeleton-actions {
+  gap: 8px;
+}
+
+.skeleton-btn {
+  width: 82px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.skeleton-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .card-actions {
   display: flex;
   align-items: center;
