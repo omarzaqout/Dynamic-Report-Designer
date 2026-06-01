@@ -128,6 +128,12 @@
     border-left: 3px solid #8b5cf6;
 }
 
+.ps-reportFooter {
+    background: #fff7fb;
+    border: none;
+    border-left: 3px solid #ec4899;
+}
+
 .section-body {
     position: relative;
 }

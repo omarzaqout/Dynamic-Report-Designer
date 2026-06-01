@@ -133,7 +133,7 @@ export class CanvasSectionComponent {
     if (el.type === 'table' && el.table) {
       return Array.from({ length: el.table.rows }, (_v, rowIndex) => this.getTableRowHeight(el, rowIndex))
         .reduce((a, b) => a + b, 0);
-    } else if (el.type === 'image' && el.size) {
+    } else if ((el.type === 'image' || el.type === 'line') && el.size) {
       return el.size.height;
     } else if (el.style) {
       return Math.max(30, el.style.fontSize * 1.5);
@@ -188,7 +188,7 @@ export class CanvasSectionComponent {
     const x = Math.max(0, event.clientX - rect.left - 4);
     const y = Math.max(0, event.clientY - rect.top - 10);
 
-    const staticType = event.dataTransfer?.getData('application/static-type') as 'text' | 'image' | 'table' | '';
+    const staticType = event.dataTransfer?.getData('application/static-type') as 'text' | 'image' | 'table' | 'line' | '';
     if (staticType) {
       this.elementAdd.emit({
         sectionId: this.section.id,
@@ -199,11 +199,13 @@ export class CanvasSectionComponent {
           size:
             staticType === 'image'
               ? { width: 120, height: 120 }
+              : staticType === 'line'
+                ? { width: 240, height: 2 }
               : staticType === 'table'
                 ? { width: 360, height: 100 }
                 : undefined,
           position: { x, y },
-          style: { ...DEFAULT_STYLE },
+          style: { ...DEFAULT_STYLE, borderStyle: staticType === 'line' ? 'dotted' : DEFAULT_STYLE.borderStyle },
         },
       });
       return;

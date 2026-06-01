@@ -4,10 +4,11 @@
       class="canvas-el"
       [class.selected]="selected"
       [class.is-image]="element.type === 'image'"
+      [class.is-line]="element.type === 'line'"
       [class.is-table]="element.type === 'table'"
       [style.left.px]="element.table?.fullWidth ? 0 : element.position.x"
-      [style.width]="element.table?.fullWidth ? '100%' : (element.type === 'table' ? tableWidth() + 'px' : null)"
-      [style.height.px]="element.type === 'table' ? tableHeight() : null"
+      [style.width]="element.table?.fullWidth ? '100%' : (element.type === 'table' ? tableWidth() + 'px' : element.type === 'line' ? (element.size?.width || 240) + 'px' : null)"
+      [style.height.px]="element.type === 'table' ? tableHeight() : element.type === 'line' ? (element.size?.height || 2) : null"
       [style.top.px]="element.position.y"
       [style.fontSize.px]="element.style.fontSize"
       [style.fontFamily]="element.style.fontFamily"
@@ -128,6 +129,14 @@
             </tbody>
           </table>
         </div>
+      } @else if (element.type === 'line') {
+        <div
+          class="el-line"
+          style="height: 0; width: 100%;"
+          [style.borderTopStyle]="element.style.borderStyle || 'dotted'"
+          [style.borderTopColor]="element.style.color"
+          [style.borderTopWidth.px]="element.size?.height || 2"
+        ></div>
       } @else if (isEditingInline) {
         <textarea class="inline-edit" [value]="element.content || ''" (blur)="onInlineBlur($event)" (keydown)="onInlineKeyDown($event)"></textarea>
       } @else {

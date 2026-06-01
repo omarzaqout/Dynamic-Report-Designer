@@ -166,6 +166,7 @@ export class PreviewPanelComponent {
       return this.tableHeight(el.table, true);
     }
     if (el.type === 'image') return el.size?.height || 100;
+    if (el.type === 'line') return el.size?.height || 2;
     const width = el.size?.width || 200;
     const measuredHeight = this.measureTextHeight(el.content || '', el.style || {}, width, '1.4');
     return Math.max(el.size?.height || 0, measuredHeight);
@@ -177,6 +178,7 @@ export class PreviewPanelComponent {
       if (originalEl?.table) return this.tableHeight(originalEl.table, true);
       if (el.table) return this.tableHeight(el.table, true);
     }
+    if (el.type === 'line') return el.size?.height || 2;
     if (el.size?.height) return el.size.height;
     return el.style?.fontSize ? el.style.fontSize * 1.5 : 30;
   }

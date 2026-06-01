@@ -110,6 +110,7 @@ export class RightPanelComponent {
       pageHeader: 'Page Header',
       details: 'Details',
       footer: 'Footer',
+      reportFooter: 'Report Footer',
     };
     return map[s.type] ?? s.type;
   });
@@ -328,6 +329,36 @@ export class RightPanelComponent {
   onBorderColorChange(event: Event): void {
     const color = (event.target as HTMLInputElement).value;
     this.updateStyle({ borderColor: color });
+  }
+
+  onLineWidthChange(event: Event): void {
+    const el = this.element();
+    if (!el || el.type !== 'line') return;
+    const width = parseInt((event.target as HTMLInputElement).value, 10);
+    this.templateService.updateElement(el.id, {
+      size: { width: Math.max(20, Number.isFinite(width) ? width : (el.size?.width || 240)), height: el.size?.height || 2 }
+    });
+  }
+
+  onLineThicknessChange(event: Event): void {
+    const el = this.element();
+    if (!el || el.type !== 'line') return;
+    const height = parseInt((event.target as HTMLInputElement).value, 10);
+    this.templateService.updateElement(el.id, {
+      size: { width: el.size?.width || 240, height: Math.max(1, Number.isFinite(height) ? height : (el.size?.height || 2)) }
+    });
+  }
+
+  onLineStyleChange(event: Event): void {
+    const el = this.element();
+    if (!el || el.type !== 'line') return;
+    this.updateStyle({ borderStyle: (event.target as HTMLSelectElement).value as any });
+  }
+
+  onLineColorPickerChange(event: Event): void {
+    const el = this.element();
+    if (!el || el.type !== 'line') return;
+    this.updateStyle({ color: (event.target as HTMLInputElement).value });
   }
 
   onXChange(event: Event): void {

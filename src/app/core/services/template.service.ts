@@ -346,10 +346,17 @@ export class TemplateService {
 
   // --- SECTION MANAGEMENT ---
   addSection(type: SectionType): void {
+    const labels: Record<SectionType, string> = {
+      reportHeader: 'Report Header',
+      pageHeader: 'Page Header',
+      details: 'Details',
+      footer: 'Page Footer',
+      reportFooter: 'Report Footer',
+    };
     const newSection: TemplateSection = {
       id: 'section-' + Math.random().toString(36).substring(2, 11),
       type,
-      label: type.charAt(0).toUpperCase() + type.slice(1),
+      label: labels[type],
       height: 40,
       repeatPerRow: type === 'details',
       elements: [],

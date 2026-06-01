@@ -433,6 +433,32 @@
       </div>
       }
 
+      @if (el.type === 'line') {
+      <div class="prop-col">
+        <label class="prop-label">Line Width</label>
+        <input type="number" class="prop-number" [value]="el.size?.width || 240" (change)="onLineWidthChange($event)" min="20" />
+      </div>
+      <div class="prop-col">
+        <label class="prop-label">Line Thickness</label>
+        <input type="number" class="prop-number" [value]="el.size?.height || 2" (change)="onLineThicknessChange($event)" min="1" />
+      </div>
+      <div class="prop-col">
+        <label class="prop-label">Line Style</label>
+        <select class="prop-select" [value]="el.style.borderStyle || 'dotted'" (change)="onLineStyleChange($event)">
+          <option value="solid">Solid</option>
+          <option value="dashed">Dashed</option>
+          <option value="dotted">Dotted</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Line Color</label>
+        <div class="color-row">
+          <input type="color" class="color-picker" [value]="el.style.color" (input)="onLineColorPickerChange($event)" />
+          <span class="color-hex">{{ el.style.color }}</span>
+        </div>
+      </div>
+      }
+
       @if (el.type === 'image') {
       <div class="prop-col">
         <label class="prop-label">Upload Image</label>

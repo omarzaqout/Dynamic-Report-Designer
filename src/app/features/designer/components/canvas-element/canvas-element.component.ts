@@ -159,10 +159,10 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
         ? [...this.element.table.rowHeights]
         : Array.from({ length: this.element.table.rows }, () => 36);
       this.resizeMode = 'table-bounds';
-    } else if (this.element.type === 'image') {
+    } else if (this.element.type === 'image' || this.element.type === 'line') {
       const imgEl = this.elRef.nativeElement.querySelector('.el-image') as HTMLImageElement | null;
       this.resizeStartWidth = this.element.size?.width ?? imgEl?.clientWidth ?? 120;
-      this.resizeStartHeight = this.element.size?.height ?? imgEl?.clientHeight ?? 120;
+      this.resizeStartHeight = this.element.size?.height ?? imgEl?.clientHeight ?? (this.element.type === 'line' ? 2 : 120);
       this.resizeMode = 'element';
     } else {
       this.resizeStartFontSize = this.element.style.fontSize;
@@ -250,12 +250,12 @@ export class CanvasElementComponent implements OnInit, OnDestroy {
     }
 
     const dx = event.clientX - this.startMouseX;
-    if (this.element.type === 'image') {
+    if (this.element.type === 'image' || this.element.type === 'line') {
       const dy = event.clientY - this.startMouseY;
       this.templateService.updateElement(this.element.id, {
         size: {
           width: Math.max(40, Math.round(this.resizeStartWidth + dx)),
-          height: Math.max(40, Math.round(this.resizeStartHeight + dy)),
+          height: Math.max(this.element.type === 'line' ? 1 : 40, Math.round(this.resizeStartHeight + dy)),
         },
       });
       return;

@@ -123,7 +123,7 @@ export class LeftPanelComponent implements OnInit {
     this.draggingKey.set(null);
   }
 
-  onStaticDragStart(event: DragEvent, type: 'text' | 'image' | 'table'): void {
+  onStaticDragStart(event: DragEvent, type: 'text' | 'image' | 'table' | 'line'): void {
     event.dataTransfer?.setData('application/static-type', type);
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
     this.draggingKey.set(`static-${type}`);

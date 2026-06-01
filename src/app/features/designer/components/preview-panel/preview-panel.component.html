@@ -81,8 +81,8 @@
       <div class="preview-band" [style.marginTop.px]="band.marginTop" [style.height.px]="band.height" [style.--band-height.px]="band.height">
         @for (el of band.elements; track el.id) {
         <div class="preview-el" [style.left.px]="el.x" [style.top.px]="el.renderedY - band.renderedY"
-          [style.width]="el.type === 'table' ? tableWidth(el.table) + 'px' : null"
-          [style.height.px]="el.type === 'table' ? tableHeight(el.table, true, el.style.whiteSpace ?? 'nowrap') : null"
+          [style.width]="el.type === 'table' ? tableWidth(el.table) + 'px' : el.type === 'line' ? (el.size?.width || 240) + 'px' : null"
+          [style.height.px]="el.type === 'table' ? tableHeight(el.table, true, el.style.whiteSpace ?? 'nowrap') : el.type === 'line' ? (el.size?.height || 2) : null"
           [style.--print-mt.px]="el.renderedY - band.renderedY" [style.--print-ml.px]="el.x"
           [style.fontSize.px]="el.style.fontSize" [style.fontFamily]="el.style.fontFamily"
           [style.fontWeight]="el.style.fontWeight" [style.fontStyle]="el.style.fontStyle"
@@ -154,6 +154,13 @@
             [style.height.px]="el.size?.height" [style.maxWidth.px]="el.size ? null : 250"
             [style.maxHeight.px]="el.size ? null : 250" />
           }
+          } @else if (el.type === 'line') {
+          <div
+            style="height: 0; width: 100%;"
+            [style.borderTopStyle]="el.style.borderStyle || 'dotted'"
+            [style.borderTopColor]="el.style.color"
+            [style.borderTopWidth.px]="el.size?.height || 2"
+          ></div>
           } @else {
           <div
             [style.min-width.px]="getTextElementMinWidth(el, section)"

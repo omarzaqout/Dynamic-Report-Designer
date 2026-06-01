@@ -61,7 +61,8 @@ export class RenderService {
       const isHeaderFooter =
         section.type === 'reportHeader' ||
         section.type === 'pageHeader' ||
-        section.type === 'footer';
+        section.type === 'footer' ||
+        section.type === 'reportFooter';
 
       if (isArray && !isHeaderFooter) {
         for (const row of resolved) {

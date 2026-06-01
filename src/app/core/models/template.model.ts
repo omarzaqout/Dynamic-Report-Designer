@@ -1,4 +1,4 @@
-export type SectionType = 'reportHeader' | 'pageHeader' | 'details' | 'footer';
+export type SectionType = 'reportHeader' | 'pageHeader' | 'details' | 'footer' | 'reportFooter';
 
 export interface ElementStyle {
   fontSize: number;
@@ -7,6 +7,7 @@ export interface ElementStyle {
   fontStyle: 'normal' | 'italic';
   textDecoration: 'none' | 'underline';
   color: string;
+  borderStyle?: 'solid' | 'dashed' | 'dotted';
   textAlign?: 'left' | 'center' | 'right';
   verticalAlign?: 'top' | 'middle' | 'bottom';
   whiteSpace?: 'nowrap' | 'normal' | 'pre-wrap';
@@ -54,7 +55,7 @@ export interface TableData {
 
 export interface TemplateElement {
   id: string;
-  type: 'text' | 'field' | 'image' | 'table';
+  type: 'text' | 'field' | 'image' | 'table' | 'line';
   content?: string;
   fieldPath?: string;
   dateFormat?: string;

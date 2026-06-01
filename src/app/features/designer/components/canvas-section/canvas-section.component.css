@@ -33,6 +33,11 @@
       background: #faf5ff;
     }
 
+    .section-type-reportFooter .section-label-bar {
+      border-left-color: #ec4899;
+      background: #fdf2f8;
+    }
+
     .section-badge {
       font-size: 9px;
       font-weight: 700;
@@ -60,6 +65,11 @@
     .badge-footer {
       background: #ede9fe;
       color: #7c3aed;
+    }
+
+    .badge-reportFooter {
+      background: #fce7f3;
+      color: #db2777;
     }
 
     .section-title {

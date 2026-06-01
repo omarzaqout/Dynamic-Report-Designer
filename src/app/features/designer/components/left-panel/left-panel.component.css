@@ -336,6 +336,10 @@
       background: #8b5cf6;
     }
 
+    .section-reportFooter .section-dot {
+      background: #ec4899;
+    }
+
     .section-name {
       font-size: 11px;
       color: #94a3b8;
