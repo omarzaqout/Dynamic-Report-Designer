@@ -326,6 +326,7 @@ export class CanvasSectionComponent {
   }
 
   onCanvasClick(event: MouseEvent): void {
+    this.templateService.setActiveSection(this.section.id);
     this.templateService.selectElement(null);
   }
 

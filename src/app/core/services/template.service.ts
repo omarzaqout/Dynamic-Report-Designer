@@ -88,6 +88,7 @@ export class TemplateService {
   readonly template = computed(() => this._template());
   readonly currentReportId = signal<string | null>(null);
   readonly selectedElementIds = signal<string[]>([]);
+  readonly activeSectionId = signal<string | null>(null);
   readonly focusedTableCell = signal<{ elementId: string; row: number; col: number } | null>(null);
   readonly selectedTableCells = signal<Array<{ elementId: string; row: number; col: number }>>([]);
 
@@ -163,6 +164,10 @@ export class TemplateService {
   }
 
   // --- SELECTION ---
+  setActiveSection(sectionId: string | null): void {
+    this.activeSectionId.set(sectionId);
+  }
+
   selectElement(id: string | null, isMulti = false): void {
     if (!id) {
       this.selectedElementIds.set([]);
@@ -180,6 +185,7 @@ export class TemplateService {
     } else {
       this.selectedElementIds.set([id]);
     }
+    this.activeSectionId.set(this.findSectionIdForElement(id));
     this.clearTableCellSelection();
   }
 
@@ -188,8 +194,10 @@ export class TemplateService {
       const current = this.selectedElementIds();
       const combined = Array.from(new Set([...current, ...ids]));
       this.selectedElementIds.set(combined);
+      if (combined.length > 0) this.activeSectionId.set(this.findSectionIdForElement(combined[0]));
     } else {
       this.selectedElementIds.set(ids);
+      if (ids.length > 0) this.activeSectionId.set(this.findSectionIdForElement(ids[0]));
     }
   }
 
@@ -450,7 +458,10 @@ export class TemplateService {
 
   pasteElements(): void {
     if (this.clipboard.length === 0) return;
-    const targetSection = this._template().sections.find(s => s.type === 'details') || this._template().sections[0];
+    const targetSection = this._template().sections.find(s => s.id === this.activeSectionId())
+      || this.selectedElementSection()
+      || this._template().sections.find(s => s.type === 'details')
+      || this._template().sections[0];
     if (!targetSection) return;
 
     this._template.update((t) => {
@@ -470,6 +481,15 @@ export class TemplateService {
       return updated;
     });
     this.pushToHistory();
+  }
+
+  private findSectionIdForElement(elementId: string): string | null {
+    for (const section of this._template().sections) {
+      if (section.elements.some((el) => el.id === elementId)) {
+        return section.id;
+      }
+    }
+    return null;
   }
 
   setFocusedTableCell(elementId: string, row: number, col: number): void {
