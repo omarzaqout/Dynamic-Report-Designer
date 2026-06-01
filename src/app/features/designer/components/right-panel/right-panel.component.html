@@ -499,6 +499,15 @@
           <button class="table-action-btn" (click)="addTableColumn()">+ Col</button>
           <button class="table-action-btn" (click)="removeTableColumn()">- Col</button>
         </div>
+        <div class="table-actions" style="margin-top: 8px;">
+          <button class="table-action-btn" (click)="copyTableStyle()">Copy Style</button>
+          <button class="table-action-btn" (click)="pasteTableStyle()" [disabled]="!hasCopiedTableStyle()">Paste Style</button>
+        </div>
+        @if (copiedTableStyle(); as copiedStyle) {
+        <div class="hint-text" style="margin-top: 6px;">
+          Copied style ready: {{ copiedStyle.rows }}x{{ copiedStyle.columns }} table. You can paste it into this template or another open template.
+        </div>
+        }
         <label class="repeat-toggle"
           style="margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #64748b; cursor: pointer;">
           <input type="checkbox" [checked]="table.dynamicRows" (change)="onTableDynamicRowsChange($event)"

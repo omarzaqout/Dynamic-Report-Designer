@@ -10,6 +10,7 @@ import { API_CONFIG } from '../config/api.config';
 })
 export class TemplateService {
   private readonly STORAGE_KEY = 'alfa_report_template_draft';
+  private readonly TABLE_STYLE_CLIPBOARD_KEY = 'alfa_report_table_style_clipboard';
 
   private normalizeElementStyle(style?: Partial<ElementStyle>): ElementStyle {
     return {
@@ -89,6 +90,15 @@ export class TemplateService {
   readonly currentReportId = signal<string | null>(null);
   readonly selectedElementIds = signal<string[]>([]);
   readonly activeSectionId = signal<string | null>(null);
+  readonly copiedTableStyle = signal<{
+    elementStyle: ElementStyle;
+    rowHeights: number[];
+    columnSettings: Array<{ width: number; order: number; visible: boolean }>;
+    fullWidth?: boolean;
+    cells: Array<Array<{ style?: any }>>;
+    rows: number;
+    columns: number;
+  } | null>(null);
   readonly focusedTableCell = signal<{ elementId: string; row: number; col: number } | null>(null);
   readonly selectedTableCells = signal<Array<{ elementId: string; row: number; col: number }>>([]);
 
@@ -124,6 +134,7 @@ export class TemplateService {
 
   constructor() {
     this.loadFromLocalStorage();
+    this.loadTableStyleClipboard();
   }
 
   private loadFromLocalStorage(): void {
@@ -140,6 +151,30 @@ export class TemplateService {
       reportId: this.currentReportId(),
       template: normalized,
     }));
+  }
+
+  private loadTableStyleClipboard(): void {
+    const saved = localStorage.getItem(this.TABLE_STYLE_CLIPBOARD_KEY);
+    if (!saved) return;
+
+    try {
+      this.copiedTableStyle.set(JSON.parse(saved));
+    } catch (e) {
+      console.error('Failed to parse saved table style clipboard', e);
+    }
+  }
+
+  copyTableStyleToClipboard(style: {
+    elementStyle: ElementStyle;
+    rowHeights: number[];
+    columnSettings: Array<{ width: number; order: number; visible: boolean }>;
+    fullWidth?: boolean;
+    cells: Array<Array<{ style?: any }>>;
+    rows: number;
+    columns: number;
+  }): void {
+    this.copiedTableStyle.set(style);
+    localStorage.setItem(this.TABLE_STYLE_CLIPBOARD_KEY, JSON.stringify(style));
   }
 
   hasStoredDraftForReport(reportId: string): boolean {

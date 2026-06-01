@@ -52,6 +52,7 @@ export class RightPanelComponent {
 
   readonly element = this.templateService.selectedElement;
   readonly selectedElementIds = this.templateService.selectedElementIds;
+  readonly copiedTableStyle = this.templateService.copiedTableStyle;
   
   // Use datasets from DataService instead of calculating here
   readonly datasets = this.dataService.datasets;
@@ -664,6 +665,69 @@ export class RightPanelComponent {
   deleteElement(): void {
     const el = this.element();
     if (el) this.templateService.deleteSelectedElements();
+  }
+
+  copyTableStyle(): void {
+    const el = this.element();
+    if (!el || el.type !== 'table' || !el.table) return;
+
+    this.templateService.copyTableStyleToClipboard({
+      elementStyle: JSON.parse(JSON.stringify(el.style)),
+      rowHeights: [...(el.table.rowHeights || [])],
+      columnSettings: (el.table.columnSettings || []).map((setting) => ({ ...setting })),
+      fullWidth: el.table.fullWidth,
+      cells: el.table.cells.map((row) =>
+        row.map((cell) => ({
+          style: cell.style ? JSON.parse(JSON.stringify(cell.style)) : undefined,
+        }))
+      ),
+      rows: el.table.rows,
+      columns: el.table.columns,
+    });
+  }
+
+  pasteTableStyle(): void {
+    const el = this.element();
+    const copied = this.copiedTableStyle();
+    if (!el || el.type !== 'table' || !el.table || !copied) return;
+
+    const targetRows = el.table.rows;
+    const targetCols = el.table.columns;
+
+    this.updateTable((table) => {
+      table.fullWidth = copied.fullWidth;
+
+      for (let row = 0; row < Math.min(targetRows, copied.rowHeights.length); row += 1) {
+        table.rowHeights[row] = copied.rowHeights[row];
+      }
+
+      for (let col = 0; col < Math.min(targetCols, copied.columnSettings.length); col += 1) {
+        const currentOrder = table.columnSettings[col]?.order ?? col;
+        table.columnSettings[col] = {
+          ...table.columnSettings[col],
+          ...copied.columnSettings[col],
+          order: currentOrder,
+        };
+      }
+
+      for (let row = 0; row < Math.min(targetRows, copied.cells.length); row += 1) {
+        for (let col = 0; col < Math.min(targetCols, copied.cells[row].length); col += 1) {
+          table.cells[row][col].style = copied.cells[row][col].style
+            ? JSON.parse(JSON.stringify(copied.cells[row][col].style))
+            : undefined;
+        }
+      }
+
+      return table;
+    });
+
+    this.templateService.updateElement(el.id, {
+      style: JSON.parse(JSON.stringify(copied.elementStyle)),
+    });
+  }
+
+  hasCopiedTableStyle(): boolean {
+    return !!this.copiedTableStyle();
   }
 
   duplicateSelected(): void {
