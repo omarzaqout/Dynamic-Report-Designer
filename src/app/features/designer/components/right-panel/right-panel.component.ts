@@ -254,8 +254,8 @@ export class RightPanelComponent {
     this.updateStyle({ color: (event.target as HTMLInputElement).value });
   }
 
-  onFontFamilyChange(event: Event): void {
-    this.updateStyle({ fontFamily: (event.target as HTMLSelectElement).value });
+  onFontFamilyChange(fontFamily: string): void {
+    this.updateStyle({ fontFamily });
   }
 
   toggleBold(): void {

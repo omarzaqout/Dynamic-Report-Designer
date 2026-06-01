@@ -50,9 +50,16 @@ export class DesignerComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
+      if (this.templateService.hasStoredDraftForReport(id)) {
+        this.templateService.currentReportId.set(id);
+        return;
+      }
+
       this.templateService.loadTemplateFromDb(id).catch(err => alert('Failed to load template'));
     } else {
-      this.templateService.resetTemplate();
+      if (!this.templateService.hasStoredDraftForNewTemplate()) {
+        this.templateService.resetTemplate();
+      }
     }
   }
 

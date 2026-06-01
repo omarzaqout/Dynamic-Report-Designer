@@ -40,6 +40,7 @@
 
     @if (!isMultiSelect() && el.type === 'table' && el.table && tableCellSelectionCount() > 0) {
     @let focus = focusedCell()!;
+    @let cell = el.table.cells[focus.row][focus.col];
     <div class="prop-section cell-style-box"
       style="border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 12px;">
       <div class="prop-section-title">Cell Specific Styling</div>
@@ -56,10 +57,10 @@
       <div class="prop-row">
         <label>Font Type</label>
         <select class="prop-select"
-          [value]="el.table.cells[focus.row][focus.col].style?.fontFamily || el.style.fontFamily"
-          (change)="onTableCellStyleChange({ fontFamily: $any($event.target).value })">
+          [ngModel]="cell.style?.fontFamily ?? el.style.fontFamily"
+          (ngModelChange)="onTableCellStyleChange({ fontFamily: $event })">
           @for (font of fontFamilies; track font.value) {
-          <option [value]="font.value">{{ font.label }}</option>
+          <option [ngValue]="font.value">{{ font.label }}</option>
           }
         </select>
       </div>
@@ -69,14 +70,14 @@
         <div style="display: flex; gap: 8px; align-items: center;">
           <div class="stepper">
             <button
-              (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) - 1 })">-</button>
-            <span style="min-width: 30px; text-align: center;">{{ el.table.cells[focus.row][focus.col].style?.fontSize
-              || 12 }}</span>
+              (click)="onTableCellStyleChange({ fontSize: (cell.style?.fontSize ?? el.style.fontSize) - 1 })">-</button>
+            <span style="min-width: 30px; text-align: center;">{{ cell.style?.fontSize
+              ?? el.style.fontSize }}</span>
             <button
-              (click)="onTableCellStyleChange({ fontSize: (el.table.cells[focus.row][focus.col].style?.fontSize || 12) + 1 })">+</button>
+              (click)="onTableCellStyleChange({ fontSize: (cell.style?.fontSize ?? el.style.fontSize) + 1 })">+</button>
           </div>
           <input type="color" class="color-picker"
-            [value]="el.table.cells[focus.row][focus.col].style?.color || '#000000'"
+            [value]="cell.style?.color ?? el.style.color"
             (input)="onTableCellStyleChange({ color: $any($event.target).value })">
         </div>
       </div>
@@ -84,24 +85,24 @@
       <div class="prop-row">
         <label>Format</label>
         <div class="toggle-group">
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold'"
-            (click)="onTableCellStyleChange({ fontWeight: el.table.cells[focus.row][focus.col].style?.fontWeight === 'bold' ? 'normal' : 'bold' })">B</button>
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic'"
-            (click)="onTableCellStyleChange({ fontStyle: el.table.cells[focus.row][focus.col].style?.fontStyle === 'italic' ? 'normal' : 'italic' })">I</button>
+          <button class="toggle-btn" [class.active]="(cell.style?.fontWeight ?? el.style.fontWeight) === 'bold'"
+            (click)="onTableCellStyleChange({ fontWeight: (cell.style?.fontWeight ?? el.style.fontWeight) === 'bold' ? 'normal' : 'bold' })">B</button>
+          <button class="toggle-btn" [class.active]="(cell.style?.fontStyle ?? el.style.fontStyle) === 'italic'"
+            (click)="onTableCellStyleChange({ fontStyle: (cell.style?.fontStyle ?? el.style.fontStyle) === 'italic' ? 'normal' : 'italic' })">I</button>
           <button class="toggle-btn"
-            [class.active]="el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline'"
-            (click)="onTableCellStyleChange({ textDecoration: el.table.cells[focus.row][focus.col].style?.textDecoration === 'underline' ? 'none' : 'underline' })">U</button>
+            [class.active]="(cell.style?.textDecoration ?? el.style.textDecoration) === 'underline'"
+            (click)="onTableCellStyleChange({ textDecoration: (cell.style?.textDecoration ?? el.style.textDecoration) === 'underline' ? 'none' : 'underline' })">U</button>
         </div>
       </div>
 
       <div class="prop-row">
         <label>Align X</label>
         <div class="toggle-group">
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'left'"
+          <button class="toggle-btn" [class.active]="(cell.style?.textAlign ?? el.style.textAlign) === 'left'"
             (click)="onTableCellStyleChange({ textAlign: 'left' })">L</button>
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'center'"
+          <button class="toggle-btn" [class.active]="(cell.style?.textAlign ?? el.style.textAlign) === 'center'"
             (click)="onTableCellStyleChange({ textAlign: 'center' })">C</button>
-          <button class="toggle-btn" [class.active]="el.table.cells[focus.row][focus.col].style?.textAlign === 'right'"
+          <button class="toggle-btn" [class.active]="(cell.style?.textAlign ?? el.style.textAlign) === 'right'"
             (click)="onTableCellStyleChange({ textAlign: 'right' })">R</button>
         </div>
       </div>
@@ -110,13 +111,13 @@
         <label>Align Y</label>
         <div class="toggle-group">
           <button class="toggle-btn"
-            [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'top'"
+            [class.active]="(cell.style?.verticalAlign ?? el.style.verticalAlign) === 'top'"
             (click)="onTableCellStyleChange({ verticalAlign: 'top' })" title="Top">T</button>
           <button class="toggle-btn"
-            [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'middle'"
+            [class.active]="(cell.style?.verticalAlign ?? el.style.verticalAlign) === 'middle'"
             (click)="onTableCellStyleChange({ verticalAlign: 'middle' })" title="Middle">M</button>
           <button class="toggle-btn"
-            [class.active]="el.table.cells[focus.row][focus.col].style?.verticalAlign === 'bottom'"
+            [class.active]="(cell.style?.verticalAlign ?? el.style.verticalAlign) === 'bottom'"
             (click)="onTableCellStyleChange({ verticalAlign: 'bottom' })" title="Bottom">B</button>
         </div>
       </div>
@@ -124,7 +125,7 @@
       <div class="prop-row">
         <label style="color: #92400e; font-weight: 700;">Wrap Text</label>
         <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
-          <input type="checkbox" [checked]="el.table.cells[focus.row][focus.col].style?.whiteSpace === 'normal'"
+          <input type="checkbox" [checked]="(cell.style?.whiteSpace ?? el.style.whiteSpace ?? 'nowrap') === 'normal'"
             (change)="onTableCellStyleChange({ whiteSpace: $any($event.target).checked ? 'normal' : 'nowrap' })">
           <span style="font-size: 10px; color: #92400e;">Allow multi-line wrap</span>
         </label>
@@ -134,27 +135,27 @@
         <label style="color: #92400e; font-weight: 700;">Border</label>
         <div style="display: flex; gap: 8px; align-items: center;">
           <label class="repeat-toggle" style="margin: 0; cursor: pointer;">
-            <input type="checkbox" [checked]="el.table.cells[focus.row][focus.col].style?.border !== 'none'"
+            <input type="checkbox" [checked]="(cell.style?.border ?? '1px solid') !== 'none'"
               (change)="onTableCellStyleChange({ border: $any($event.target).checked ? '1px solid' : 'none' })">
             <span style="font-size: 10px; color: #92400e;">Show Border</span>
           </label>
           <input type="color" class="color-picker"
-            [value]="el.table.cells[focus.row][focus.col].style?.borderColor || '#cbd5e1'"
+            [value]="cell.style?.borderColor ?? el.style.borderColor ?? '#cbd5e1'"
             (input)="onTableCellStyleChange({ borderColor: $any($event.target).value })"
             style="width: 24px; height: 24px;">
         </div>
       </div>
 
-      @if (hasSingleSelectedTableCell() && el.table.cells[focus.row][focus.col].imageUrl) {
+      @if (hasSingleSelectedTableCell() && cell.imageUrl) {
       <div class="prop-row">
         <label style="color: #92400e; font-weight: 700;">Image Size (Padding)</label>
         <div class="stepper">
           <button
-            (click)="onTableCellStyleChange({ padding: (el.table.cells[focus.row][focus.col].style?.padding || 0) + 2 })">+</button>
-          <span style="min-width: 30px; text-align: center;">{{ (el.table.cells[focus.row][focus.col].style?.padding ||
+            (click)="onTableCellStyleChange({ padding: (cell.style?.padding ?? 0) + 2 })">+</button>
+          <span style="min-width: 30px; text-align: center;">{{ (cell.style?.padding ||
             0) }}px</span>
           <button
-            (click)="onTableCellStyleChange({ padding: Math.max(0, (el.table.cells[focus.row][focus.col].style?.padding || 0) - 2) })">-</button>
+            (click)="onTableCellStyleChange({ padding: Math.max(0, (cell.style?.padding ?? 0) - 2) })">-</button>
         </div>
       </div>
       <div class="hint-text" style="color: #b45309; font-size: 9px; margin-top: -8px; margin-bottom: 8px;">Increase
@@ -582,9 +583,9 @@
       @if (el.type === 'field' || el.type === 'text' || el.type === 'table') {
       <div class="prop-col">
         <label class="prop-label">Font Family</label>
-        <select class="prop-select" [value]="el.style.fontFamily" (change)="onFontFamilyChange($event)">
+        <select class="prop-select" [ngModel]="el.style.fontFamily" (ngModelChange)="onFontFamilyChange($event)">
           @for (font of fontFamilies; track font.value) {
-          <option [value]="font.value">{{ font.label }}</option>
+          <option [ngValue]="font.value">{{ font.label }}</option>
           }
         </select>
       </div>

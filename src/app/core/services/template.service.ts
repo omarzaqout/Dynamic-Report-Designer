@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
-import { ReportTemplate, TemplateSection, TemplateElement, TableData, SectionType, ElementStyle } from '../models/template.model';
+import { ReportTemplate, TemplateSection, TemplateElement, TableData, SectionType, ElementStyle, DEFAULT_STYLE } from '../models/template.model';
 import { ReportData } from '../models/report.model';
 import { API_CONFIG } from '../config/api.config';
 
@@ -10,6 +10,69 @@ import { API_CONFIG } from '../config/api.config';
 })
 export class TemplateService {
   private readonly STORAGE_KEY = 'alfa_report_template_draft';
+
+  private normalizeElementStyle(style?: Partial<ElementStyle>): ElementStyle {
+    return {
+      ...DEFAULT_STYLE,
+      ...(style || {}),
+    };
+  }
+
+  private normalizeTable(table?: TableData): TableData | undefined {
+    if (!table) return undefined;
+
+    return {
+      ...table,
+      cells: table.cells.map((row) =>
+        row.map((cell) => ({
+          ...cell,
+          style: cell.style ? this.normalizeElementStyle(cell.style) : undefined,
+        }))
+      ),
+    };
+  }
+
+  private normalizeTemplate(template: ReportTemplate): ReportTemplate {
+    return {
+      ...template,
+      sections: template.sections.map((section) => ({
+        ...section,
+        elements: section.elements.map((element) => ({
+          ...element,
+          style: this.normalizeElementStyle(element.style),
+          table: this.normalizeTable(element.table),
+        })),
+      })),
+    };
+  }
+  
+  private readStoredDraft(): { reportId: string | null; template: ReportTemplate } | null {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+    if (!saved) return null;
+
+    try {
+      const parsed = JSON.parse(saved);
+
+      if (parsed?.template?.sections && Array.isArray(parsed.template.sections)) {
+        return {
+          reportId: parsed.reportId ?? null,
+          template: this.normalizeTemplate(parsed.template),
+        };
+      }
+
+      // Backward compatibility with older drafts stored as raw template JSON.
+      if (parsed?.sections && Array.isArray(parsed.sections)) {
+        return {
+          reportId: null,
+          template: this.normalizeTemplate(parsed),
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse saved template draft', e);
+    }
+
+    return null;
+  }
   
   private _template = signal<ReportTemplate>({
     id: 'template-1',
@@ -63,19 +126,29 @@ export class TemplateService {
   }
 
   private loadFromLocalStorage(): void {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        this._template.set(parsed);
-      } catch (e) {
-        console.error('Failed to load saved template draft', e);
-      }
-    }
+    const draft = this.readStoredDraft();
+    if (!draft) return;
+
+    this.currentReportId.set(draft.reportId);
+    this._template.set(draft.template);
   }
 
   private persistToLocalStorage(t: ReportTemplate): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(t));
+    const normalized = this.normalizeTemplate(t);
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+      reportId: this.currentReportId(),
+      template: normalized,
+    }));
+  }
+
+  hasStoredDraftForReport(reportId: string): boolean {
+    const draft = this.readStoredDraft();
+    return draft?.reportId === reportId;
+  }
+
+  hasStoredDraftForNewTemplate(): boolean {
+    const draft = this.readStoredDraft();
+    return !!draft && !draft.reportId;
   }
 
   get templateValue(): ReportTemplate {
@@ -83,8 +156,9 @@ export class TemplateService {
   }
 
   setTemplate(template: ReportTemplate): void {
-    this._template.set(template);
-    this.persistToLocalStorage(template);
+    const normalized = this.normalizeTemplate(template);
+    this._template.set(normalized);
+    this.persistToLocalStorage(normalized);
     this.pushToHistory();
   }
 
@@ -123,6 +197,8 @@ export class TemplateService {
   addElement(sectionId: string, element: Omit<TemplateElement, 'id'>): void {
     const newElement: TemplateElement = {
       ...element,
+      style: this.normalizeElementStyle(element.style),
+      table: this.normalizeTable(element.table),
       id: 'el-' + Math.random().toString(36).substring(2, 11),
     };
 
