@@ -19,6 +19,32 @@ export class TemplateService {
     };
   }
 
+  private normalizeCellStyle(style?: Partial<ElementStyle>): Partial<ElementStyle> | undefined {
+    if (!style) return undefined;
+
+    const keys = Object.keys(style) as Array<keyof ElementStyle>;
+    if (keys.length === 0) return undefined;
+
+    // Older drafts persisted cell styles as fully-expanded objects, which turns
+    // inherited table-level values into explicit cell overrides after refresh.
+    // Compress those legacy objects back to meaningful overrides only.
+    const defaultKeys = Object.keys(DEFAULT_STYLE) as Array<keyof ElementStyle>;
+    const isLegacyExpandedStyle = keys.length >= Math.max(defaultKeys.length - 1, 1);
+
+    if (!isLegacyExpandedStyle) {
+      return { ...style };
+    }
+
+    const normalized: Partial<ElementStyle> = {};
+    for (const key of keys) {
+      if (style[key] !== DEFAULT_STYLE[key]) {
+        (normalized as any)[key] = style[key];
+      }
+    }
+
+    return Object.keys(normalized).length > 0 ? normalized : undefined;
+  }
+
   private normalizeTable(table?: TableData): TableData | undefined {
     if (!table) return undefined;
 
@@ -27,7 +53,7 @@ export class TemplateService {
       cells: table.cells.map((row) =>
         row.map((cell) => ({
           ...cell,
-          style: cell.style ? this.normalizeElementStyle(cell.style) : undefined,
+          style: this.normalizeCellStyle(cell.style),
         }))
       ),
     };
